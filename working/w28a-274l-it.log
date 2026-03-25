@@ -1,0 +1,21 @@
+============================= test session starts ==============================
+platform linux -- Python 3.10.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: /opt/iac/Development/cloud-dog-ai/db-mcp-server
+configfile: pyproject.toml
+plugins: asyncio-1.3.0, cloud-dog-config-0.3.0, anyio-4.13.0, timeout-2.4.0, cov-7.1.0
+asyncio: mode=strict, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 7 items
+
+tests/integration/IT1.1_AccessControlLifecycle/test_access_control_lifecycle.py . [ 14%]
+                                                                         [ 14%]
+tests/integration/IT1.2_MongoDbMcpTools/test_mongodb_mcp_tools.py .      [ 28%]
+tests/integration/IT1.3_FullDiscoveryFlow/test_full_discovery_flow.py .  [ 42%]
+tests/integration/IT1.4_ContentCRUDLifecycle/test_content_crud_lifecycle.py . [ 57%]
+                                                                         [ 57%]
+tests/integration/IT1.5_RelationshipLifecycle/test_relationship_lifecycle.py . [ 71%]
+                                                                         [ 71%]
+tests/integration/IT1.6_SearchIndexingLifecycle/test_search_indexing_lifecycle.py . [ 85%]
+                                                                         [ 85%]
+tests/integration/IT1.7_SchemaChangeLifecycle/test_schema_change_lifecycle.py . [100%]
+
+======================== 7 passed in 506.19s (0:08:26) =========================

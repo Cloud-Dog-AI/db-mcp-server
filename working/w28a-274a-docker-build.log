@@ -1,0 +1,238 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 598B 0.0s done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.10-slim
+#2 DONE 0.4s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/6] FROM docker.io/library/python:3.10-slim@sha256:4ba18b066cee17f2696cf9a2ba564d7d5eb05a91d6a949326780aa7c6912160d
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.59MB 5.0s
+#5 transferring context: 5.21MB 10.0s
+#5 transferring context: 7.85MB 15.0s
+#5 transferring context: 10.78MB 20.1s
+#5 transferring context: 13.94MB 25.1s
+#5 transferring context: 17.05MB 30.1s
+#5 transferring context: 20.15MB 35.1s
+#5 transferring context: 22.42MB 40.0s done
+#5 DONE 40.2s
+
+#6 [2/6] WORKDIR /workspace
+#6 CACHED
+
+#7 [3/6] COPY db-mcp-server /workspace/db-mcp-server
+#7 DONE 1.9s
+
+#8 [4/6] COPY cloud-dog-ai-platform-standards /workspace/cloud-dog-ai-platform-standards
+#8 DONE 23.3s
+
+#9 [5/6] WORKDIR /workspace/db-mcp-server
+#9 DONE 0.1s
+
+#10 [6/6] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir -e ".[dev]"
+#10 2.057 Requirement already satisfied: pip in /usr/local/lib/python3.10/site-packages (23.0.1)
+#10 2.196 Collecting pip
+#10 2.241   Downloading pip-26.0.1-py3-none-any.whl (1.8 MB)
+#10 2.414      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 10.6 MB/s eta 0:00:00
+#10 2.518 Installing collected packages: pip
+#10 2.519   Attempting uninstall: pip
+#10 2.520     Found existing installation: pip 23.0.1
+#10 2.825     Uninstalling pip-23.0.1:
+#10 3.117       Successfully uninstalled pip-23.0.1
+#10 4.351 Successfully installed pip-26.0.1
+#10 4.352 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#10 5.030 Obtaining file:///workspace/db-mcp-server
+#10 5.033   Installing build dependencies: started
+#10 6.365   Installing build dependencies: finished with status 'done'
+#10 6.367   Checking if build backend supports build_editable: started
+#10 6.422   Checking if build backend supports build_editable: finished with status 'done'
+#10 6.424   Getting requirements to build editable: started
+#10 6.637   Getting requirements to build editable: finished with status 'done'
+#10 6.640   Installing backend dependencies: started
+#10 7.329   Installing backend dependencies: finished with status 'done'
+#10 7.331   Preparing editable metadata (pyproject.toml): started
+#10 7.592   Preparing editable metadata (pyproject.toml): finished with status 'done'
+#10 7.698 Collecting alembic>=1.13.0 (from db-mcp-server==0.1.0)
+#10 7.747   Downloading alembic-1.18.4-py3-none-any.whl.metadata (7.2 kB)
+#10 7.784 Collecting argon2-cffi>=23.1.0 (from db-mcp-server==0.1.0)
+#10 7.792   Downloading argon2_cffi-25.1.0-py3-none-any.whl.metadata (4.1 kB)
+#10 8.134 Collecting cryptography>=42.0.0 (from db-mcp-server==0.1.0)
+#10 8.141   Downloading cryptography-46.0.5-cp38-abi3-manylinux_2_34_x86_64.whl.metadata (5.7 kB)
+#10 8.229 Collecting fastapi>=0.110.0 (from db-mcp-server==0.1.0)
+#10 8.238   Downloading fastapi-0.135.2-py3-none-any.whl.metadata (28 kB)
+#10 8.276 Collecting httpx>=0.27.0 (from db-mcp-server==0.1.0)
+#10 8.284   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+#10 8.503 Collecting pydantic>=2.6.0 (from db-mcp-server==0.1.0)
+#10 8.510   Downloading pydantic-2.12.5-py3-none-any.whl.metadata (90 kB)
+#10 8.543 Collecting pyjwt>=2.8.0 (from db-mcp-server==0.1.0)
+#10 8.550   Downloading pyjwt-2.12.1-py3-none-any.whl.metadata (4.1 kB)
+#10 8.626 Collecting pyyaml>=6.0.1 (from db-mcp-server==0.1.0)
+#10 8.633   Downloading pyyaml-6.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+#10 8.679 Collecting redis>=5.0.0 (from db-mcp-server==0.1.0)
+#10 8.687   Downloading redis-7.4.0-py3-none-any.whl.metadata (12 kB)
+#10 8.723 Collecting requests>=2.31.0 (from db-mcp-server==0.1.0)
+#10 8.730   Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+#10 9.263 Collecting sqlalchemy>=2.0.0 (from db-mcp-server==0.1.0)
+#10 9.271   Downloading sqlalchemy-2.0.48-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (9.5 kB)
+#10 9.322 Collecting uvicorn>=0.29.0 (from db-mcp-server==0.1.0)
+#10 9.327   Downloading uvicorn-0.42.0-py3-none-any.whl.metadata (6.7 kB)
+#10 9.514 Collecting mypy>=1.8.0 (from db-mcp-server==0.1.0)
+#10 9.522   Downloading mypy-1.19.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.2 kB)
+#10 9.554 Collecting pytest-asyncio>=0.23.0 (from db-mcp-server==0.1.0)
+#10 9.561   Downloading pytest_asyncio-1.3.0-py3-none-any.whl.metadata (4.1 kB)
+#10 9.635 Collecting pytest-cov>=4.1.0 (from db-mcp-server==0.1.0)
+#10 9.642   Downloading pytest_cov-7.1.0-py3-none-any.whl.metadata (32 kB)
+#10 9.659 Collecting pytest-timeout>=2.3.0 (from db-mcp-server==0.1.0)
+#10 9.665   Downloading pytest_timeout-2.4.0-py3-none-any.whl.metadata (20 kB)
+#10 9.716 Collecting pytest>=8.0.0 (from db-mcp-server==0.1.0)
+#10 9.723   Downloading pytest-9.0.2-py3-none-any.whl.metadata (7.6 kB)
+#10 10.39 Collecting ruff>=0.3.0 (from db-mcp-server==0.1.0)
+#10 10.40   Downloading ruff-0.15.7-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (26 kB)
+#10 10.51 Collecting Mako (from alembic>=1.13.0->db-mcp-server==0.1.0)
+#10 10.52   Downloading mako-1.3.10-py3-none-any.whl.metadata (2.9 kB)
+#10 10.54 Collecting typing-extensions>=4.12 (from alembic>=1.13.0->db-mcp-server==0.1.0)
+#10 10.54   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+#10 10.57 Collecting tomli (from alembic>=1.13.0->db-mcp-server==0.1.0)
+#10 10.58   Downloading tomli-2.4.0-py3-none-any.whl.metadata (10 kB)
+#10 10.59 Collecting argon2-cffi-bindings (from argon2-cffi>=23.1.0->db-mcp-server==0.1.0)
+#10 10.60   Downloading argon2_cffi_bindings-25.1.0-cp39-abi3-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (7.4 kB)
+#10 10.78 Collecting cffi>=2.0.0 (from cryptography>=42.0.0->db-mcp-server==0.1.0)
+#10 10.79   Downloading cffi-2.0.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+#10 10.81 Collecting pycparser (from cffi>=2.0.0->cryptography>=42.0.0->db-mcp-server==0.1.0)
+#10 10.81   Downloading pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+#10 10.85 Collecting starlette>=0.46.0 (from fastapi>=0.110.0->db-mcp-server==0.1.0)
+#10 10.85   Downloading starlette-1.0.0-py3-none-any.whl.metadata (6.3 kB)
+#10 10.88 Collecting typing-inspection>=0.4.2 (from fastapi>=0.110.0->db-mcp-server==0.1.0)
+#10 10.88   Downloading typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+#10 10.89 Collecting annotated-doc>=0.0.2 (from fastapi>=0.110.0->db-mcp-server==0.1.0)
+#10 10.90   Downloading annotated_doc-0.0.4-py3-none-any.whl.metadata (6.6 kB)
+#10 10.93 Collecting anyio (from httpx>=0.27.0->db-mcp-server==0.1.0)
+#10 10.93   Downloading anyio-4.13.0-py3-none-any.whl.metadata (4.5 kB)
+#10 10.96 Collecting certifi (from httpx>=0.27.0->db-mcp-server==0.1.0)
+#10 10.96   Downloading certifi-2026.2.25-py3-none-any.whl.metadata (2.5 kB)
+#10 10.99 Collecting httpcore==1.* (from httpx>=0.27.0->db-mcp-server==0.1.0)
+#10 10.99   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+#10 11.01 Collecting idna (from httpx>=0.27.0->db-mcp-server==0.1.0)
+#10 11.02   Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+#10 11.03 Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.27.0->db-mcp-server==0.1.0)
+#10 11.04   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+#10 11.05 Collecting mypy_extensions>=1.0.0 (from mypy>=1.8.0->db-mcp-server==0.1.0)
+#10 11.06   Downloading mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+#10 11.08 Collecting pathspec>=0.9.0 (from mypy>=1.8.0->db-mcp-server==0.1.0)
+#10 11.09   Downloading pathspec-1.0.4-py3-none-any.whl.metadata (13 kB)
+#10 11.27 Collecting librt>=0.6.2 (from mypy>=1.8.0->db-mcp-server==0.1.0)
+#10 11.28   Downloading librt-0.8.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (1.3 kB)
+#10 11.30 Collecting annotated-types>=0.6.0 (from pydantic>=2.6.0->db-mcp-server==0.1.0)
+#10 11.30   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+#10 12.61 Collecting pydantic-core==2.41.5 (from pydantic>=2.6.0->db-mcp-server==0.1.0)
+#10 12.62   Downloading pydantic_core-2.41.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+#10 12.65 Collecting exceptiongroup>=1 (from pytest>=8.0.0->db-mcp-server==0.1.0)
+#10 12.66   Downloading exceptiongroup-1.3.1-py3-none-any.whl.metadata (6.7 kB)
+#10 12.67 Collecting iniconfig>=1.0.1 (from pytest>=8.0.0->db-mcp-server==0.1.0)
+#10 12.68   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+#10 12.70 Collecting packaging>=22 (from pytest>=8.0.0->db-mcp-server==0.1.0)
+#10 12.71   Downloading packaging-26.0-py3-none-any.whl.metadata (3.3 kB)
+#10 12.72 Collecting pluggy<2,>=1.5 (from pytest>=8.0.0->db-mcp-server==0.1.0)
+#10 12.73   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+#10 12.76 Collecting pygments>=2.7.2 (from pytest>=8.0.0->db-mcp-server==0.1.0)
+#10 12.76   Downloading pygments-2.19.2-py3-none-any.whl.metadata (2.5 kB)
+#10 12.86 Collecting backports-asyncio-runner<2,>=1.1 (from pytest-asyncio>=0.23.0->db-mcp-server==0.1.0)
+#10 12.87   Downloading backports_asyncio_runner-1.2.0-py3-none-any.whl.metadata (7.5 kB)
+#10 13.71 Collecting coverage>=7.10.6 (from coverage[toml]>=7.10.6->pytest-cov>=4.1.0->db-mcp-server==0.1.0)
+#10 13.72   Downloading coverage-7.13.5-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (8.5 kB)
+#10 13.75 Collecting async-timeout>=4.0.3 (from redis>=5.0.0->db-mcp-server==0.1.0)
+#10 13.76   Downloading async_timeout-5.0.1-py3-none-any.whl.metadata (5.1 kB)
+#10 13.92 Collecting charset_normalizer<4,>=2 (from requests>=2.31.0->db-mcp-server==0.1.0)
+#10 13.93   Downloading charset_normalizer-3.4.6-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+#10 13.97 Collecting urllib3<3,>=1.21.1 (from requests>=2.31.0->db-mcp-server==0.1.0)
+#10 13.97   Downloading urllib3-2.6.3-py3-none-any.whl.metadata (6.9 kB)
+#10 14.19 Collecting greenlet>=1 (from sqlalchemy>=2.0.0->db-mcp-server==0.1.0)
+#10 14.20   Downloading greenlet-3.3.2-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (3.7 kB)
+#10 14.24 Collecting click>=7.0 (from uvicorn>=0.29.0->db-mcp-server==0.1.0)
+#10 14.25   Downloading click-8.3.1-py3-none-any.whl.metadata (2.6 kB)
+#10 14.34 Collecting MarkupSafe>=0.9.2 (from Mako->alembic>=1.13.0->db-mcp-server==0.1.0)
+#10 14.34   Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+#10 14.36 Downloading alembic-1.18.4-py3-none-any.whl (263 kB)
+#10 14.37 Downloading argon2_cffi-25.1.0-py3-none-any.whl (14 kB)
+#10 14.38 Downloading cryptography-46.0.5-cp38-abi3-manylinux_2_34_x86_64.whl (4.5 MB)
+#10 14.45    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 65.7 MB/s  0:00:00
+#10 14.46 Downloading cffi-2.0.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (216 kB)
+#10 14.47 Downloading fastapi-0.135.2-py3-none-any.whl (117 kB)
+#10 14.48 Downloading annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
+#10 14.48 Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+#10 14.50 Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#10 14.51 Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#10 14.51 Downloading mypy-1.19.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (13.5 MB)
+#10 14.68    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.5/13.5 MB 84.1 MB/s  0:00:00
+#10 14.69 Downloading librt-0.8.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (219 kB)
+#10 14.70 Downloading mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+#10 14.70 Downloading pathspec-1.0.4-py3-none-any.whl (55 kB)
+#10 14.71 Downloading pydantic-2.12.5-py3-none-any.whl (463 kB)
+#10 14.72 Downloading pydantic_core-2.41.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+#10 14.76    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 64.0 MB/s  0:00:00
+#10 14.77 Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+#10 14.78 Downloading pyjwt-2.12.1-py3-none-any.whl (29 kB)
+#10 14.78 Downloading pytest-9.0.2-py3-none-any.whl (374 kB)
+#10 14.79 Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+#10 14.80 Downloading exceptiongroup-1.3.1-py3-none-any.whl (16 kB)
+#10 14.80 Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+#10 14.81 Downloading packaging-26.0-py3-none-any.whl (74 kB)
+#10 14.81 Downloading pygments-2.19.2-py3-none-any.whl (1.2 MB)
+#10 14.83    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 92.5 MB/s  0:00:00
+#10 14.83 Downloading pytest_asyncio-1.3.0-py3-none-any.whl (15 kB)
+#10 14.84 Downloading backports_asyncio_runner-1.2.0-py3-none-any.whl (12 kB)
+#10 14.85 Downloading pytest_cov-7.1.0-py3-none-any.whl (22 kB)
+#10 14.85 Downloading coverage-7.13.5-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (248 kB)
+#10 14.86 Downloading pytest_timeout-2.4.0-py3-none-any.whl (14 kB)
+#10 14.87 Downloading pyyaml-6.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (770 kB)
+#10 14.88    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 770.3/770.3 kB 86.1 MB/s  0:00:00
+#10 14.89 Downloading redis-7.4.0-py3-none-any.whl (409 kB)
+#10 14.90 Downloading async_timeout-5.0.1-py3-none-any.whl (6.2 kB)
+#10 14.90 Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+#10 14.91 Downloading charset_normalizer-3.4.6-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (207 kB)
+#10 14.92 Downloading idna-3.11-py3-none-any.whl (71 kB)
+#10 14.92 Downloading urllib3-2.6.3-py3-none-any.whl (131 kB)
+#10 14.93 Downloading certifi-2026.2.25-py3-none-any.whl (153 kB)
+#10 14.94 Downloading ruff-0.15.7-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (11.2 MB)
+#10 15.07    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 86.5 MB/s  0:00:00
+#10 15.11 Downloading sqlalchemy-2.0.48-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (3.2 MB)
+#10 15.15    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.2/3.2 MB 111.9 MB/s  0:00:00
+#10 15.16 Downloading greenlet-3.3.2-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (591 kB)
+#10 15.16    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 591.7/591.7 kB 89.3 MB/s  0:00:00
+#10 15.17 Downloading starlette-1.0.0-py3-none-any.whl (72 kB)
+#10 15.18 Downloading anyio-4.13.0-py3-none-any.whl (114 kB)
+#10 15.18 Downloading tomli-2.4.0-py3-none-any.whl (14 kB)
+#10 15.19 Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+#10 15.20 Downloading typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+#10 15.20 Downloading uvicorn-0.42.0-py3-none-any.whl (68 kB)
+#10 15.21 Downloading click-8.3.1-py3-none-any.whl (108 kB)
+#10 15.22 Downloading argon2_cffi_bindings-25.1.0-cp39-abi3-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (87 kB)
+#10 15.22 Downloading mako-1.3.10-py3-none-any.whl (78 kB)
+#10 15.23 Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (20 kB)
+#10 15.24 Downloading pycparser-3.0-py3-none-any.whl (48 kB)
+#10 15.45 Building wheels for collected packages: db-mcp-server
+#10 15.45   Building editable for db-mcp-server (pyproject.toml): started
+#10 15.50   Building editable for db-mcp-server (pyproject.toml): finished with status 'done'
+#10 15.50   Created wheel for db-mcp-server: filename=db_mcp_server-0.1.0-py3-none-any.whl size=2422 sha256=ee7abc31e7e3c94420063500b79a3d64235d4b933ef49ccdfccf643a3d6cd831
+#10 15.50   Stored in directory: /tmp/pip-ephem-wheel-cache-fnpi4wyw/wheels/b3/b6/d3/40b655f4c948e77135f4e21015b56a04fba8fbd46c63b46879
+#10 15.51 Successfully built db-mcp-server
+#10 15.68 Installing collected packages: urllib3, typing-extensions, tomli, ruff, pyyaml, pygments, pycparser, pluggy, pathspec, packaging, mypy_extensions, MarkupSafe, librt, iniconfig, idna, h11, greenlet, coverage, click, charset_normalizer, certifi, backports-asyncio-runner, async-timeout, annotated-types, annotated-doc, uvicorn, typing-inspection, sqlalchemy, requests, redis, pyjwt, pydantic-core, mypy, Mako, httpcore, exceptiongroup, cffi, pytest, pydantic, cryptography, argon2-cffi-bindings, anyio, alembic, starlette, pytest-timeout, pytest-cov, pytest-asyncio, httpx, argon2-cffi, fastapi, db-mcp-server
+#10 23.60 
+#10 23.62 Successfully installed Mako-1.3.10 MarkupSafe-3.0.3 alembic-1.18.4 annotated-doc-0.0.4 annotated-types-0.7.0 anyio-4.13.0 argon2-cffi-25.1.0 argon2-cffi-bindings-25.1.0 async-timeout-5.0.1 backports-asyncio-runner-1.2.0 certifi-2026.2.25 cffi-2.0.0 charset_normalizer-3.4.6 click-8.3.1 coverage-7.13.5 cryptography-46.0.5 db-mcp-server-0.1.0 exceptiongroup-1.3.1 fastapi-0.135.2 greenlet-3.3.2 h11-0.16.0 httpcore-1.0.9 httpx-0.28.1 idna-3.11 iniconfig-2.3.0 librt-0.8.1 mypy-1.19.1 mypy_extensions-1.1.0 packaging-26.0 pathspec-1.0.4 pluggy-1.6.0 pycparser-3.0 pydantic-2.12.5 pydantic-core-2.41.5 pygments-2.19.2 pyjwt-2.12.1 pytest-9.0.2 pytest-asyncio-1.3.0 pytest-cov-7.1.0 pytest-timeout-2.4.0 pyyaml-6.0.3 redis-7.4.0 requests-2.32.5 ruff-0.15.7 sqlalchemy-2.0.48 starlette-1.0.0 tomli-2.4.0 typing-extensions-4.15.0 typing-inspection-0.4.2 urllib3-2.6.3 uvicorn-0.42.0
+#10 23.62 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#10 DONE 24.9s
+
+#11 exporting to image
+#11 exporting layers
+#11 exporting layers 21.7s done
+#11 writing image sha256:09534240cc0f8e5f3f136cd9f2a35290a5b2a439f918e7bc64b62e1adbfb9d4c done
+#11 naming to docker.io/cloud-dog/db-mcp-server:w28a-274a-hostnet 0.0s done
+#11 DONE 21.7s

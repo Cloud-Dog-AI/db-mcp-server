@@ -1,0 +1,44 @@
+services:
+  opensearch:
+    image: opensearchproject/opensearch:2.14.0
+    container_name: db-mcp-opensearch
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: 'true'
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: cloud-dog-test-password
+      bootstrap.memory_lock: 'true'
+      OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 40s
+
+  opensearch-seed:
+    image: python:3.10-slim
+    container_name: db-mcp-opensearch-seed
+    restart: "no"
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    working_dir: /workspace/db-mcp-server
+    volumes:
+      - ..:/workspace/db-mcp-server
+    environment:
+      DB_MCP_TEST_OPENSEARCH_URL: http://opensearch:9200
+      DB_MCP_TEST_OPENSEARCH_PREFIX: dbmcp_ecommerce
+    command: >-
+      bash -lc "pip install --no-cache-dir requests >/tmp/pip.log 2>&1 &&
+      python -m tests.fixtures.opensearch_seed"
+
+volumes:
+  opensearch-data:

@@ -1,0 +1,38 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: db-mcp-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: 'false'
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9201:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9200/_cluster/health >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 40s
+
+  elasticsearch-seed:
+    image: python:3.10-slim
+    container_name: db-mcp-elasticsearch-seed
+    restart: "no"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    working_dir: /workspace/db-mcp-server
+    volumes:
+      - ..:/workspace/db-mcp-server
+    environment:
+      DB_MCP_TEST_ELASTICSEARCH_URL: http://elasticsearch:9200
+      DB_MCP_TEST_OPENSEARCH_PREFIX: dbmcp_ecommerce
+    command: >-
+      bash -lc "pip install --no-cache-dir requests >/tmp/pip.log 2>&1 &&
+      python -m tests.fixtures.elasticsearch_seed"
+
+volumes:
+  elasticsearch-data:

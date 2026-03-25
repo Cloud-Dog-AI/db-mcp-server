@@ -1,0 +1,125 @@
+Obtaining file:///opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards/packages/backend/platform-config
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Obtaining file:///opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards/packages/backend/platform-logging
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Obtaining file:///opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards/packages/backend/platform-api-kit
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Obtaining file:///opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards/packages/backend/platform-db
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Obtaining file:///opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards/packages/backend/platform-idam
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Obtaining file:///opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards/packages/backend/platform-jobs
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: pyyaml>=6.0 in ./venv/lib/python3.10/site-packages (from cloud-dog-config==0.3.0) (6.0.3)
+Requirement already satisfied: fastapi>=0.110 in ./venv/lib/python3.10/site-packages (from cloud-dog-api-kit==0.2.0) (0.135.2)
+Requirement already satisfied: httpx>=0.27 in ./venv/lib/python3.10/site-packages (from cloud-dog-api-kit==0.2.0) (0.28.1)
+Requirement already satisfied: pydantic>=2.0 in ./venv/lib/python3.10/site-packages (from cloud-dog-api-kit==0.2.0) (2.12.5)
+Requirement already satisfied: starlette>=0.36 in ./venv/lib/python3.10/site-packages (from cloud-dog-api-kit==0.2.0) (1.0.0)
+Requirement already satisfied: alembic<2.0,>=1.13 in ./venv/lib/python3.10/site-packages (from cloud_dog_db==0.1.0) (1.18.4)
+Requirement already satisfied: sqlalchemy<3.0,>=2.0 in ./venv/lib/python3.10/site-packages (from cloud_dog_db==0.1.0) (2.0.48)
+Requirement already satisfied: argon2-cffi>=23.0 in ./venv/lib/python3.10/site-packages (from cloud-dog-idam==0.2.0) (25.1.0)
+Requirement already satisfied: cryptography>=42.0 in ./venv/lib/python3.10/site-packages (from cloud-dog-idam==0.2.0) (46.0.5)
+Requirement already satisfied: pyjwt>=2.8 in ./venv/lib/python3.10/site-packages (from pyjwt[crypto]>=2.8->cloud-dog-idam==0.2.0) (2.12.1)
+Requirement already satisfied: redis>=5.0 in ./venv/lib/python3.10/site-packages (from cloud-dog-jobs==0.2.0) (7.4.0)
+Requirement already satisfied: Mako in ./venv/lib/python3.10/site-packages (from alembic<2.0,>=1.13->cloud_dog_db==0.1.0) (1.3.10)
+Requirement already satisfied: typing-extensions>=4.12 in ./venv/lib/python3.10/site-packages (from alembic<2.0,>=1.13->cloud_dog_db==0.1.0) (4.15.0)
+Requirement already satisfied: tomli in ./venv/lib/python3.10/site-packages (from alembic<2.0,>=1.13->cloud_dog_db==0.1.0) (2.4.0)
+Requirement already satisfied: annotated-types>=0.6.0 in ./venv/lib/python3.10/site-packages (from pydantic>=2.0->cloud-dog-api-kit==0.2.0) (0.7.0)
+Requirement already satisfied: pydantic-core==2.41.5 in ./venv/lib/python3.10/site-packages (from pydantic>=2.0->cloud-dog-api-kit==0.2.0) (2.41.5)
+Requirement already satisfied: typing-inspection>=0.4.2 in ./venv/lib/python3.10/site-packages (from pydantic>=2.0->cloud-dog-api-kit==0.2.0) (0.4.2)
+Requirement already satisfied: greenlet>=1 in ./venv/lib/python3.10/site-packages (from sqlalchemy<3.0,>=2.0->cloud_dog_db==0.1.0) (3.3.2)
+Requirement already satisfied: argon2-cffi-bindings in ./venv/lib/python3.10/site-packages (from argon2-cffi>=23.0->cloud-dog-idam==0.2.0) (25.1.0)
+Requirement already satisfied: cffi>=2.0.0 in ./venv/lib/python3.10/site-packages (from cryptography>=42.0->cloud-dog-idam==0.2.0) (2.0.0)
+Requirement already satisfied: pycparser in ./venv/lib/python3.10/site-packages (from cffi>=2.0.0->cryptography>=42.0->cloud-dog-idam==0.2.0) (3.0)
+Requirement already satisfied: annotated-doc>=0.0.2 in ./venv/lib/python3.10/site-packages (from fastapi>=0.110->cloud-dog-api-kit==0.2.0) (0.0.4)
+Requirement already satisfied: anyio in ./venv/lib/python3.10/site-packages (from httpx>=0.27->cloud-dog-api-kit==0.2.0) (4.13.0)
+Requirement already satisfied: certifi in ./venv/lib/python3.10/site-packages (from httpx>=0.27->cloud-dog-api-kit==0.2.0) (2026.2.25)
+Requirement already satisfied: httpcore==1.* in ./venv/lib/python3.10/site-packages (from httpx>=0.27->cloud-dog-api-kit==0.2.0) (1.0.9)
+Requirement already satisfied: idna in ./venv/lib/python3.10/site-packages (from httpx>=0.27->cloud-dog-api-kit==0.2.0) (3.11)
+Requirement already satisfied: h11>=0.16 in ./venv/lib/python3.10/site-packages (from httpcore==1.*->httpx>=0.27->cloud-dog-api-kit==0.2.0) (0.16.0)
+Requirement already satisfied: async-timeout>=4.0.3 in ./venv/lib/python3.10/site-packages (from redis>=5.0->cloud-dog-jobs==0.2.0) (5.0.1)
+Requirement already satisfied: exceptiongroup>=1.0.2 in ./venv/lib/python3.10/site-packages (from anyio->httpx>=0.27->cloud-dog-api-kit==0.2.0) (1.3.1)
+Requirement already satisfied: MarkupSafe>=0.9.2 in ./venv/lib/python3.10/site-packages (from Mako->alembic<2.0,>=1.13->cloud_dog_db==0.1.0) (3.0.3)
+Building wheels for collected packages: cloud-dog-config, cloud-dog-logging, cloud-dog-api-kit, cloud_dog_db, cloud-dog-idam, cloud-dog-jobs
+  Building editable for cloud-dog-config (pyproject.toml): started
+  Building editable for cloud-dog-config (pyproject.toml): finished with status 'done'
+  Created wheel for cloud-dog-config: filename=cloud_dog_config-0.3.0-py3-none-any.whl size=9593 sha256=8498f1cd7884d39382ab09174e28333429399ce32fa00d37c8472386049c9cc3
+  Stored in directory: /tmp/pip-ephem-wheel-cache-nfi6zlue/wheels/5d/1e/f2/f11be94e1473cf2929959a5212e1139be6680c0b6e68e6f430
+  Building editable for cloud-dog-logging (pyproject.toml): started
+  Building editable for cloud-dog-logging (pyproject.toml): finished with status 'done'
+  Created wheel for cloud-dog-logging: filename=cloud_dog_logging-0.3.1-py3-none-any.whl size=9373 sha256=4f356dcf1ad4a9b6e63f758b765dd3c92553aa2c2934e393ebe4fd2c5e0857da
+  Stored in directory: /tmp/pip-ephem-wheel-cache-nfi6zlue/wheels/8e/8a/32/014d23dce2e063865d0d73643cc6f431117ab5294c069d2e08
+  Building editable for cloud-dog-api-kit (pyproject.toml): started
+  Building editable for cloud-dog-api-kit (pyproject.toml): finished with status 'done'
+  Created wheel for cloud-dog-api-kit: filename=cloud_dog_api_kit-0.2.0-py3-none-any.whl size=9399 sha256=4ed1b88f0c6066bde9e944444b2cf9af8c4d47857eecf234eb3bbe3d831f3d30
+  Stored in directory: /tmp/pip-ephem-wheel-cache-nfi6zlue/wheels/7c/12/15/bf17c21dab9912943a31b88b68508b0ee351543c36361909fd
+  Building editable for cloud_dog_db (pyproject.toml): started
+  Building editable for cloud_dog_db (pyproject.toml): finished with status 'done'
+  Created wheel for cloud_dog_db: filename=cloud_dog_db-0.1.0-py3-none-any.whl size=9606 sha256=a2799de152a8551431cfa4956867e091ebcacaddf3a9004060e5bdc27116a105
+  Stored in directory: /tmp/pip-ephem-wheel-cache-nfi6zlue/wheels/20/9e/2f/2a3974104d902ab1f26f1fe7775b3f9c05cdf5f52a60cb0a26
+  Building editable for cloud-dog-idam (pyproject.toml): started
+  Building editable for cloud-dog-idam (pyproject.toml): finished with status 'done'
+  Created wheel for cloud-dog-idam: filename=cloud_dog_idam-0.2.0-py3-none-any.whl size=9498 sha256=0fb863c7bb39b1f2379e757ba290f55da0a128c9a0216ae88159d21870a7f3e2
+  Stored in directory: /tmp/pip-ephem-wheel-cache-nfi6zlue/wheels/a7/30/94/988991ba157c669bf4541db5ef5dd237277187d8b02b182fbf
+  Building editable for cloud-dog-jobs (pyproject.toml): started
+  Building editable for cloud-dog-jobs (pyproject.toml): finished with status 'done'
+  Created wheel for cloud-dog-jobs: filename=cloud_dog_jobs-0.2.0-py3-none-any.whl size=9439 sha256=6c6f26755f714cba2529f7e9bf16936b2b716d3fb0ec13ce07d8e084284b518c
+  Stored in directory: /tmp/pip-ephem-wheel-cache-nfi6zlue/wheels/61/9c/18/aa622441708c503bb42e5bc572c85324d4df776a37bd7d8543
+Successfully built cloud-dog-config cloud-dog-logging cloud-dog-api-kit cloud_dog_db cloud-dog-idam cloud-dog-jobs
+Installing collected packages: cloud-dog-logging, cloud-dog-config, cloud_dog_db, cloud-dog-jobs, cloud-dog-idam, cloud-dog-api-kit
+
+Successfully installed cloud-dog-api-kit-0.2.0 cloud-dog-config-0.3.0 cloud-dog-idam-0.2.0 cloud-dog-jobs-0.2.0 cloud-dog-logging-0.3.1 cloud_dog_db-0.1.0

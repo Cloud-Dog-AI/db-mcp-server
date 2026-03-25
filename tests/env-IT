@@ -1,1 +1,4 @@
 TEST_ENV_TIER=IT
+CLOUD_DOG__AUTH__API_KEY=${vault.dev.services.dbmcpserver0.api_key || 'test-api-key'}
+CLOUD_DOG__CONNECTORS__MONGODB__DEFAULT_URI=mongodb://127.0.0.1:27018
+CLOUD_DOG__SEARCH__DISCOVERY_INDEX_PATH=./data/test-it-discovery-index.db

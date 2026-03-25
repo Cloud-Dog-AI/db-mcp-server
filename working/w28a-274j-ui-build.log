@@ -1,0 +1,18 @@
+
+> @cloud-dog/app-db-mcp@0.0.1 build
+> vite build
+
+vite v7.3.1 building client environment for production...
+transforming...
+(node:78352) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ 183 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              0.48 kB │ gzip:  0.32 kB
+dist/assets/logo-DJsvC-Va.svg                9.36 kB │ gzip:  2.92 kB
+dist/assets/favicon-N3ucaVbi.ico            15.09 kB
+dist/assets/apple-touch-icon-3PS-Tdo8.png   31.02 kB
+dist/assets/index-RKFvbyih.css              21.03 kB │ gzip:  4.87 kB
+dist/assets/index-Dcur7IZq.js              296.30 kB │ gzip: 86.26 kB
+✓ built in 5.16s

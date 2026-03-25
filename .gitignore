@@ -1,28 +1,13 @@
-# Virtual environments
-.venv/
-venv/
-
-# Secrets and local operator files
-private/
-.env
-.env.*
-
-# Python cache/build outputs
 __pycache__/
 *.pyc
+.venv/
+venv/
 .pytest_cache/
 .mypy_cache/
-dist/
-build/
-*.egg-info/
-
-# Runtime data
+.ruff_cache/
+.coverage
+htmlcov/
 logs/
-data/
-*.db
 .pids/
-
-# Working artefacts
-working/*.log
-working/*.tmp
-working/*.out
+data/
+ui/dist/

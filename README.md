@@ -1,76 +1,77 @@
 # db-mcp-server
 
-`db-mcp-server` is the planned Cloud-Dog AI control plane for NoSQL and search database discovery, structured content operations, schema change workflows, relationship management, and discovery indexing across MongoDB, CouchDB, OpenSearch, Elasticsearch, and Cassandra.
+`db-mcp-server` is the Cloud-Dog AI control plane for structured discovery and operations across database and search backends. The current tree includes the four runtime surfaces, Mongo-backed discovery/search flows, the PS-30 WebUI, and canonical cross-backend test-data/docker environments for MongoDB, CouchDB, OpenSearch, Elasticsearch, and Cassandra.
 
 ## Quick Start
 
-### Current status
-This repository is a Phase 1 planning skeleton only. The project structure, requirements, architecture, and follow-up backlog are in place. Runtime servers and connector implementations are not yet implemented.
-
 ### Prerequisites
 - Python 3.10+
-- Docker
-- Access to `/opt/iac/Development/cloud-dog-ai/env-vault`
+- Access to `/opt/iac/Development/cloud-dog-ai/env-vault` for Vault-backed settings when needed
 
 ### Install
 ```bash
 cd /opt/iac/Development/cloud-dog-ai/db-mcp-server
-python3 -m venv .venv
-.venv/bin/pip install --upgrade pip
-.venv/bin/pip install -e ".[dev]" --index-url https://pypi.cloud-dog.net/simple/
+python3 -m venv venv
+. venv/bin/activate
+pip install --upgrade pip
+pip install -e ".[dev]"
 ```
 
-### Planned ports
+### Start all four servers
+```bash
+set -a; source /opt/iac/Development/cloud-dog-ai/env-vault; set +a
+./server_control.sh --env tests/env-ST start all
+```
+
+### Health checks
+```bash
+curl -s http://127.0.0.1:8086/health
+curl -s http://127.0.0.1:8087/health
+curl -s http://127.0.0.1:8088/health
+curl -s http://127.0.0.1:8089/health
+```
+
+### Stop all servers
+```bash
+./server_control.sh --env tests/env-ST stop all
+```
+
+### Seed canonical test databases
+```bash
+./scripts/seed-test-data.sh mongodb
+venv/bin/python -m pytest tests/fixtures/test_seed_data.py --env tests/env-mongodb -v --tb=short
+```
+
+## Runtime Surfaces
 - API: `8086`
 - Web: `8087`
 - MCP: `8088`
 - A2A: `8089`
 
-Port allocation verified against [`AGENT-DISPATCH-TABLE.md`](../cloud-dog-ai-platform-standards/AGENT-DISPATCH-TABLE.md).
+## Implemented In This Phase
+- Layered config loading via `cloud_dog_config`
+- Structured logging via `cloud_dog_logging`
+- FastAPI server bootstrap via `cloud_dog_api_kit`
+- API-key authentication via `cloud_dog_idam`
+- Memory-backed job queue wiring via `cloud_dog_jobs`
+- Metadata and audit database health probes via `cloud_dog_db`
+- `server_control.sh` process management for all four server surfaces
+- Canonical e-commerce test dataset plus per-backend seed modules
+- Docker Compose test environments for MongoDB, CouchDB, OpenSearch, Elasticsearch, and Cassandra
+- PS-30 WebUI served from `ui/dist`
 
-### Next implementation steps
-- Requirements: [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)
-- Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- Backlog: [docs/BACKLOG.md](docs/BACKLOG.md)
+## Not Yet Implemented
+- CouchDB, OpenSearch, Elasticsearch, and Cassandra connector adapters
+- Live CRUD/discovery coverage for non-Mongo backends
+- Real queue workers and job handlers beyond current inline/memory-backed execution
+- AT coverage
 
-## Architecture Overview
-The planned runtime follows the standard four-server Cloud-Dog pattern with a shared domain core, background job execution, profile-based connector adapters, and a metadata/audit store. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
-## API Interfaces
-| Interface | Purpose | Reference |
-|---|---|---|
-| REST API | Admin, catalogue, schema, content, jobs | [docs/API-REFERENCE.md](docs/API-REFERENCE.md) |
-| MCP | Tool-driven discovery and operations | [docs/API-REFERENCE.md](docs/API-REFERENCE.md#mcp-tool-families) |
-| A2A | Agent-to-agent orchestration | [docs/API-REFERENCE.md](docs/API-REFERENCE.md#a2a-surface) |
-| Web UI | Admin and review workflows | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
-
-## Configuration
-Configuration precedence is `os.environ -> --env file -> config.yaml -> defaults.yaml` with Vault-backed resolution via `cloud_dog_config`. See [docs/ENV-REFERENCE.md](docs/ENV-REFERENCE.md) and [docs/PREPROD.md](docs/PREPROD.md).
-
-## Platform Packages
-| Package | Purpose |
-|---|---|
-| `cloud-dog-config` | Layered configuration and Vault resolution |
-| `cloud-dog-logging` | Structured logging and audit controls |
-| `cloud-dog-api-kit` | Standard API/web server bootstrap |
-| `cloud-dog-idam` | Users, groups, API keys, RBAC |
-| `cloud-dog-jobs` | Indexing and schema-change job orchestration |
-| `cloud-dog-db` | Metadata store and audit persistence |
-
-## Documentation Links
-| Document | Link |
-|---|---|
-| Requirements | [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) |
-| Architecture | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
-| Tests | [docs/TESTS.md](docs/TESTS.md) |
-| Build | [docs/BUILD.md](docs/BUILD.md) |
-| Deploy | [docs/DEPLOY.md](docs/DEPLOY.md) |
-| Preprod | [docs/PREPROD.md](docs/PREPROD.md) |
-| API Reference | [docs/API-REFERENCE.md](docs/API-REFERENCE.md) |
-| Env Reference | [docs/ENV-REFERENCE.md](docs/ENV-REFERENCE.md) |
-| Backlog | [docs/BACKLOG.md](docs/BACKLOG.md) |
-| Context Summary | [CONTEXT-SUMMARY.md](CONTEXT-SUMMARY.md) |
-| Rules | [RULES.md](RULES.md) |
-
-## Licence
-Apache 2.0 — Copyright (c) 2026 Cloud-Dog, Viewdeck Engineering Limited
+## Documentation
+- [Requirements](docs/REQUIREMENTS.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Tests](docs/TESTS.md)
+- [Build](docs/BUILD.md)
+- [Deploy](docs/DEPLOY.md)
+- [Preprod](docs/PREPROD.md)
+- [API Reference](docs/API-REFERENCE.md)
+- [Env Reference](docs/ENV-REFERENCE.md)

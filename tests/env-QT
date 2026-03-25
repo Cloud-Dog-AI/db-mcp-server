@@ -1,1 +1,3 @@
 TEST_ENV_TIER=QT
+CLOUD_DOG__AUTH__API_KEY=test-api-key
+CLOUD_DOG__SEARCH__DISCOVERY_INDEX_PATH=./data/test-qt-discovery-index.db

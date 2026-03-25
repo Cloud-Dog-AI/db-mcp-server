@@ -1,0 +1,6 @@
+TEST_ENV_TIER=ST
+CLOUD_DOG__AUTH__API_KEY=test-api-key
+CLOUD_DOG__CONNECTORS__MONGODB__DEFAULT_URI=mongodb://127.0.0.1:27018
+CLOUD_DOG__SEARCH__DISCOVERY_INDEX_PATH=./data/test-webui-discovery-index.db
+CLOUD_DOG__METADATA_STORE__URI=sqlite:///./data/dbmcp_webui_metadata.db
+CLOUD_DOG__AUDIT_STORE__URI=sqlite:///./data/dbmcp_webui_audit.db

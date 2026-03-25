@@ -1,0 +1,20 @@
+$ set -a; source /opt/iac/Development/cloud-dog-ai/env-vault; set +a
+$ bash server_control.sh --env tests/env-ST start all
+api started (pid 3152101, port 8086)
+web started (pid 3153728, port 8087)
+mcp started (pid 3155017, port 8088)
+a2a started (pid 3156316, port 8089)
+$ sleep 5
+$ curl -s http://localhost:8086/health
+{"status":"ok","application":"db-mcp-server-api","version":"0.1.0","env_file":"tests/env-ST"}
+$ curl -s http://localhost:8087/health
+{"status":"ok","application":"db-mcp-server-web","version":"0.1.0","env_file":"tests/env-ST"}
+$ curl -s http://localhost:8088/health
+{"status":"ok","application":"db-mcp-server-mcp","version":"0.1.0","env_file":"tests/env-ST"}
+$ curl -s http://localhost:8089/health
+{"status":"ok","application":"db-mcp-server-a2a","version":"0.1.0","env_file":"tests/env-ST"}
+$ bash server_control.sh --env tests/env-ST stop all
+api stopped
+web stopped
+mcp stopped
+a2a stopped

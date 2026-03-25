@@ -1,0 +1,24 @@
+{
+  "profile_id": "839c07f1-63c6-47bc-ae24-7bd89d051f4d",
+  "profile_name": "ui-e2e-profile",
+  "namespace": "dbmcp_ui_e2e",
+  "mongo_uri": "mongodb://127.0.0.1:27018",
+  "sync_result": {
+    "job_id": "b7c8e763-7056-4a8e-9c01-53e0082866d7",
+    "job_status": "succeeded",
+    "profile_status": {
+      "profile_id": "839c07f1-63c6-47bc-ae24-7bd89d051f4d",
+      "last_job_id": "b7c8e763-7056-4a8e-9c01-53e0082866d7",
+      "last_job_status": "succeeded",
+      "last_synced_at": "2026-03-25T08:57:54.793769+00:00",
+      "freshness_state": "fresh",
+      "namespace_count": 1,
+      "entity_count": 5,
+      "field_count": 31,
+      "relationship_count": 5,
+      "content_count": 50,
+      "document_count": 93,
+      "error": ""
+    }
+  }
+}

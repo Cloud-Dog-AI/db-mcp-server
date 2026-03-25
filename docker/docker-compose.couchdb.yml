@@ -1,0 +1,39 @@
+services:
+  couchdb:
+    image: couchdb:3
+    container_name: db-mcp-couchdb
+    ports:
+      - "5984:5984"
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: cloud-dog-test
+    volumes:
+      - couchdb-data:/opt/couchdb/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:5984/_up >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  couchdb-seed:
+    image: python:3.10-slim
+    container_name: db-mcp-couchdb-seed
+    restart: "no"
+    depends_on:
+      couchdb:
+        condition: service_healthy
+    working_dir: /workspace/db-mcp-server
+    volumes:
+      - ..:/workspace/db-mcp-server
+    environment:
+      DB_MCP_TEST_COUCHDB_URL: http://couchdb:5984
+      DB_MCP_TEST_COUCHDB_PREFIX: dbmcp_ecommerce
+      DB_MCP_TEST_COUCHDB_USERNAME: admin
+      DB_MCP_TEST_COUCHDB_PASSWORD: cloud-dog-test
+    command: >-
+      bash -lc "pip install --no-cache-dir requests >/tmp/pip.log 2>&1 &&
+      python -m tests.fixtures.couchdb_seed"
+
+volumes:
+  couchdb-data:

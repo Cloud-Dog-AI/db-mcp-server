@@ -1,108 +1,136 @@
 app:
-  name: "DB MCP Server"
+  name: "db-mcp-server"
   version: "0.1.0"
-  environment: "development"
+  environment: "${CLOUD_DOG_ENVIRONMENT || 'dev'}"
   url: "https://dbmcp.cloud-dog.net"
+
+service_name: "db-mcp-server"
+service_instance: "${HOSTNAME || 'db-mcp-local'}"
+environment: "${CLOUD_DOG_ENVIRONMENT || 'dev'}"
+
+auth:
+  mode: "api_key_only"
+  api_key: "${vault.dev.services.dbmcpserver0.api_key || ''}"
+  default_role: "admin"
+  jwt_secret: "${vault.dev.services.dbmcpserver0.jwt_secret || 'test-jwt-secret'}"
+
+access_control:
+  bootstrap_admin:
+    user_id: "bootstrap-admin"
+    username: "bootstrap-admin"
+    display_name: "Bootstrap Admin"
+    api_key_name: "bootstrap-admin-key"
+  roles:
+    admin:
+      - "*"
+    data_steward:
+      - "catalog.read"
+      - "schema.read"
+      - "schema.change"
+      - "relationship.read"
+      - "relationship.change"
+      - "content.search"
+      - "data.read"
+      - "data.create"
+      - "data.update"
+      - "data.delete"
+      - "index.manage"
+      - "profile.manage"
+      - "audit.read"
+    developer:
+      - "catalog.read"
+      - "schema.read"
+      - "schema.change"
+      - "relationship.read"
+      - "content.search"
+      - "data.read"
+      - "data.create"
+      - "data.update"
+      - "index.manage"
+    analyst:
+      - "catalog.read"
+      - "schema.read"
+      - "relationship.read"
+      - "content.search"
+      - "data.read"
+    auditor:
+      - "catalog.read"
+      - "schema.read"
+      - "relationship.read"
+      - "audit.read"
+      - "data.read"
 
 api_server:
   enabled: true
   host: "0.0.0.0"
   port: 8086
-  base_url: ""
-  api_key: "${vault.dev.services.dbmcpserver0.api_key || ''}"
   cors_origins: []
 
 web_server:
   enabled: true
   host: "0.0.0.0"
   port: 8087
-  base_url: ""
-  username: "${vault.dev.services.dbmcpserver0.web_username || ''}"
-  password: "${vault.dev.services.dbmcpserver0.web_password || ''}"
-  api_base_url: ""
+  api_base_url: "http://127.0.0.1:8086"
 
 mcp_server:
   enabled: true
   host: "0.0.0.0"
   port: 8088
-  base_url: ""
-  transport: "streamable_http"
-  api_base_url: ""
-  session_ttl_seconds: 3600
+  transport_modes:
+    - "streamable_http"
+    - "http_jsonrpc"
+    - "legacy_sse"
 
 a2a_server:
   enabled: true
   host: "0.0.0.0"
   port: 8089
-  base_url: ""
-  api_base_url: ""
+  websocket_path: "/a2a/ws"
 
 metadata_store:
   uri: "${vault.dev.databases.dbmcp_metadata_postgresql.uri || 'sqlite:///./data/dbmcp_metadata.db'}"
-  audit_uri: "${vault.dev.databases.dbmcp_audit_postgresql.uri || 'sqlite:///./data/dbmcp_audit.db'}"
+
+audit_store:
+  uri: "${vault.dev.databases.dbmcp_audit_postgresql.uri || 'sqlite:///./data/dbmcp_audit.db'}"
 
 jobs:
-  backend: "${vault.dev.redis.valkey0.url || 'redis://127.0.0.1:6379/0'}"
-  worker_concurrency: 4
-  plan_timeout_seconds: 900
-  index_timeout_seconds: 1800
+  backend: "memory"
+  payload_max_bytes: 16384
 
-auth:
-  mode: "api_key+jwt"
-  jwt_secret: "${vault.dev.services.dbmcpserver0.jwt_secret || 'dev-only-placeholder-jwt-secret'}"
-  profile_access_enforced: true
+search:
+  enabled: true
+  discovery_index_path: "./data/discovery-index.db"
+  metadata_limit: 20
+  content_limit: 20
+  max_documents_per_entity: 10
+  max_excerpt_chars: 240
+  freshness_seconds: 3600
+  inline_sync: true
 
-logging:
+log:
   level: "INFO"
   format: "json"
+  console: true
   pii_redaction: true
-  service_instance: "${HOSTNAME:db-mcp-local}"
-  environment: "${CLOUD_DOG_ENVIRONMENT:dev}"
+  service_instance: "${HOSTNAME || 'db-mcp-local'}"
+  environment: "${CLOUD_DOG_ENVIRONMENT || 'dev'}"
+  app_log: "logs/app.log.jsonl"
+  audit_log: "logs/audit.log.jsonl"
+  integrity:
+    enabled: false
 
-structured_filters:
-  max_clauses: 32
-  max_sort_fields: 5
-  allow_regex: false
-  allow_server_side_scripts: false
+runtime:
+  health_exempt_paths:
+    - "/health"
+    - "/ready"
+    - "/live"
+    - "/status"
+    - "/docs"
+    - "/redoc"
+    - "/openapi.json"
 
 connectors:
   mongodb:
-    enabled: false
-    uri: "${vault.dev.databases.mongodb_primary.uri || ''}"
-    database: ""
-    read_preference: "primaryPreferred"
-  couchdb:
-    enabled: false
-    url: "${vault.dev.databases.couchdb_primary.url || ''}"
-    database: ""
-    username: "${vault.dev.databases.couchdb_primary.username || ''}"
-    password: "${vault.dev.databases.couchdb_primary.password || ''}"
-  opensearch:
-    enabled: false
-    url: "${vault.dev.vdbs.opensearch.url || ''}"
-    username: "${vault.dev.vdbs.opensearch.username || ''}"
-    password: "${vault.dev.vdbs.opensearch.password || ''}"
-    verify_tls: true
-  elasticsearch:
-    enabled: false
-    url: "${vault.dev.vdbs.elasticsearch.url || ''}"
-    api_key: "${vault.dev.vdbs.elasticsearch.api_key || ''}"
-    verify_tls: true
-  cassandra:
-    enabled: false
-    contact_points: "${vault.dev.databases.cassandra_primary.contact_points || ''}"
-    keyspace: ""
-    username: "${vault.dev.databases.cassandra_primary.username || ''}"
-    password: "${vault.dev.databases.cassandra_primary.password || ''}"
-
-indexing:
-  enabled: true
-  backend: "${vault.dev.vdbs.qdrant.url || ''}"
-  embedding_model: "${vault.dev.models.ollama_nomic_embed_text_llm1.model || 'nomic-embed-text'}"
-  embedding_base_url: "${vault.dev.models.ollama_nomic_embed_text_llm1.base_url || ''}"
-  batch_size: 100
-
-relationships:
-  inference_enabled: true
-  max_candidates_per_entity: 25
-  review_required: true
+    enabled: true
+    default_uri: "${vault.dev.databases.mongodb.uri}"
+    timeout_ms: 30000

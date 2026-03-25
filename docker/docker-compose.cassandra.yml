@@ -1,0 +1,41 @@
+services:
+  cassandra:
+    image: cassandra:4.1
+    container_name: db-mcp-cassandra
+    environment:
+      CASSANDRA_CLUSTER_NAME: db-mcp-test
+      HEAP_NEWSIZE: 128M
+      MAX_HEAP_SIZE: 512M
+    ports:
+      - "9042:9042"
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh 127.0.0.1 9042 -e 'DESCRIBE KEYSPACES' >/dev/null 2>&1"]
+      interval: 20s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  cassandra-seed:
+    image: python:3.10-slim
+    container_name: db-mcp-cassandra-seed
+    restart: "no"
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    working_dir: /workspace/db-mcp-server
+    volumes:
+      - ..:/workspace/db-mcp-server
+    environment:
+      DB_MCP_TEST_CASSANDRA_HOST: cassandra
+      DB_MCP_TEST_CASSANDRA_PORT: '9042'
+      DB_MCP_TEST_CASSANDRA_KEYSPACE: dbmcp_ecommerce
+      DB_MCP_TEST_CASSANDRA_USERNAME: cassandra
+      DB_MCP_TEST_CASSANDRA_PASSWORD: cassandra
+    command: >-
+      bash -lc "pip install --no-cache-dir cassandra-driver >/tmp/pip.log 2>&1 &&
+      python -m tests.fixtures.cassandra_seed"
+
+volumes:
+  cassandra-data:
