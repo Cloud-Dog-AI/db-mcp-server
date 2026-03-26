@@ -19,13 +19,24 @@
 """Filter model exports."""
 
 from src.core.filters.model import FilterCondition, FilterGroup, FilterNode, parse_filter
-from src.core.filters.translator import FilterTranslator, MongoDBFilterTranslator
+from src.core.filters.translator import (
+    CassandraFilterTranslator,
+    CouchDBFilterTranslator,
+    ElasticsearchFilterTranslator,
+    FilterTranslator,
+    MongoDBFilterTranslator,
+    OpenSearchFilterTranslator,
+)
 
 __all__ = [
     "FilterCondition",
     "FilterGroup",
     "FilterNode",
+    "CassandraFilterTranslator",
+    "CouchDBFilterTranslator",
+    "ElasticsearchFilterTranslator",
     "FilterTranslator",
     "MongoDBFilterTranslator",
+    "OpenSearchFilterTranslator",
     "parse_filter",
 ]

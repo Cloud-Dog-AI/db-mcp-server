@@ -95,3 +95,120 @@ class MongoDBFilterTranslator:
         if operator == "is_not_null":
             return {field: {"$ne": None}}
         raise ValidationError(message=f"Unsupported filter operator: {operator}")
+
+
+class CouchDBFilterTranslator(MongoDBFilterTranslator):
+    """Translate structured filters into the shared Mango-compatible selector subset."""
+
+
+class OpenSearchFilterTranslator:
+    """Translate structured filters into OpenSearch query DSL clauses."""
+
+    def translate(self, filter_node: FilterNode) -> dict[str, Any]:
+        if isinstance(filter_node, FilterCondition):
+            return self._translate_condition(filter_node)
+        return self._translate_group(filter_node)
+
+    def _translate_group(self, group: FilterGroup) -> dict[str, Any]:
+        translated = [self.translate(item) for item in group.conditions]
+        translated = [item for item in translated if item not in ({}, None)]
+        if not translated:
+            return {}
+        if group.op == "and":
+            if len(translated) == 1:
+                return translated[0]
+            return {"bool": {"must": translated}}
+        if group.op == "or":
+            return {"bool": {"should": translated, "minimum_should_match": 1}}
+        if group.op == "not":
+            return {"bool": {"must_not": translated}}
+        raise ValidationError(message=f"Unsupported filter group operator: {group.op}")
+
+    def _translate_condition(self, condition: FilterCondition) -> dict[str, Any]:
+        field = condition.field
+        operator = condition.operator
+        value = condition.value
+        if operator == "eq":
+            return {"term": {field: value}}
+        if operator == "neq":
+            return {"bool": {"must_not": [{"term": {field: value}}]}}
+        if operator == "gt":
+            return {"range": {field: {"gt": value}}}
+        if operator == "gte":
+            return {"range": {field: {"gte": value}}}
+        if operator == "lt":
+            return {"range": {field: {"lt": value}}}
+        if operator == "lte":
+            return {"range": {field: {"lte": value}}}
+        if operator == "in":
+            return {"terms": {field: list(value or [])}}
+        if operator == "not_in":
+            return {"bool": {"must_not": [{"terms": {field: list(value or [])}}]}}
+        if operator == "contains":
+            return {"wildcard": {field: {"value": f"*{str(value or '')}*"}}}
+        if operator == "starts_with":
+            return {"wildcard": {field: {"value": f"{str(value or '')}*"}}}
+        if operator == "ends_with":
+            return {"wildcard": {field: {"value": f"*{str(value or '')}"}}}
+        if operator == "exists":
+            return {"exists": {"field": field}} if bool(value) else {"bool": {"must_not": [{"exists": {"field": field}}]}}
+        if operator == "not_exists":
+            return {"bool": {"must_not": [{"exists": {"field": field}}]}}
+        if operator == "regex":
+            return {"regexp": {field: {"value": str(value or "")}}}
+        if operator == "is_null":
+            return {"bool": {"must_not": [{"exists": {"field": field}}]}}
+        if operator == "is_not_null":
+            return {"exists": {"field": field}}
+        raise ValidationError(message=f"Unsupported filter operator: {operator}")
+
+
+class ElasticsearchFilterTranslator(OpenSearchFilterTranslator):
+    """Translate structured filters into Elasticsearch query DSL clauses.
+
+    Elasticsearch and OpenSearch share the same query DSL for the filter
+    operations supported by the connector contract, so this class inherits
+    the full OpenSearch translator implementation.
+    """
+
+
+class CassandraFilterTranslator:
+    """Translate structured filters into Cassandra-compatible flat equality dicts.
+
+    Cassandra CQL only supports equality-based WHERE clauses on partition
+    and clustering key columns (without ALLOW FILTERING). This translator
+    reduces filter nodes to ``{column: value}`` equality pairs.
+    """
+
+    def translate(self, filter_node: FilterNode) -> dict[str, Any]:
+        """Translate a filter node to a flat column=value dict.
+
+        Args:
+            filter_node: Structured filter node.
+
+        Returns:
+            Dict suitable for ``CassandraConnector._build_where``.
+
+        Raises:
+            ValidationError: For unsupported operators or nested groups.
+        """
+        if isinstance(filter_node, FilterCondition):
+            return self._translate_condition(filter_node)
+        return self._translate_group(filter_node)
+
+    def _translate_group(self, group: FilterGroup) -> dict[str, Any]:
+        if group.op != "and":
+            raise ValidationError(
+                message=f"Cassandra only supports 'and' filter groups, got: {group.op}"
+            )
+        result: dict[str, Any] = {}
+        for condition in group.conditions:
+            result.update(self.translate(condition))
+        return result
+
+    def _translate_condition(self, condition: FilterCondition) -> dict[str, Any]:
+        if condition.operator != "eq":
+            raise ValidationError(
+                message=f"Cassandra filter only supports 'eq' operator, got: {condition.operator}"
+            )
+        return {condition.field: condition.value}

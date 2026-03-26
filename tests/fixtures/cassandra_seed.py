@@ -33,7 +33,7 @@ DEFAULT_CASSANDRA_PASSWORD = os.getenv("DB_MCP_TEST_CASSANDRA_PASSWORD", "cassan
 TABLE_SCHEMAS = {
     "customers": """
         CREATE TABLE IF NOT EXISTS customers (
-            _id text PRIMARY KEY,
+            id text PRIMARY KEY,
             name text,
             email text,
             country text,
@@ -46,7 +46,7 @@ TABLE_SCHEMAS = {
     """,
     "orders": """
         CREATE TABLE IF NOT EXISTS orders (
-            _id text PRIMARY KEY,
+            id text PRIMARY KEY,
             customer_id text,
             product_id text,
             quantity int,
@@ -59,7 +59,7 @@ TABLE_SCHEMAS = {
     """,
     "products": """
         CREATE TABLE IF NOT EXISTS products (
-            _id text PRIMARY KEY,
+            id text PRIMARY KEY,
             name text,
             category text,
             subcategory text,
@@ -72,7 +72,7 @@ TABLE_SCHEMAS = {
     """,
     "suppliers": """
         CREATE TABLE IF NOT EXISTS suppliers (
-            _id text PRIMARY KEY,
+            id text PRIMARY KEY,
             name text,
             country text,
             rating double,
@@ -82,7 +82,7 @@ TABLE_SCHEMAS = {
     """,
     "invoices": """
         CREATE TABLE IF NOT EXISTS invoices (
-            _id text PRIMARY KEY,
+            id text PRIMARY KEY,
             order_id text,
             customer_id text,
             amount double,
@@ -120,8 +120,9 @@ def build_cassandra_cql(*, keyspace: str = DEFAULT_CASSANDRA_KEYSPACE) -> str:
     for table, ddl in TABLE_SCHEMAS.items():
         statements.append(ddl.strip() + ";")
         for row in dataset[table]:
-            columns = ", ".join(row.keys())
-            values = ", ".join(_cql_literal(value) for value in row.values())
+            mapped = {"id" if k == "_id" else k: v for k, v in row.items()}
+            columns = ", ".join(mapped.keys())
+            values = ", ".join(_cql_literal(value) for value in mapped.values())
             statements.append(f"INSERT INTO {table} ({columns}) VALUES ({values});")
     return "\n".join(statements) + "\n"
 
@@ -131,16 +132,27 @@ def seed_cassandra(*, keyspace: str = DEFAULT_CASSANDRA_KEYSPACE) -> str:
     from cassandra.auth import PlainTextAuthProvider
     from cassandra.cluster import Cluster
 
-    auth_provider = PlainTextAuthProvider(
-        username=DEFAULT_CASSANDRA_USERNAME,
-        password=DEFAULT_CASSANDRA_PASSWORD,
+    auth_provider: PlainTextAuthProvider | None = None
+    if DEFAULT_CASSANDRA_USERNAME:
+        auth_provider = PlainTextAuthProvider(
+            username=DEFAULT_CASSANDRA_USERNAME,
+            password=DEFAULT_CASSANDRA_PASSWORD,
+        )
+    cluster = Cluster(
+        [DEFAULT_CASSANDRA_HOST],
+        port=DEFAULT_CASSANDRA_PORT,
+        auth_provider=auth_provider,
+        connect_timeout=30,
     )
-    cluster = Cluster([DEFAULT_CASSANDRA_HOST], port=DEFAULT_CASSANDRA_PORT, auth_provider=auth_provider)
     session = cluster.connect()
     try:
-        for statement in build_cassandra_cql(keyspace=keyspace).splitlines():
+        cql = build_cassandra_cql(keyspace=keyspace)
+        for statement in cql.split(";"):
             sql = statement.strip()
             if not sql:
+                continue
+            if sql.upper().startswith("USE "):
+                session.set_keyspace(sql.split()[-1])
                 continue
             session.execute(sql)
         return keyspace

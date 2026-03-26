@@ -38,6 +38,12 @@
 - `tests/unit/UT1.12_SchemaChangeService/test_schema_change_service.py`
   - Verifies schema-change operation parsing, approval gating, plan persistence, apply execution, and history retrieval.
   - Verifies index refresh is triggered after apply and that audit identifiers are carried into persisted history.
+- `tests/unit/UT1.13_CouchDBConnector/test_couchdb_connector.py`
+  - Verifies CouchDB adapter capability reporting, profile validation, namespace and entity discovery, CRUD, count, schema operations, and relationship extraction with mocked HTTP/session behaviour.
+  - Verifies Mango index creation payload shaping and CouchDB-specific entity abstraction without a live backend.
+- `tests/unit/UT1.14_OpenSearchConnector/test_opensearch_connector.py`
+  - Verifies OpenSearch adapter capability reporting, cluster and entity discovery, mapping-based schema description, CRUD, count, schema operations, and relationship extraction with a mocked OpenSearch client.
+  - Verifies query-DLS execution shaping and index-template lifecycle without a live backend.
 
 ### ST
 - `tests/system/ST1.1_ServerStartup/test_server_startup.py`
@@ -66,6 +72,14 @@
 - `tests/system/ST1.8_WebUiServing/test_web_ui_system_serving.py`
   - Starts the real four-surface stack with `tests/env-ST-WEBUI`.
   - Verifies the web surface serves the SPA shell, `/runtime-config.js`, browser-history routes, and same-origin API proxying.
+- `tests/system/ST1.9_CouchDBConnector/test_couchdb_connector_real.py`
+  - Exercises the CouchDB adapter against a real local CouchDB 3 runtime.
+  - Verifies database discovery, entity discovery, field inference, index listing, CRUD, count, and relationship extraction.
+  - Uses a local Docker CouchDB 3 container on `127.0.0.1:5984` via host networking because bridged port publishing reset host HTTP client sessions on this machine.
+- `tests/system/ST1.10_OpenSearchConnector/test_opensearch_connector_real.py`
+  - Exercises the OpenSearch adapter against a real local OpenSearch 2 runtime.
+  - Verifies cluster discovery, index discovery, mapping-based field description, CRUD, count, template-backed schema changes, and relationship extraction.
+  - Uses a local Docker OpenSearch 2 container on `127.0.0.1:9200` via host networking and a strong initial admin password because current OpenSearch startup enforces that bootstrap requirement even in local test mode.
 
 ### IT
 - `tests/integration/IT1.1_AccessControlLifecycle/test_access_control_lifecycle.py`
@@ -86,6 +100,12 @@
   - Verifies full discovery indexing lifecycle: sync profile, metadata search, content search, related-entity search, entity resync, rebuild, and final status reporting.
 - `tests/integration/IT1.7_SchemaChangeLifecycle/test_schema_change_lifecycle.py`
   - Verifies full schema workflow: plan, approve, apply, audit-log visibility, history visibility, and index refresh on the real stack.
+- `tests/integration/IT1.8_CouchDbMcpTools/test_couchdb_mcp_tools.py`
+  - Creates a real CouchDB profile through the API server and executes catalogue, schema, and data tools through the MCP server.
+  - Verifies namespace listing, entity listing, field inference, count, create, read, update, and delete through real HTTP requests against the real four-surface stack.
+- `tests/integration/IT1.9_OpenSearchMcpTools/test_opensearch_mcp_tools.py`
+  - Creates a real OpenSearch profile through the API server and executes catalogue, schema, and data tools through the MCP server.
+  - Verifies cluster namespace discovery, index listing, mapping-based field description, count, create, read, update, and delete through real HTTP requests against the real four-surface stack.
 
 ### AT
 - None yet.
@@ -118,6 +138,7 @@ venv/bin/python -m pytest tests/system --env tests/env-ST-WEBUI -v --tb=short
 venv/bin/python -m pytest tests/integration --env tests/env-IT -v --tb=short
 venv/bin/python -m pytest tests/ --env tests/env-IT -q --tb=short
 ./scripts/seed-test-data.sh mongodb
+./scripts/seed-test-data.sh couchdb
 venv/bin/python -m pytest tests/fixtures/test_seed_data.py --env tests/env-mongodb -v --tb=short
 cd /opt/iac/Development/cloud-dog-ai/cloud-dog-ai-ui-monorepo && npm --prefix apps/db-mcp run typecheck
 cd /opt/iac/Development/cloud-dog-ai/cloud-dog-ai-ui-monorepo && npm --prefix apps/db-mcp run lint
@@ -211,3 +232,25 @@ cd /opt/iac/Development/cloud-dog-ai/cloud-dog-ai-ui-monorepo && npm --prefix ap
   - Evidence: `working/w28a-274l-st.log`
 - `2026-03-25` IT full after schema-change tooling: `7 passed in 506.19s`
   - Evidence: `working/w28a-274l-it.log`
+- `2026-03-25` compile verification for CouchDB connector: PASS
+  - Evidence: `working/w28a-274d-compileall.log`
+- `2026-03-25` QT full after CouchDB connector: `1 passed in 0.05s`
+  - Evidence: `working/w28a-274d-qt.log`
+- `2026-03-25` UT full after CouchDB connector: `28 passed in 3.44s`
+  - Evidence: `working/w28a-274d-ut.log`
+- `2026-03-25` ST1.9 targeted: `1 passed in 0.40s`
+  - Evidence: `working/w28a-274d-st19.log`
+- `2026-03-25` IT1.8 targeted: `1 passed in 71.32s`
+  - Evidence: `working/w28a-274d-it18.log`
+- `2026-03-25` compile verification for OpenSearch connector: PASS
+  - Evidence: `working/w28a-274e-compileall.log`
+- `2026-03-25` QT full after OpenSearch connector: `1 passed in 0.05s`
+  - Evidence: `working/w28a-274e-qt.log`
+- `2026-03-25` UT1.14 targeted: `2 passed in 0.44s`
+  - Evidence: `working/w28a-274e-ut14.log`
+- `2026-03-25` UT full after OpenSearch connector: `30 passed in 3.47s`
+  - Evidence: `working/w28a-274e-ut.log`
+- `2026-03-25` ST1.10 targeted: `1 passed in 148.29s`
+  - Evidence: `working/w28a-274e-st10.log`
+- `2026-03-25` IT1.9 targeted: `1 passed in 73.95s`
+  - Evidence: `working/w28a-274e-it19.log`

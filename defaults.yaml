@@ -134,3 +134,20 @@ connectors:
     enabled: true
     default_uri: "${vault.dev.databases.mongodb.uri}"
     timeout_ms: 30000
+  couchdb:
+    enabled: true
+    default_uri: "${vault.dev.databases.couchdb.url || 'http://admin:cloud-dog-test@127.0.0.1:5984'}"
+    timeout_seconds: 30
+  opensearch:
+    enabled: true
+    default_uri: "${vault.dev.databases.opensearch.url || ''}"
+    timeout_seconds: 30
+  elasticsearch:
+    enabled: true
+    default_uri: "${vault.dev.databases.elasticsearch.url || ''}"
+    timeout_seconds: 30
+  cassandra:
+    enabled: true
+    default_host: "${vault.dev.databases.providers.cassandra.host || ''}"
+    default_port: 9042
+    timeout_seconds: 30

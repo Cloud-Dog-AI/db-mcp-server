@@ -24,13 +24,21 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from fastapi import Request
+from cassandra import DriverException as CassandraDriverException
+from elasticsearch import ApiError as ElasticsearchApiError
+from opensearchpy.exceptions import OpenSearchException
 from pymongo.errors import PyMongoError
+from requests import RequestException
 
 from cloud_dog_api_kit.errors import InternalError, UnauthorisedError, ValidationError
 from cloud_dog_logging import Actor
 
+from src.core.connectors.cassandra import CassandraConnector
+from src.core.connectors.couchdb import CouchDBConnector
+from src.core.connectors.elasticsearch import ElasticsearchConnector
 from src.core.connectors.mongodb import MongoDBConnector
-from src.core.filters import MongoDBFilterTranslator
+from src.core.connectors.opensearch import OpenSearchConnector
+from src.core.filters import CassandraFilterTranslator, CouchDBFilterTranslator, ElasticsearchFilterTranslator, MongoDBFilterTranslator, OpenSearchFilterTranslator
 
 
 @dataclass(slots=True)
@@ -57,6 +65,30 @@ class ConnectorManager:
                 connector=self._build_mongodb_connector(profile),
                 translator=MongoDBFilterTranslator(),
             )
+        if source_type == "couchdb":
+            return ConnectorSession(
+                profile=profile,
+                connector=self._build_couchdb_connector(profile),
+                translator=CouchDBFilterTranslator(),
+            )
+        if source_type == "opensearch":
+            return ConnectorSession(
+                profile=profile,
+                connector=self._build_opensearch_connector(profile),
+                translator=OpenSearchFilterTranslator(),
+            )
+        if source_type == "elasticsearch":
+            return ConnectorSession(
+                profile=profile,
+                connector=self._build_elasticsearch_connector(profile),
+                translator=ElasticsearchFilterTranslator(),
+            )
+        if source_type == "cassandra":
+            return ConnectorSession(
+                profile=profile,
+                connector=self._build_cassandra_connector(profile),
+                translator=CassandraFilterTranslator(),
+            )
         raise ValidationError(message=f"Unsupported source type: {source_type}")
 
     def execute(
@@ -80,7 +112,7 @@ class ConnectorManager:
         try:
             self._enforce_tool_scope(session.profile, audit_action)
             result = callback(session)
-        except PyMongoError as exc:
+        except (PyMongoError, RequestException, OpenSearchException, ElasticsearchApiError, CassandraDriverException) as exc:
             self._runtime.audit_logger.log_tool_call(
                 actor=Actor(type="user", id=principal.user_id, roles=principal.roles),
                 tool=audit_action,
@@ -155,6 +187,79 @@ class ConnectorManager:
         connector = MongoDBConnector(
             uri=uri,
             timeout_ms=int(self._runtime.config.get("connectors.mongodb.timeout_ms", 30000)),
+        )
+        connector.validate_profile()
+        return connector
+
+    def _build_couchdb_connector(self, profile: dict[str, Any]) -> CouchDBConnector:
+        if not bool(self._runtime.config.get("connectors.couchdb.enabled", True)):
+            raise ValidationError(message="CouchDB connector is disabled")
+        source_connection = str(profile.get("source_connection", "") or "").strip()
+        if source_connection and "://" in source_connection:
+            uri = source_connection
+        else:
+            uri = str(self._runtime.config.get("connectors.couchdb.default_uri", "") or "").strip()
+        if not uri:
+            raise ValidationError(message="CouchDB connector URI is not configured")
+        connector = CouchDBConnector(
+            uri=uri,
+            timeout_seconds=int(self._runtime.config.get("connectors.couchdb.timeout_seconds", 30)),
+        )
+        connector.validate_profile()
+        return connector
+
+    def _build_cassandra_connector(self, profile: dict[str, Any]) -> CassandraConnector:
+        if not bool(self._runtime.config.get("connectors.cassandra.enabled", True)):
+            raise ValidationError(message="Cassandra connector is disabled")
+        source_connection = str(profile.get("source_connection", "") or "").strip()
+        if source_connection and "://" in source_connection:
+            connector = CassandraConnector.from_uri(
+                source_connection,
+                timeout_seconds=int(self._runtime.config.get("connectors.cassandra.timeout_seconds", 30)),
+            )
+        else:
+            host = str(self._runtime.config.get("connectors.cassandra.default_host", "") or "").strip()
+            port = int(self._runtime.config.get("connectors.cassandra.default_port", 9042))
+            if not host:
+                raise ValidationError(message="Cassandra connector host is not configured")
+            connector = CassandraConnector(
+                host=host,
+                port=port,
+                timeout_seconds=int(self._runtime.config.get("connectors.cassandra.timeout_seconds", 30)),
+            )
+        connector.validate_profile()
+        return connector
+
+    def _build_elasticsearch_connector(self, profile: dict[str, Any]) -> ElasticsearchConnector:
+        if not bool(self._runtime.config.get("connectors.elasticsearch.enabled", True)):
+            raise ValidationError(message="Elasticsearch connector is disabled")
+        source_connection = str(profile.get("source_connection", "") or "").strip()
+        if source_connection and "://" in source_connection:
+            uri = source_connection
+        else:
+            uri = str(self._runtime.config.get("connectors.elasticsearch.default_uri", "") or "").strip()
+        if not uri:
+            raise ValidationError(message="Elasticsearch connector URI is not configured")
+        connector = ElasticsearchConnector(
+            uri=uri,
+            timeout_seconds=int(self._runtime.config.get("connectors.elasticsearch.timeout_seconds", 30)),
+        )
+        connector.validate_profile()
+        return connector
+
+    def _build_opensearch_connector(self, profile: dict[str, Any]) -> OpenSearchConnector:
+        if not bool(self._runtime.config.get("connectors.opensearch.enabled", True)):
+            raise ValidationError(message="OpenSearch connector is disabled")
+        source_connection = str(profile.get("source_connection", "") or "").strip()
+        if source_connection and "://" in source_connection:
+            uri = source_connection
+        else:
+            uri = str(self._runtime.config.get("connectors.opensearch.default_uri", "") or "").strip()
+        if not uri:
+            raise ValidationError(message="OpenSearch connector URI is not configured")
+        connector = OpenSearchConnector(
+            uri=uri,
+            timeout_seconds=int(self._runtime.config.get("connectors.opensearch.timeout_seconds", 30)),
         )
         connector.validate_profile()
         return connector
