@@ -20,12 +20,15 @@
 
 from __future__ import annotations
 
+import os
+import secrets
+import time
 from collections.abc import Iterable
 from pathlib import Path
 
 import httpx
-from fastapi import Request, Response
-from fastapi.responses import PlainTextResponse
+from fastapi import HTTPException, Request, Response
+from fastapi.responses import JSONResponse, PlainTextResponse
 
 from cloud_dog_api_kit import create_app
 
@@ -56,6 +59,52 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     )
     app.state.runtime = runtime
     app.include_router(build_health_router(runtime, "db-mcp-server-web"))
+
+    # In-memory token session store (no itsdangerous dependency).
+    _sessions: dict[str, dict] = {}
+    _admin_username = os.environ.get("CLOUD_DOG_WEB_LOGIN_USERNAME", "admin")
+    _admin_password = os.environ.get("CLOUD_DOG_WEB_LOGIN_PASSWORD", "")
+    _cookie_name = "db_web_session"
+
+    def _get_session(request: Request) -> dict | None:
+        token = request.cookies.get(_cookie_name)
+        if token and token in _sessions:
+            sess = _sessions[token]
+            if time.time() - sess.get("_created", 0) < 3600:
+                return sess
+            del _sessions[token]
+        return None
+
+    @app.post("/auth/login")
+    async def auth_login(request: Request) -> JSONResponse:
+        body = await request.json()
+        username = str(body.get("username", "")).strip()
+        password = str(body.get("password", "")).strip()
+        if not username or not password:
+            raise HTTPException(status_code=400, detail="Username and password required")
+        if username != _admin_username or password != _admin_password:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        token = secrets.token_urlsafe(32)
+        _sessions[token] = {"user": username, "user_id": "1", "role": "admin", "_created": time.time()}
+        resp = JSONResponse({"user": {"id": "1", "displayName": username, "email": None, "roles": ["admin"], "permissions": ["*"]}})
+        resp.set_cookie(_cookie_name, token, httponly=True, samesite="lax", max_age=3600, path="/")
+        return resp
+
+    @app.get("/auth/me")
+    async def auth_me(request: Request) -> JSONResponse:
+        sess = _get_session(request)
+        if not sess:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        return JSONResponse({"user": {"id": sess["user_id"], "displayName": sess["user"], "email": None, "roles": [sess["role"]], "permissions": ["*"]}})
+
+    @app.post("/auth/logout")
+    async def auth_logout(request: Request) -> JSONResponse:
+        token = request.cookies.get(_cookie_name)
+        if token:
+            _sessions.pop(token, None)
+        resp = JSONResponse({"ok": True})
+        resp.delete_cookie(_cookie_name, path="/")
+        return resp
 
     @app.get("/runtime-config.js", response_class=Response)
     async def runtime_config(request: Request) -> Response:

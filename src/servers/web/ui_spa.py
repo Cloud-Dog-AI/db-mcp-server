@@ -100,15 +100,18 @@ def serve_spa_asset(project_root: Path, relative_path: str) -> FileResponse:
 
 def serve_runtime_config(runtime, request: Request) -> Response:
     """Return runtime-config.js for the SPA bootstrap contract."""
-    api_base = str(request.base_url).rstrip("/")
-    payload = {
-        "ENV": str(runtime.config.get("environment", "dev")),
-        "API_BASE_URL": api_base,
-        "AUTH_MODE": "api_key",
-        "API_KEY_HEADER": "X-API-Key",
-        "APP_VERSION": _application_release(),
-    }
-    body = "window.__RUNTIME_CONFIG__ = " + json.dumps(payload, separators=(",", ":")) + ";\n"
+    environment = str(runtime.config.get("environment", "dev"))
+    app_version = _application_release()
+    body = (
+        "const __origin = window.location.origin;\n"
+        "window.__RUNTIME_CONFIG__ = {\n"
+        f'  "ENV": "{environment}",\n'
+        '  "API_BASE_URL": __origin,\n'
+        '  "AUTH_MODE": "cookie",\n'
+        '  "API_KEY_HEADER": "X-API-Key",\n'
+        f'  "APP_VERSION": "{app_version}"\n'
+        "};\n"
+    )
     return Response(content=body, media_type="application/javascript")
 
 
