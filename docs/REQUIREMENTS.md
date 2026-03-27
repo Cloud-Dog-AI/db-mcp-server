@@ -1,4 +1,9 @@
 # db-mcp-server — REQUIREMENTS
+## W28A-421 Review Status
+- Reviewed for external/shareable publication during W28A-421.
+- Source basis: `defaults.yaml`, 4 server source files, 31 discovered routes/endpoints, and 46 MCP tools.
+- Internal-only absolute paths, environment-specific hosts, and private registries have been removed from this shareable document set.
+
 **Version:** 0.1 • 2026-03-21
 **Status:** Planning
 

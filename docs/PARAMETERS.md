@@ -1,154 +1,162 @@
-# Configuration Parameters
+# Parameters
 
-All parameters can be set via `defaults.yaml`, `config.yaml`, environment variables, or Vault.
+This reference is generated from `defaults.yaml`. Each key can be overridden by the corresponding environment variable.
 
-## Application
+## `a2a_server`
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| app.name | db-mcp-server | - | Application name |
-| app.version | 0.1.0 | - | Application version |
-| app.environment | dev | CLOUD_DOG_ENVIRONMENT | Deployment environment |
-| app.url | https://dbmcp.cloud-dog.net | - | Public URL |
-| service_name | db-mcp-server | - | Service name |
-| service_instance | db-mcp-local | HOSTNAME | Service instance ID |
-| environment | dev | CLOUD_DOG_ENVIRONMENT | Environment name |
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `a2a_server.enabled` | `true` | `CLOUD_DOG__A2A_SERVER__ENABLED` | Toggle for a2a server. |
+| `a2a_server.host` | `0.0.0.0` | `CLOUD_DOG__A2A_SERVER__HOST` | Host binding or upstream host for a2a server. |
+| `a2a_server.port` | `8089` | `CLOUD_DOG__A2A_SERVER__PORT` | Port for a2a server connections. |
+| `a2a_server.websocket_path` | `/a2a/ws` | `CLOUD_DOG__A2A_SERVER__WEBSOCKET_PATH` | Configuration value for a2a server websocket path. |
 
-## Server Ports
+## `access_control`
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| api_server.enabled | true | - | Enable API server |
-| api_server.host | 0.0.0.0 | - | API server bind address |
-| api_server.port | 8086 | - | API server port |
-| api_server.cors_origins | [] | - | CORS allowed origins |
-| web_server.enabled | true | - | Enable web server |
-| web_server.host | 0.0.0.0 | - | Web server bind address |
-| web_server.port | 8087 | - | Web server port |
-| web_server.api_base_url | http://127.0.0.1:8086 | - | API base URL for proxy |
-| mcp_server.enabled | true | - | Enable MCP server |
-| mcp_server.host | 0.0.0.0 | - | MCP server bind address |
-| mcp_server.port | 8088 | - | MCP server port |
-| mcp_server.transport_modes | [streamable_http, http_jsonrpc, legacy_sse] | - | MCP transport modes |
-| a2a_server.enabled | true | - | Enable A2A server |
-| a2a_server.host | 0.0.0.0 | - | A2A server bind address |
-| a2a_server.port | 8089 | - | A2A server port |
-| a2a_server.websocket_path | /a2a/ws | - | WebSocket path |
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `access_control.bootstrap_admin.user_id` | `bootstrap-admin` | `CLOUD_DOG__ACCESS_CONTROL__BOOTSTRAP_ADMIN__USER_ID` | Configuration value for access control bootstrap admin user id. |
+| `access_control.bootstrap_admin.username` | `bootstrap-admin` | `CLOUD_DOG__ACCESS_CONTROL__BOOTSTRAP_ADMIN__USERNAME` | Configuration value for access control bootstrap admin username. |
+| `access_control.bootstrap_admin.display_name` | `Bootstrap Admin` | `CLOUD_DOG__ACCESS_CONTROL__BOOTSTRAP_ADMIN__DISPLAY_NAME` | Configuration value for access control bootstrap admin display name. |
+| `access_control.bootstrap_admin.api_key_name` | `<secret>` | `CLOUD_DOG__ACCESS_CONTROL__BOOTSTRAP_ADMIN__API_KEY_NAME` | Credential or authentication setting for the related subsystem. |
+| `access_control.roles.admin` | `["*"]` | `CLOUD_DOG__ACCESS_CONTROL__ROLES__ADMIN` | Configuration value for access control roles admin. |
+| `access_control.roles.data_steward` | `["catalog.read", "schema.read", "schema.change", "relationship.read", "relationship.change", "content.search", "data.rea...` | `CLOUD_DOG__ACCESS_CONTROL__ROLES__DATA_STEWARD` | Configuration value for access control roles data steward. |
+| `access_control.roles.developer` | `["catalog.read", "schema.read", "schema.change", "relationship.read", "content.search", "data.read", "data.create", "dat...` | `CLOUD_DOG__ACCESS_CONTROL__ROLES__DEVELOPER` | Configuration value for access control roles developer. |
+| `access_control.roles.analyst` | `["catalog.read", "schema.read", "relationship.read", "content.search", "data.read"]` | `CLOUD_DOG__ACCESS_CONTROL__ROLES__ANALYST` | Configuration value for access control roles analyst. |
+| `access_control.roles.auditor` | `["catalog.read", "schema.read", "relationship.read", "audit.read", "data.read"]` | `CLOUD_DOG__ACCESS_CONTROL__ROLES__AUDITOR` | Configuration value for access control roles auditor. |
 
-## Authentication
+## `api_server`
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| auth.mode | api_key_only | - | Auth mode |
-| auth.api_key | (empty) | Vault | API key |
-| auth.default_role | admin | - | Default role for authenticated users |
-| auth.jwt_secret | (empty) | Vault | JWT signing secret |
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `api_server.enabled` | `true` | `CLOUD_DOG__API_SERVER__ENABLED` | Credential or authentication setting for the related subsystem. |
+| `api_server.host` | `0.0.0.0` | `CLOUD_DOG__API_SERVER__HOST` | Host binding or upstream host for api server. |
+| `api_server.port` | `8086` | `CLOUD_DOG__API_SERVER__PORT` | Port for api server connections. |
+| `api_server.cors_origins` | `[]` | `CLOUD_DOG__API_SERVER__CORS_ORIGINS` | Credential or authentication setting for the related subsystem. |
 
-## Access Control
+## `app`
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| access_control.bootstrap_admin.user_id | bootstrap-admin | - | Bootstrap admin user ID |
-| access_control.bootstrap_admin.username | bootstrap-admin | - | Bootstrap admin username |
-| access_control.bootstrap_admin.display_name | Bootstrap Admin | - | Bootstrap admin display name |
-| access_control.bootstrap_admin.api_key_name | bootstrap-admin-key | - | Bootstrap admin API key name |
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `app.name` | `db-mcp-server` | `CLOUD_DOG__APP__NAME` | Configuration value for app name. |
+| `app.version` | `0.1.0` | `CLOUD_DOG__APP__VERSION` | Configuration value for app version. |
+| `app.environment` | `${CLOUD_DOG_ENVIRONMENT || 'dev'}` | `CLOUD_DOG__APP__ENVIRONMENT` | Configuration value for app environment. |
+| `app.url` | `<set per environment>` | `CLOUD_DOG__APP__URL` | Endpoint or connection URL for app. |
 
-### Roles
+## `audit_store`
 
-| Role | Permissions |
-|------|-------------|
-| admin | * (all) |
-| data_steward | catalog.read, schema.read, schema.change, relationship.read, relationship.change, content.search, data.read, data.create, data.update, data.delete, index.manage, profile.manage, audit.read |
-| developer | catalog.read, schema.read, schema.change, relationship.read, content.search, data.read, data.create, data.update, index.manage |
-| analyst | catalog.read, schema.read, relationship.read, content.search, data.read |
-| auditor | catalog.read, schema.read, relationship.read, audit.read, data.read |
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `audit_store.uri` | `${vault.dev.databases.dbmcp_audit_postgresql.uri || 'sqlite:/...` | `CLOUD_DOG__AUDIT_STORE__URI` | Endpoint or connection URL for audit store. |
 
-## Data Stores
+## `auth`
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| metadata_store.uri | sqlite:///./data/dbmcp_metadata.db | Vault | Metadata database URI |
-| audit_store.uri | sqlite:///./data/dbmcp_audit.db | Vault | Audit database URI |
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `auth.mode` | `api_key_only` | `CLOUD_DOG__AUTH__MODE` | Configuration value for auth mode. |
+| `auth.api_key` | `<secret>` | `CLOUD_DOG__AUTH__API_KEY` | Credential or authentication setting for the related subsystem. |
+| `auth.default_role` | `admin` | `CLOUD_DOG__AUTH__DEFAULT_ROLE` | Configuration value for auth default role. |
+| `auth.jwt_secret` | `<secret>` | `CLOUD_DOG__AUTH__JWT_SECRET` | Credential or authentication setting for the related subsystem. |
 
-## Jobs
+## `connectors`
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| jobs.backend | memory | - | Jobs backend (memory) |
-| jobs.payload_max_bytes | 16384 | - | Max job payload size |
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `connectors.mongodb.enabled` | `true` | `CLOUD_DOG__CONNECTORS__MONGODB__ENABLED` | Toggle for connectors mongodb. |
+| `connectors.mongodb.default_uri` | `${vault.dev.databases.mongodb.uri}` | `CLOUD_DOG__CONNECTORS__MONGODB__DEFAULT_URI` | Endpoint or connection URL for connectors mongodb default. |
+| `connectors.mongodb.timeout_ms` | `30000` | `CLOUD_DOG__CONNECTORS__MONGODB__TIMEOUT_MS` | Configuration value for connectors mongodb timeout ms. |
+| `connectors.couchdb.enabled` | `true` | `CLOUD_DOG__CONNECTORS__COUCHDB__ENABLED` | Toggle for connectors couchdb. |
+| `connectors.couchdb.default_uri` | `${vault.dev.databases.couchdb.url || 'http://admin:cloud-dog-...` | `CLOUD_DOG__CONNECTORS__COUCHDB__DEFAULT_URI` | Endpoint or connection URL for connectors couchdb default. |
+| `connectors.couchdb.timeout_seconds` | `30` | `CLOUD_DOG__CONNECTORS__COUCHDB__TIMEOUT_SECONDS` | Timeout or duration control for connectors couchdb timeout. |
+| `connectors.opensearch.enabled` | `true` | `CLOUD_DOG__CONNECTORS__OPENSEARCH__ENABLED` | Toggle for connectors opensearch. |
+| `connectors.opensearch.default_uri` | `${vault.dev.databases.opensearch.url || ''}` | `CLOUD_DOG__CONNECTORS__OPENSEARCH__DEFAULT_URI` | Endpoint or connection URL for connectors opensearch default. |
+| `connectors.opensearch.timeout_seconds` | `30` | `CLOUD_DOG__CONNECTORS__OPENSEARCH__TIMEOUT_SECONDS` | Timeout or duration control for connectors opensearch timeout. |
+| `connectors.elasticsearch.enabled` | `true` | `CLOUD_DOG__CONNECTORS__ELASTICSEARCH__ENABLED` | Toggle for connectors elasticsearch. |
+| `connectors.elasticsearch.default_uri` | `${vault.dev.databases.elasticsearch.url || ''}` | `CLOUD_DOG__CONNECTORS__ELASTICSEARCH__DEFAULT_URI` | Endpoint or connection URL for connectors elasticsearch default. |
+| `connectors.elasticsearch.timeout_seconds` | `30` | `CLOUD_DOG__CONNECTORS__ELASTICSEARCH__TIMEOUT_SECONDS` | Timeout or duration control for connectors elasticsearch timeout. |
+| `connectors.cassandra.enabled` | `true` | `CLOUD_DOG__CONNECTORS__CASSANDRA__ENABLED` | Toggle for connectors cassandra. |
+| `connectors.cassandra.default_host` | `${vault.dev.databases.providers.cassandra.host || ''}` | `CLOUD_DOG__CONNECTORS__CASSANDRA__DEFAULT_HOST` | Host binding or upstream host for connectors cassandra default. |
+| `connectors.cassandra.default_port` | `9042` | `CLOUD_DOG__CONNECTORS__CASSANDRA__DEFAULT_PORT` | Port for connectors cassandra default connections. |
+| `connectors.cassandra.timeout_seconds` | `30` | `CLOUD_DOG__CONNECTORS__CASSANDRA__TIMEOUT_SECONDS` | Timeout or duration control for connectors cassandra timeout. |
 
-## Search (Discovery Index)
+## `environment`
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| search.enabled | true | - | Enable discovery search |
-| search.discovery_index_path | ./data/discovery-index.db | - | Discovery index database path |
-| search.metadata_limit | 20 | - | Max metadata search results |
-| search.content_limit | 20 | - | Max content search results |
-| search.max_documents_per_entity | 10 | - | Max documents per entity |
-| search.max_excerpt_chars | 240 | - | Max excerpt character length |
-| search.freshness_seconds | 3600 | - | Cache freshness TTL |
-| search.inline_sync | true | - | Enable inline index sync |
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `environment` | `${CLOUD_DOG_ENVIRONMENT || 'dev'}` | `CLOUD_DOG__ENVIRONMENT` | Configuration value for environment. |
 
-## Connectors
+## `jobs`
 
-### MongoDB
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `jobs.backend` | `memory` | `CLOUD_DOG__JOBS__BACKEND` | Configuration value for jobs backend. |
+| `jobs.payload_max_bytes` | `16384` | `CLOUD_DOG__JOBS__PAYLOAD_MAX_BYTES` | Configuration value for jobs payload max bytes. |
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| connectors.mongodb.enabled | true | - | Enable MongoDB connector |
-| connectors.mongodb.default_uri | (empty) | Vault | Default MongoDB URI |
-| connectors.mongodb.timeout_ms | 30000 | - | Connection timeout (ms) |
+## `log`
 
-### CouchDB
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `log.level` | `INFO` | `CLOUD_DOG__LOG__LEVEL` | Configuration value for log level. |
+| `log.format` | `json` | `CLOUD_DOG__LOG__FORMAT` | Configuration value for log format. |
+| `log.console` | `true` | `CLOUD_DOG__LOG__CONSOLE` | Configuration value for log console. |
+| `log.pii_redaction` | `true` | `CLOUD_DOG__LOG__PII_REDACTION` | Configuration value for log pii redaction. |
+| `log.service_instance` | `${HOSTNAME || 'db-mcp-local'}` | `CLOUD_DOG__LOG__SERVICE_INSTANCE` | Configuration value for log service instance. |
+| `log.environment` | `${CLOUD_DOG_ENVIRONMENT || 'dev'}` | `CLOUD_DOG__LOG__ENVIRONMENT` | Configuration value for log environment. |
+| `log.app_log` | `logs/app.log.jsonl` | `CLOUD_DOG__LOG__APP_LOG` | Configuration value for log app log. |
+| `log.audit_log` | `logs/audit.log.jsonl` | `CLOUD_DOG__LOG__AUDIT_LOG` | Configuration value for log audit log. |
+| `log.integrity.enabled` | `false` | `CLOUD_DOG__LOG__INTEGRITY__ENABLED` | Toggle for log integrity. |
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| connectors.couchdb.enabled | true | - | Enable CouchDB connector |
-| connectors.couchdb.default_uri | http://admin:cloud-dog-test@127.0.0.1:5984 | Vault | Default CouchDB URI |
-| connectors.couchdb.timeout_seconds | 30 | - | Connection timeout |
+## `mcp_server`
 
-### OpenSearch
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `mcp_server.enabled` | `true` | `CLOUD_DOG__MCP_SERVER__ENABLED` | Toggle for mcp server. |
+| `mcp_server.host` | `0.0.0.0` | `CLOUD_DOG__MCP_SERVER__HOST` | Host binding or upstream host for mcp server. |
+| `mcp_server.port` | `8088` | `CLOUD_DOG__MCP_SERVER__PORT` | Port for mcp server connections. |
+| `mcp_server.transport_modes` | `["streamable_http", "http_jsonrpc", "legacy_sse"]` | `CLOUD_DOG__MCP_SERVER__TRANSPORT_MODES` | Configuration value for mcp server transport modes. |
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| connectors.opensearch.enabled | true | - | Enable OpenSearch connector |
-| connectors.opensearch.default_uri | (empty) | Vault | Default OpenSearch URI |
-| connectors.opensearch.timeout_seconds | 30 | - | Connection timeout |
+## `metadata_store`
 
-### Elasticsearch
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `metadata_store.uri` | `${vault.dev.databases.dbmcp_metadata_postgresql.uri || 'sqlit...` | `CLOUD_DOG__METADATA_STORE__URI` | Endpoint or connection URL for metadata store. |
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| connectors.elasticsearch.enabled | true | - | Enable Elasticsearch connector |
-| connectors.elasticsearch.default_uri | (empty) | Vault | Default Elasticsearch URI |
-| connectors.elasticsearch.timeout_seconds | 30 | - | Connection timeout |
+## `runtime`
 
-### Cassandra
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `runtime.health_exempt_paths` | `["/health", "/ready", "/live", "/status", "/docs", "/redoc", "/openapi.json"]` | `CLOUD_DOG__RUNTIME__HEALTH_EXEMPT_PATHS` | Configuration value for runtime health exempt paths. |
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| connectors.cassandra.enabled | true | - | Enable Cassandra connector |
-| connectors.cassandra.default_host | (empty) | Vault | Default Cassandra host |
-| connectors.cassandra.default_port | 9042 | - | Default Cassandra port |
-| connectors.cassandra.timeout_seconds | 30 | - | Connection timeout |
+## `search`
 
-## Runtime
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `search.enabled` | `true` | `CLOUD_DOG__SEARCH__ENABLED` | Toggle for search. |
+| `search.discovery_index_path` | `./data/discovery-index.db` | `CLOUD_DOG__SEARCH__DISCOVERY_INDEX_PATH` | Configuration value for search discovery index path. |
+| `search.metadata_limit` | `20` | `CLOUD_DOG__SEARCH__METADATA_LIMIT` | Configuration value for search metadata limit. |
+| `search.content_limit` | `20` | `CLOUD_DOG__SEARCH__CONTENT_LIMIT` | Configuration value for search content limit. |
+| `search.max_documents_per_entity` | `10` | `CLOUD_DOG__SEARCH__MAX_DOCUMENTS_PER_ENTITY` | Configuration value for search max documents per entity. |
+| `search.max_excerpt_chars` | `240` | `CLOUD_DOG__SEARCH__MAX_EXCERPT_CHARS` | Configuration value for search max excerpt chars. |
+| `search.freshness_seconds` | `3600` | `CLOUD_DOG__SEARCH__FRESHNESS_SECONDS` | Timeout or duration control for search freshness. |
+| `search.inline_sync` | `true` | `CLOUD_DOG__SEARCH__INLINE_SYNC` | Configuration value for search inline sync. |
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| runtime.health_exempt_paths | [/health, /ready, /live, /status, /docs, /redoc, /openapi.json] | - | Paths exempt from auth |
+## `service_instance`
 
-## Logging
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `service_instance` | `${HOSTNAME || 'db-mcp-local'}` | `CLOUD_DOG__SERVICE_INSTANCE` | Configuration value for service instance. |
 
-| Parameter | Default | Env Override | Description |
-|-----------|---------|-------------|-------------|
-| log.level | INFO | - | Log level |
-| log.format | json | - | Log format |
-| log.console | true | - | Log to console |
-| log.pii_redaction | true | - | Enable PII redaction |
-| log.service_instance | db-mcp-local | HOSTNAME | Service instance ID |
-| log.environment | dev | CLOUD_DOG_ENVIRONMENT | Deployment environment |
-| log.app_log | logs/app.log.jsonl | - | Application log file |
-| log.audit_log | logs/audit.log.jsonl | - | Audit log file |
-| log.integrity.enabled | false | - | Enable log integrity checks |
+## `service_name`
+
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `service_name` | `db-mcp-server` | `CLOUD_DOG__SERVICE_NAME` | Configuration value for service name. |
+
+## `web_server`
+
+| Key | Default | Environment Override | Description |
+|-----|---------|----------------------|-------------|
+| `web_server.enabled` | `true` | `CLOUD_DOG__WEB_SERVER__ENABLED` | Toggle for web server. |
+| `web_server.host` | `0.0.0.0` | `CLOUD_DOG__WEB_SERVER__HOST` | Host binding or upstream host for web server. |
+| `web_server.port` | `8087` | `CLOUD_DOG__WEB_SERVER__PORT` | Port for web server connections. |
+| `web_server.api_base_url` | `http://127.0.0.1:8086` | `CLOUD_DOG__WEB_SERVER__API_BASE_URL` | Credential or authentication setting for the related subsystem. |

@@ -1,10 +1,10 @@
 # PREPROD Deployment — db-mcp-server
 
 ## 1. Overview
-- Service URL: `https://dbmcp0.cloud-dog.net` (planned)
+- Service URL: `https://dbmcp0.your-domain.com` (planned)
 - Ports: API `8086`, Web `8087`, MCP `8088`, A2A `8089`
-- Image: `registry.cloud-dog.net:443/cloud-dog/db-mcp-server:latest` (planned)
-- Terraform location: to be allocated in `/opt/iac/cloud-dog-repo/terraform/server0.viewdeck.com/`
+- Image: `registry.example.com/cloud-dog/db-mcp-server:latest` (planned)
+- Terraform location: to be allocated in `terraform/`
 
 ## 2. Configuration
 Preprod configuration will layer:
@@ -38,13 +38,13 @@ Expected Vault paths:
 
 Populate with:
 ```bash
-set -a; source /opt/iac/Development/cloud-dog-ai/env-vault; set +a
+set -a; source .env.local
 vault kv get -mount=cloud_dog_ai config
 ```
 
 ## 5. Deployment Steps
 1. Build image with `bash docker-build.sh latest`
-2. Tag and push to `registry.cloud-dog.net:443/cloud-dog/db-mcp-server:latest`
+2. Tag and push to `registry.example.com/cloud-dog/db-mcp-server:latest`
 3. Apply Terraform once deployment files exist
 4. Verify `GET /health`
 

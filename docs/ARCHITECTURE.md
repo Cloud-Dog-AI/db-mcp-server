@@ -1,5 +1,10 @@
 # db-mcp-server — Architecture
 
+## W28A-421 Review Status
+- Reviewed for external/shareable publication during W28A-421.
+- Source basis: `defaults.yaml`, 4 server source files, 31 discovered routes/endpoints, and 46 MCP tools.
+- Internal-only absolute paths, environment-specific hosts, and private registries have been removed from this shareable document set.
+
 ## 1. System Context
 `db-mcp-server` is planned as the Cloud-Dog AI service for discovery, controlled operations, schema planning, relationship management, and indexed exploration across NoSQL and search platforms. It serves human operators, internal agents, and higher-level orchestration clients through REST, Web, MCP, and A2A surfaces while enforcing profile-scoped RBAC and audit.
 

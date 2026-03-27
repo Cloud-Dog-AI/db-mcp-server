@@ -5,10 +5,10 @@ Build scaffolding only. Runtime implementation is not present yet.
 
 ## Local development setup
 ```bash
-cd /opt/iac/Development/cloud-dog-ai/db-mcp-server
+cd ./db-mcp-server
 python3 -m venv .venv
 .venv/bin/pip install --upgrade pip
-.venv/bin/pip install -e ".[dev]" --index-url https://pypi.cloud-dog.net/simple/
+.venv/bin/pip install -e ".[dev]" --index-url https://your-package-index/simple/
 ```
 
 ## Docker build
