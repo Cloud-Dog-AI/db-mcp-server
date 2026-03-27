@@ -1,74 +1,96 @@
 # Build Instructions
 
 ## Project
-`db-mcp-server`
+`db-mcp-server` - database access and catalog service with API, Web, MCP, and A2A servers.
 
 ## Prerequisites
-- Python `3.10+`
-- Node.js `20+` and npm `10+` for the PS-30 UI app
+- Python 3.10+
+- Node.js 20+ and npm 10+ for the UI bundle
 - Docker
-- Access to `https://pypi.cloud-dog.net/simple/`
-- Vault bootstrap file: `/opt/iac/Development/cloud-dog-ai/env-vault`
 
-## Local Development Setup
+## Development Setup
 ```bash
-cd /opt/iac/Development/cloud-dog-ai/db-mcp-server
 python3 -m venv .venv
-.venv/bin/pip install --upgrade pip
-.venv/bin/pip install -e ".[dev]" --index-url https://pypi.cloud-dog.net/simple/
-set -a; source /opt/iac/Development/cloud-dog-ai/env-vault; set +a
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -e ".[dev]"
+```
+
+If platform dependencies are served from a package index rather than editable local source:
+```bash
+PYPI_URL=https://packages.example.com/simple/
+pip install -e ".[dev]" --extra-index-url "$PYPI_URL"
+```
+
+## Local Configuration
+```bash
+cat > .env.local <<'ENV'
+API_SERVER_PORT=8086
+WEB_SERVER_PORT=8087
+MCP_SERVER_PORT=8088
+A2A_SERVER_PORT=8089
+METADATA_STORE_URI=sqlite:///./data/dbmcp_metadata.db
+AUDIT_STORE_URI=sqlite:///./data/dbmcp_audit.db
+ENV
 ```
 
 ## Run Locally
 ```bash
-./server_control.sh --env tests/env-IT start all
-./server_control.sh --env tests/env-IT status all
-./server_control.sh --env tests/env-IT stop all
+./server_control.sh --env ./.env.local start all
+./server_control.sh --env ./.env.local status all
+./server_control.sh --env ./.env.local stop all
 ```
 
 ## Run Tests
 ```bash
-.venv/bin/python -m pytest tests/quality --env tests/env-QT -q
-.venv/bin/python -m pytest tests/unit --env tests/env-UT -q
-.venv/bin/python -m pytest tests/system --env tests/env-ST -q
-.venv/bin/python -m pytest tests/integration --env tests/env-IT -q
-.venv/bin/python -m pytest tests/system/ST1.8_WebUiServing --env tests/env-ST-WEBUI -q
+.venv/bin/python -m pytest tests/quality -v
+.venv/bin/python -m pytest tests/unit -v
+.venv/bin/python -m pytest tests/system -v
+.venv/bin/python -m pytest tests/integration -v
 ```
 
-There are no application-tier pytest suites in this repo yet.
-
-Connector-specific overlays are available in `tests/env-mongodb`, `tests/env-couchdb`, `tests/env-opensearch`, `tests/env-elasticsearch`, `tests/env-cassandra`, and `tests/env-all`.
-
-## Build and Stage the Web UI Bundle
+## Build
+### Python Package
 ```bash
-cd /opt/iac/Development/cloud-dog-ai/cloud-dog-ai-ui-monorepo
+python -m pip install build
+python -m build
+```
+
+### Build and Stage the UI Bundle
+```bash
+cd ../cloud-dog-ai-ui-monorepo
+npm install
 npm run build --workspace=apps/db-mcp
-
-cd /opt/iac/Development/cloud-dog-ai/db-mcp-server
-mkdir -p ui
-rm -rf ui/dist
-cp -r /opt/iac/Development/cloud-dog-ai/cloud-dog-ai-ui-monorepo/apps/db-mcp/dist ui/dist
+cd ../db-mcp-server
+mkdir -p ./ui
+rm -rf ./ui/dist
+cp -r ../cloud-dog-ai-ui-monorepo/apps/db-mcp/dist ./ui/dist
 ```
 
-## Docker Build
+### Docker Container
+The provided script builds from the parent workspace as the Docker context:
 ```bash
-bash docker-build.sh latest
+./docker-build.sh latest
+```
+
+Equivalent direct Docker invocation:
+```bash
+DOCKER_BUILDKIT=1 docker build --network host -f ./Dockerfile -t registry.example.com/team/db-mcp-server:latest ..
 ```
 
 ## Docker Push
 ```bash
-docker push registry.cloud-dog.net:443/cloud-dog/db-mcp-server:latest
+docker tag cloud-dog/db-mcp-server:latest registry.example.com/team/db-mcp-server:latest
+docker push registry.example.com/team/db-mcp-server:latest
 ```
 
-## Deploy to Preprod
-No preprod Terraform workspace is assigned to `db-mcp-server` yet. Build and push the image first, then add the deployment workspace before documenting `terraform apply` here.
+## Configuration
+Runtime configuration comes from the env file passed to `server_control.sh`, then any higher-priority shell variables, then `defaults.yaml`.
 
-## Environment Files
-- `tests/env-QT`, `tests/env-UT`, `tests/env-ST`, `tests/env-ST-WEBUI`, `tests/env-IT`
-- connector overlays: `tests/env-mongodb`, `tests/env-couchdb`, `tests/env-opensearch`, `tests/env-elasticsearch`, `tests/env-cassandra`, `tests/env-all`
-- defaults: `defaults.yaml`
-
-## Dependencies
-- FastAPI / Uvicorn / SQLAlchemy / PyJWT runtime
-- connector clients: `pymongo`, `couchdb`, `opensearch-py`, `elasticsearch`, `cassandra-driver`
-- See `pyproject.toml` for the full dependency set.
+## Vault Integration
+```bash
+export VAULT_ADDR=https://vault.example.com
+export VAULT_TOKEN=your-token
+export VAULT_MOUNT_POINT=your-mount
+export VAULT_CONFIG_PATH=your-path
+```
