@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -30,6 +31,12 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 class APIKeyAuthMiddleware(BaseHTTPMiddleware):
     """Protect non-exempt HTTP routes with API-key authentication."""
+
+    # JSON-RPC methods that are allowed without authentication on MCP
+    # transport paths.  ``tools/list`` is the MCP catalogue discovery
+    # method used by gate/health probes that carry no credentials.
+    _PUBLIC_MCP_METHODS: frozenset[str] = frozenset({"tools/list"})
+    _MCP_PATHS: frozenset[str] = frozenset({"/mcp", "/messages"})
 
     def __init__(
         self,
@@ -44,9 +51,25 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
         self._exempt_paths = exempt_paths or set()
         self._api_key_header = api_key_header
 
+    async def _is_public_mcp_request(self, request: Request) -> bool:
+        """Return True when the request is an unauthenticated-safe MCP method."""
+        if request.method != "POST" or request.url.path not in self._MCP_PATHS:
+            return False
+        try:
+            body = await request.body()
+            payload = json.loads(body)
+            if isinstance(payload, dict):
+                return str(payload.get("method", "")) in self._PUBLIC_MCP_METHODS
+        except Exception:
+            pass
+        return False
+
     async def dispatch(self, request: Request, call_next):
         """Check the inbound API key unless the path is public."""
         if request.url.path in self._exempt_paths:
+            return await call_next(request)
+
+        if await self._is_public_mcp_request(request):
             return await call_next(request)
 
         api_key = request.headers.get(self._api_key_header, "").strip()
