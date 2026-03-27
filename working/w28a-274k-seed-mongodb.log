@@ -1,8 +1,0 @@
- Volume docker_mongodb-data  Creating
- Volume docker_mongodb-data  Created
- Container db-mcp-mongodb  Creating
- Container db-mcp-mongodb  Created
- Container db-mcp-mongodb  Starting
- Container db-mcp-mongodb  Started
-MongoDB seed completed for database: dbmcp_ecommerce
-Seed completed for target: mongodb

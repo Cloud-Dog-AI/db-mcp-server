@@ -1,8 +1,0 @@
-tests/integration/IT1.1_AccessControlLifecycle/test_access_control_lifecycle.py: 1
-tests/quality/QT1.1_ProjectStructure/test_project_structure.py: 1
-tests/system/ST1.1_ServerStartup/test_server_startup.py: 1
-tests/system/ST1.2_AccessControlApi/test_access_control_api.py: 1
-tests/unit/UT1.1_ConfigLoading/test_config_loading.py: 2
-tests/unit/UT1.2_AuthMiddleware/test_auth_middleware.py: 3
-tests/unit/UT1.3_AccessControlService/test_access_control_service.py: 3
-

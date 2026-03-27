@@ -11,3 +11,12 @@ logs/
 .pids/
 data/
 ui/dist/
+working/
+tmp/
+private/
+storage/
+*.log
+node_modules
+.env
+.terraform
+*.tfstate
