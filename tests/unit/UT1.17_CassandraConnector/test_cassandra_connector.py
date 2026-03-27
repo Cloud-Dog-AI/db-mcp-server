@@ -14,6 +14,7 @@
 #
 # Description: Unit tests for the Cassandra adapter with mocked Cluster/Session.
 # Related requirements: CN-01
+# Tests: CN-05
 # Related tests: UT1.17
 # Recent changes:
 #   W28A-274-G — Initial implementation

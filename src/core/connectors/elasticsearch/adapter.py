@@ -14,6 +14,7 @@
 #
 # Description: Elasticsearch adapter implementing the db-mcp-server connector contract.
 # Related requirements: CN-01, CD-02, SC-01, CO-01, CO-02, RL-01
+# Covers: CN-04
 # Related tests: UT1.16, ST1.12, IT1.11
 # Recent changes:
 #   W28A-274-F — Initial implementation

@@ -14,6 +14,7 @@
 #
 # Description: Unit tests for the CouchDB adapter with a mocked HTTP session.
 # Related requirements: CN-01
+# Tests: CN-02
 # Related tests: UT1.13
 
 from __future__ import annotations

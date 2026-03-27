@@ -14,6 +14,7 @@
 #
 # Description: Discovery index document normalisation and indexing pipeline.
 # Related requirements: W28A-274-I deliverables 1, 2
+# Covers: CD-04, SI-01, SI-04
 # Related tests: UT1.9, ST1.7, IT1.6
 
 """Discovery index document normalisation and indexing pipeline."""

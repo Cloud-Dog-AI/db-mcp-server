@@ -14,6 +14,7 @@
 #
 # Description: CouchDB adapter implementing the shared db-mcp-server connector contract.
 # Related requirements: CN-01, CD-02, SC-01, CO-01, CO-02, RL-01
+# Covers: CN-02
 # Related tests: UT1.13, ST1.9, IT1.8
 
 """CouchDB connector adapter for db-mcp-server."""

@@ -14,6 +14,7 @@
 #
 # Description: UT coverage for discovery search repository and service queries.
 # Related requirements: W28A-274-I deliverables 1, 3, 4
+# Tests: SI-02, SI-03
 # Related tests: UT1.10
 
 from __future__ import annotations

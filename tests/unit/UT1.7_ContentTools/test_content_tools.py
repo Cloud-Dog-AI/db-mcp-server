@@ -14,6 +14,7 @@
 #
 # Description: Unit tests for structured content MCP tools and filter translation.
 # Related requirements: CO-01, CO-02, CN-01
+# Tests: CO-03, CO-04
 # Related tests: UT1.7
 
 from __future__ import annotations

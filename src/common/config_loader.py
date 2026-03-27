@@ -14,6 +14,7 @@
 #
 # Description: Platform-config bootstrap for db-mcp-server.
 # Related requirements: W28A-274-A deliverables 1, 2
+# Covers: CFG-02, CFG-03
 # Related tests: UT1.1, ST1.1
 
 """Configuration bootstrap for db-mcp-server."""

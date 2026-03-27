@@ -14,6 +14,7 @@
 #
 # Description: Connector dispatch and profile-scoped execution orchestration.
 # Related requirements: CN-01, AC-01, AC-02, CO-01, CO-02
+# Covers: CO-03, CO-04
 # Related tests: UT1.6, UT1.7, ST1.4, ST1.5, ST1.6, IT1.3, IT1.4, IT1.5
 
 """Connector dispatch helpers for db-mcp-server."""

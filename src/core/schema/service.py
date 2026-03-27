@@ -14,6 +14,7 @@
 #
 # Description: Schema-change orchestration service with history, audit, and index refresh.
 # Related requirements: SC-01, SC-02, W28A-274-L deliverables 1, 2, 4, 5
+# Covers: SC-03, SC-04
 # Related tests: UT1.12, ST1.6, IT1.7
 
 """Schema-change orchestration service."""

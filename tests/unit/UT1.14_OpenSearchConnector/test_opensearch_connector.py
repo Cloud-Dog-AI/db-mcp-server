@@ -14,6 +14,7 @@
 #
 # Description: Unit tests for the OpenSearch adapter with a mocked client.
 # Related requirements: CN-01
+# Tests: CN-03
 # Related tests: UT1.14
 
 from __future__ import annotations

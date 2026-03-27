@@ -14,6 +14,7 @@
 #
 # Description: Unit tests for schema-change planning, apply, and history orchestration.
 # Related requirements: SC-01, SC-02, W28A-274-L deliverables 1, 2, 4, 5
+# Tests: SC-03, SC-04
 # Related tests: UT1.12
 
 from __future__ import annotations

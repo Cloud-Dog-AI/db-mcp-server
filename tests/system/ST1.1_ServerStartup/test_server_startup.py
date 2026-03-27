@@ -14,6 +14,7 @@
 #
 # Description: System test covering startup and health probes for all four server surfaces.
 # Related requirements: W28A-274-A deliverables 1, 3, 5
+# Tests: CR-01, CR-02, CR-03
 # Related tests: ST1.1
 
 from __future__ import annotations

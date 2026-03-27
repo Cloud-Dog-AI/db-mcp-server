@@ -14,6 +14,7 @@
 #
 # Description: Shared runtime bootstrap for db-mcp-server server surfaces.
 # Related requirements: W28A-274-A deliverables 1, 2, 5, AC-01, AC-02, RL-01, RL-02, RL-03, W28A-274-I deliverables 1, 2, 3, 4
+# Covers: CR-01, CR-02, CR-03, NF-02, NF-03
 # Related tests: UT1.1, UT1.2, UT1.3, UT1.6, UT1.7, UT1.8, UT1.9, UT1.10, ST1.1, ST1.2, ST1.4, ST1.5, ST1.6, ST1.7, IT1.1, IT1.3, IT1.4, IT1.5, IT1.6
 
 """Shared runtime bootstrap for db-mcp-server."""

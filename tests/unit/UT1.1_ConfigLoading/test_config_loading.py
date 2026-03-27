@@ -14,6 +14,7 @@
 #
 # Description: Unit tests for db-mcp-server config loading and runtime config JS.
 # Related requirements: W28A-274-A deliverables 1, 2, 5
+# Tests: CFG-02, CFG-03
 # Related tests: UT1.1
 
 from __future__ import annotations

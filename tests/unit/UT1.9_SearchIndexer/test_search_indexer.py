@@ -14,6 +14,7 @@
 #
 # Description: UT coverage for discovery indexer normalisation and document creation.
 # Related requirements: W28A-274-I deliverables 1, 2
+# Tests: CD-04, SI-01, SI-02, SI-03, SI-04
 # Related tests: UT1.9
 
 from __future__ import annotations

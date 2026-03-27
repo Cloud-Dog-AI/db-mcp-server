@@ -14,6 +14,7 @@
 #
 # Description: Discovery search orchestration and index job execution.
 # Related requirements: W28A-274-I deliverables 1, 2, 3, 4
+# Covers: SI-01, SI-02, SI-03, SI-04
 # Related tests: UT1.9, UT1.10, ST1.7, IT1.6
 
 """Discovery search and indexing orchestration for db-mcp-server."""

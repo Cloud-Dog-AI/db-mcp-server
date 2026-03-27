@@ -14,6 +14,7 @@
 #
 # Description: Cassandra adapter implementing the db-mcp-server connector contract.
 # Related requirements: CN-01, CD-02, SC-01, CO-01, CO-02, RL-01
+# Covers: CN-05
 # Related tests: UT1.17, ST1.13, IT1.12
 # Recent changes:
 #   W28A-274-G — Initial implementation

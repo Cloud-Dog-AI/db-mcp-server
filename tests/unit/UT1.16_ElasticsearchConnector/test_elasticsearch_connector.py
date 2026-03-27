@@ -14,6 +14,7 @@
 #
 # Description: Unit tests for the Elasticsearch adapter with a mocked client.
 # Related requirements: CN-01
+# Tests: CN-04
 # Related tests: UT1.16
 
 from __future__ import annotations

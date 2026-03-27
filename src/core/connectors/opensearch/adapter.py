@@ -14,6 +14,7 @@
 #
 # Description: OpenSearch adapter implementing the db-mcp-server connector contract.
 # Related requirements: CN-01, CD-02, SC-01, CO-01, CO-02, RL-01
+# Covers: CN-03
 # Related tests: UT1.14, ST1.10, IT1.9
 
 """OpenSearch connector adapter for db-mcp-server."""
