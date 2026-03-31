@@ -72,6 +72,10 @@ web_server:
   port: 8087
   api_base_url: "http://127.0.0.1:8086"
 
+web_login:
+  username: "${CLOUD_DOG_WEB_LOGIN_USERNAME:admin}"
+  password: "${CLOUD_DOG_WEB_LOGIN_PASSWORD || ''}"
+
 mcp_server:
   enabled: true
   host: "0.0.0.0"
@@ -94,7 +98,8 @@ audit_store:
   uri: "${vault.dev.databases.dbmcp_audit_postgresql.uri || 'sqlite:///./data/dbmcp_audit.db'}"
 
 jobs:
-  backend: "memory"
+  backend: "sql"
+  sql_database_url: "${vault.dev.databases.dbmcp_jobs_postgresql.uri || 'sqlite:///./data/dbmcp_jobs.db'}"
   payload_max_bytes: 16384
 
 search:
@@ -132,22 +137,58 @@ runtime:
 connectors:
   mongodb:
     enabled: true
-    default_uri: "${vault.dev.databases.mongodb.uri}"
+    default_uri: "${vault.dev.databases.mongodb.uri || ''}"
+    default_host: "${vault.dev.databases.providers.mongodb.host || ''}"
+    default_port: "${vault.dev.databases.providers.mongodb.port || 27017}"
+    default_username: "${vault.dev.databases.providers.mongodb.username || ''}"
+    default_password: "${vault.dev.databases.providers.mongodb.password || ''}"
+    default_auth_database: "admin"
+    default_query: "ssl=false"
     timeout_ms: 30000
   couchdb:
     enabled: true
-    default_uri: "${vault.dev.databases.couchdb.url || 'http://admin:cloud-dog-test@127.0.0.1:5984'}"
+    default_uri: "${vault.dev.databases.providers.couchdb.uri || CLOUD_DOG__CONNECTORS__COUCHDB__URI || ''}"
+    default_host: "${vault.dev.databases.providers.couchdb.host || CLOUD_DOG__CONNECTORS__COUCHDB__HOST || ''}"
+    default_port: "${vault.dev.databases.providers.couchdb.port || CLOUD_DOG__CONNECTORS__COUCHDB__PORT || 5984}"
+    default_username: "${vault.dev.databases.providers.couchdb.username || CLOUD_DOG__CONNECTORS__COUCHDB__USERNAME || ''}"
+    default_password: "${vault.dev.databases.providers.couchdb.password || CLOUD_DOG__CONNECTORS__COUCHDB__PASSWORD || ''}"
     timeout_seconds: 30
   opensearch:
     enabled: true
-    default_uri: "${vault.dev.databases.opensearch.url || ''}"
+    default_uri: "${vault.dev.databases.providers.opensearch.uri || CLOUD_DOG__CONNECTORS__OPENSEARCH__URI || ''}"
+    default_host: "${vault.dev.databases.providers.opensearch.host || CLOUD_DOG__CONNECTORS__OPENSEARCH__HOST || ''}"
+    default_port: "${vault.dev.databases.providers.opensearch.port || CLOUD_DOG__CONNECTORS__OPENSEARCH__PORT || 9200}"
+    default_username: "${vault.dev.databases.providers.opensearch.username || CLOUD_DOG__CONNECTORS__OPENSEARCH__USERNAME || ''}"
+    default_password: "${vault.dev.databases.providers.opensearch.password || CLOUD_DOG__CONNECTORS__OPENSEARCH__PASSWORD || ''}"
     timeout_seconds: 30
   elasticsearch:
     enabled: true
-    default_uri: "${vault.dev.databases.elasticsearch.url || ''}"
+    default_uri: "${vault.dev.databases.providers.elasticsearch.uri || CLOUD_DOG__CONNECTORS__ELASTICSEARCH__URI || ''}"
+    default_host: "${vault.dev.databases.providers.elasticsearch.host || CLOUD_DOG__CONNECTORS__ELASTICSEARCH__HOST || ''}"
+    default_port: "${vault.dev.databases.providers.elasticsearch.port || CLOUD_DOG__CONNECTORS__ELASTICSEARCH__PORT || 9200}"
+    default_username: "${vault.dev.databases.providers.elasticsearch.username || CLOUD_DOG__CONNECTORS__ELASTICSEARCH__USERNAME || ''}"
+    default_password: "${vault.dev.databases.providers.elasticsearch.password || CLOUD_DOG__CONNECTORS__ELASTICSEARCH__PASSWORD || ''}"
     timeout_seconds: 30
   cassandra:
     enabled: true
-    default_host: "${vault.dev.databases.providers.cassandra.host || ''}"
-    default_port: 9042
+    default_host: "${vault.dev.databases.providers.cassandra.host || CLOUD_DOG__CONNECTORS__CASSANDRA__HOST || ''}"
+    default_port: "${vault.dev.databases.providers.cassandra.port || CLOUD_DOG__CONNECTORS__CASSANDRA__PORT || 9042}"
+    timeout_seconds: 30
+  postgresql:
+    enabled: true
+    default_uri: "${CLOUD_DOG__CONNECTORS__POSTGRESQL__DEFAULT_URI || CLOUD_DOG__CONNECTORS__POSTGRESQL__URI || ''}"
+    default_host: "${vault.dev.databases.providers.postgres.host || CLOUD_DOG__CONNECTORS__POSTGRESQL__HOST || ''}"
+    default_port: "${vault.dev.databases.providers.postgres.port || CLOUD_DOG__CONNECTORS__POSTGRESQL__PORT || 5432}"
+    default_username: "${vault.dev.databases.providers.postgres.username || CLOUD_DOG__CONNECTORS__POSTGRESQL__USERNAME || ''}"
+    default_password: "${vault.dev.databases.providers.postgres.password || CLOUD_DOG__CONNECTORS__POSTGRESQL__PASSWORD || ''}"
+    default_database: "${CLOUD_DOG__CONNECTORS__POSTGRESQL__DATABASE || 'cloud_dog_db_test'}"
+    timeout_seconds: 30
+  mariadb:
+    enabled: true
+    default_uri: "${CLOUD_DOG__CONNECTORS__MARIADB__DEFAULT_URI || CLOUD_DOG__CONNECTORS__MARIADB__URI || ''}"
+    default_host: "${vault.dev.databases.providers.mysql.host || CLOUD_DOG__CONNECTORS__MARIADB__HOST || ''}"
+    default_port: "${vault.dev.databases.providers.mysql.port || CLOUD_DOG__CONNECTORS__MARIADB__PORT || 3306}"
+    default_username: "${vault.dev.databases.providers.mysql.username || CLOUD_DOG__CONNECTORS__MARIADB__USERNAME || ''}"
+    default_password: "${vault.dev.databases.providers.mysql.password || CLOUD_DOG__CONNECTORS__MARIADB__PASSWORD || ''}"
+    default_database: "${CLOUD_DOG__CONNECTORS__MARIADB__DATABASE || 'cloud_dog_db_test'}"
     timeout_seconds: 30

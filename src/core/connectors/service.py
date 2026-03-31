@@ -30,6 +30,7 @@ from elasticsearch import ApiError as ElasticsearchApiError
 from opensearchpy.exceptions import OpenSearchException
 from pymongo.errors import PyMongoError
 from requests import RequestException
+from sqlalchemy.exc import SQLAlchemyError
 
 from cloud_dog_api_kit.errors import InternalError, UnauthorisedError, ValidationError
 from cloud_dog_logging import Actor
@@ -37,9 +38,12 @@ from cloud_dog_logging import Actor
 from src.core.connectors.cassandra import CassandraConnector
 from src.core.connectors.couchdb import CouchDBConnector
 from src.core.connectors.elasticsearch import ElasticsearchConnector
+from src.core.connectors.mariadb import MariaDBConnector
 from src.core.connectors.mongodb import MongoDBConnector
 from src.core.connectors.opensearch import OpenSearchConnector
-from src.core.filters import CassandraFilterTranslator, CouchDBFilterTranslator, ElasticsearchFilterTranslator, MongoDBFilterTranslator, OpenSearchFilterTranslator
+from src.core.connectors.postgresql import PostgreSQLConnector
+from src.core.connectors.relational import _build_uri
+from src.core.filters import CassandraFilterTranslator, CouchDBFilterTranslator, ElasticsearchFilterTranslator, MongoDBFilterTranslator, OpenSearchFilterTranslator, RelationalFilterTranslator
 
 
 @dataclass(slots=True)
@@ -90,6 +94,18 @@ class ConnectorManager:
                 connector=self._build_cassandra_connector(profile),
                 translator=CassandraFilterTranslator(),
             )
+        if source_type == "postgresql":
+            return ConnectorSession(
+                profile=profile,
+                connector=self._build_postgresql_connector(profile),
+                translator=RelationalFilterTranslator(),
+            )
+        if source_type == "mariadb":
+            return ConnectorSession(
+                profile=profile,
+                connector=self._build_mariadb_connector(profile),
+                translator=RelationalFilterTranslator(),
+            )
         raise ValidationError(message=f"Unsupported source type: {source_type}")
 
     def execute(
@@ -113,7 +129,7 @@ class ConnectorManager:
         try:
             self._enforce_tool_scope(session.profile, audit_action)
             result = callback(session)
-        except (PyMongoError, RequestException, OpenSearchException, ElasticsearchApiError, CassandraDriverException) as exc:
+        except (PyMongoError, RequestException, OpenSearchException, ElasticsearchApiError, CassandraDriverException, SQLAlchemyError) as exc:
             self._runtime.audit_logger.log_tool_call(
                 actor=Actor(type="user", id=principal.user_id, roles=principal.roles),
                 tool=audit_action,
@@ -264,6 +280,79 @@ class ConnectorManager:
         )
         connector.validate_profile()
         return connector
+
+    def _build_postgresql_connector(self, profile: dict[str, Any]) -> PostgreSQLConnector:
+        if not bool(self._runtime.config.get("connectors.postgresql.enabled", True)):
+            raise ValidationError(message="PostgreSQL connector is disabled")
+        uri = self._resolve_relational_uri(
+            profile=profile,
+            source_type="postgresql",
+            default_uri_path="connectors.postgresql.default_uri",
+            host_path="connectors.postgresql.default_host",
+            port_path="connectors.postgresql.default_port",
+            username_path="connectors.postgresql.default_username",
+            password_path="connectors.postgresql.default_password",
+            database_path="connectors.postgresql.default_database",
+            scheme="postgresql",
+        )
+        connector = PostgreSQLConnector(
+            uri=uri,
+            timeout_seconds=int(self._runtime.config.get("connectors.postgresql.timeout_seconds", 30)),
+        )
+        connector.validate_profile()
+        return connector
+
+    def _build_mariadb_connector(self, profile: dict[str, Any]) -> MariaDBConnector:
+        if not bool(self._runtime.config.get("connectors.mariadb.enabled", True)):
+            raise ValidationError(message="MariaDB connector is disabled")
+        uri = self._resolve_relational_uri(
+            profile=profile,
+            source_type="mariadb",
+            default_uri_path="connectors.mariadb.default_uri",
+            host_path="connectors.mariadb.default_host",
+            port_path="connectors.mariadb.default_port",
+            username_path="connectors.mariadb.default_username",
+            password_path="connectors.mariadb.default_password",
+            database_path="connectors.mariadb.default_database",
+            scheme="mariadb",
+        )
+        connector = MariaDBConnector(
+            uri=uri,
+            timeout_seconds=int(self._runtime.config.get("connectors.mariadb.timeout_seconds", 30)),
+        )
+        connector.validate_profile()
+        return connector
+
+    def _resolve_relational_uri(
+        self,
+        *,
+        profile: dict[str, Any],
+        source_type: str,
+        default_uri_path: str,
+        host_path: str,
+        port_path: str,
+        username_path: str,
+        password_path: str,
+        database_path: str,
+        scheme: str,
+    ) -> str:
+        source_connection = str(profile.get("source_connection", "") or "").strip()
+        if source_connection and "://" in source_connection:
+            return source_connection
+        default_uri = str(self._runtime.config.get(default_uri_path, "") or "").strip()
+        if default_uri:
+            return default_uri
+        uri = _build_uri(
+            scheme=scheme,
+            host=str(self._runtime.config.get(host_path, "") or "").strip(),
+            port=int(self._runtime.config.get(port_path, 0) or 0),
+            username=str(self._runtime.config.get(username_path, "") or "").strip(),
+            password=str(self._runtime.config.get(password_path, "") or "").strip(),
+            database=str(self._runtime.config.get(database_path, "") or "").strip(),
+        )
+        if uri:
+            return uri
+        raise ValidationError(message=f"{source_type.title()} connector URI is not configured")
 
     @staticmethod
     def _enforce_tool_scope(profile: dict[str, Any], audit_action: str) -> None:

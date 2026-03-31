@@ -212,3 +212,10 @@ class CassandraFilterTranslator:
                 message=f"Cassandra filter only supports 'eq' operator, got: {condition.operator}"
             )
         return {condition.field: condition.value}
+
+
+class RelationalFilterTranslator:
+    """Pass structured filters through for SQL connectors to compile."""
+
+    def translate(self, filter_node: FilterNode) -> FilterNode:
+        return filter_node

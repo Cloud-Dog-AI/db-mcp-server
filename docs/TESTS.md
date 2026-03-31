@@ -26,8 +26,10 @@ python3 -m pytest tests/unit --env tests/env-UT -q
 python3 -m pytest tests/system --env tests/env-ST -q
 python3 -m pytest tests/integration --env tests/env-IT -q
 python3 -m pytest tests/application --env tests/env-AT -q
+python3 -m pytest tests/system/ST1.14_PostgreSQLConnector --env tests/env-ST --env tests/env-postgresql -q
+python3 -m pytest tests/system/ST1.15_MariaDBConnector --env tests/env-ST --env tests/env-mariadb -q
 ```
 
 ## Notes
 - Top-level test directories present: `__pycache__`, `application`, `fixtures`, `helpers`, `integration`, `quality`, `system`, `unit`.
-- Environment overlays and private credentials are intentionally not published in this document set.
+- Connector-specific real-runtime overlays are published for PostgreSQL (`tests/env-postgresql`) and MariaDB (`tests/env-mariadb`) and rely on `cloud_dog_config`/Vault resolution at runtime.

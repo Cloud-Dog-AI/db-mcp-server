@@ -26,6 +26,7 @@ from src.core.filters.translator import (
     FilterTranslator,
     MongoDBFilterTranslator,
     OpenSearchFilterTranslator,
+    RelationalFilterTranslator,
 )
 
 __all__ = [
@@ -38,5 +39,6 @@ __all__ = [
     "FilterTranslator",
     "MongoDBFilterTranslator",
     "OpenSearchFilterTranslator",
+    "RelationalFilterTranslator",
     "parse_filter",
 ]
