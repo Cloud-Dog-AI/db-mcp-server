@@ -1,0 +1,7 @@
+version: "3.8"
+
+services:
+  db-mcp-server:
+    extends:
+      file: docker/docker-compose.yml
+      service: db-mcp-server

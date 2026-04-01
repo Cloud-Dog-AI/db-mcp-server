@@ -21,8 +21,9 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
+
+from cloud_dog_config import resolve_runtime_env_files
 
 
 def repo_root() -> Path:
@@ -33,13 +34,9 @@ def repo_root() -> Path:
 def resolve_env_files(explicit_env_files: list[str] | None = None) -> list[str]:
     """Resolve env files from explicit input or process environment.
 
-    The server control script exports `DB_MCP_SERVER_ENV_FILE`. Tests may pass an
+    The server control script exports `CLOUD_DOG_ENV_FILES`. Tests may pass an
     explicit list instead.
     """
     if explicit_env_files:
         return [str(Path(path)) for path in explicit_env_files]
-
-    env_file = os.environ.get("DB_MCP_SERVER_ENV_FILE", "").strip()
-    if not env_file:
-        return []
-    return [env_file]
+    return resolve_runtime_env_files()

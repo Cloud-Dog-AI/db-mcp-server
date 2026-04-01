@@ -37,6 +37,8 @@ _SPA_ENTRY_ROUTES = {
     "/relationships",
     "/schema",
     "/audit",
+    "/mcp-console",
+    "/a2a-console",
     "/settings",
 }
 
@@ -107,6 +109,8 @@ def serve_runtime_config(runtime, request: Request) -> Response:
         "window.__RUNTIME_CONFIG__ = {\n"
         f'  "ENV": "{environment}",\n'
         '  "API_BASE_URL": __origin,\n'
+        '  "MCP_BASE_URL": __origin,\n'
+        '  "A2A_BASE_URL": __origin,\n'
         '  "AUTH_MODE": "cookie",\n'
         '  "API_KEY_HEADER": "X-API-Key",\n'
         f'  "APP_VERSION": "{app_version}"\n'

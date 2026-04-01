@@ -24,6 +24,7 @@ import pytest
 
 from src.common.config_loader import load_runtime_config
 from src.servers.web.app import create_web_app
+from tests.helpers.server_runtime import service_port
 
 pytestmark = pytest.mark.unit
 
@@ -31,8 +32,8 @@ pytestmark = pytest.mark.unit
 def test_load_runtime_config_reads_ports_and_auth_key() -> None:
     """Config should honour env overrides supplied via `--env`."""
     config = load_runtime_config(["tests/env-UT"])
-    assert config.get("api_server.port") == 8086
-    assert config.get("web_server.port") == 8087
+    assert config.get("api_server.port") == service_port("api", "tests/env-UT", default_tier="UT")
+    assert config.get("web_server.port") == service_port("web", "tests/env-UT", default_tier="UT")
     assert config.get("auth.api_key") == "test-api-key"
 
 

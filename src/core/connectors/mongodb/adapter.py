@@ -157,6 +157,10 @@ class MongoDBConnector:
     def update(self, namespace: str, entity: str, filter: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
         """Update documents matching a structured filter."""
         collection = self._client[namespace][entity]
+        # MongoDB requires update operators ($set, $unset, etc.).
+        # If the caller passes a plain dict, wrap it in $set automatically.
+        if update and not any(k.startswith("$") for k in update):
+            update = {"$set": update}
         result = collection.update_many(filter or {}, update)
         return {
             "matched_count": result.matched_count,

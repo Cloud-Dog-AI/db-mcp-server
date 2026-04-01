@@ -113,6 +113,20 @@ Acceptance criteria:
 - masking policy model is documented
 - read and write paths both honour field-level restrictions
 
+### CO-05 (P1)
+The system shall support a documented structured-filter operator grammar for content reads, counts, existence checks, updates, and deletes.
+Acceptance criteria:
+- CO-01 filter grammar explicitly enumerates `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `in`, `not_in`, `contains`, `starts_with`, `ends_with`, `exists`, `not_exists`, `regex`, `is_null`, and `is_not_null`
+- logical grouping explicitly supports `and`, `or`, and `not`
+- MongoDB, CouchDB, OpenSearch, and Elasticsearch document support for the full 16-operator grammar; Cassandra documents support for `eq` within `and` groups only
+
+### CO-06 (P1)
+The system shall support binary/blob content fields for MongoDB using JSON-safe binary envelopes on write and hex serialisation on read.
+Acceptance criteria:
+- create and update requests accept `{"__type__":"binary","encoding":"hex"|"base64","data":"..."}` for binary field values
+- read responses serialise binary field values as hex strings and schema introspection reports the field type as `binary`
+- MongoDB shall support at least 50 KiB insert/read verification and 500 KiB update/read verification in ST coverage; other Phase 1 connectors do not advertise binary-field serialisation support in this release
+
 ## SI — Search & Indexing
 ### SI-01 (P1)
 The system shall index source metadata and selected content for discovery search.
@@ -206,6 +220,28 @@ The system shall support field masking and sensitive-field suppression by role a
 Acceptance criteria:
 - masking rules are documented
 - policy enforcement point is the service layer
+
+### AC-04 (P1)
+The system shall provide the five built-in RBAC roles `admin`, `data_steward`, `developer`, `analyst`, and `auditor` with documented default permission sets.
+Acceptance criteria:
+- `admin` grants `*`
+- `data_steward` grants `catalog.read`, `schema.read`, `schema.change`, `relationship.read`, `relationship.change`, `content.search`, `data.read`, `data.create`, `data.update`, `data.delete`, `index.manage`, `profile.manage`, and `audit.read`
+- `developer` grants `catalog.read`, `schema.read`, `schema.change`, `relationship.read`, `content.search`, `data.read`, `data.create`, `data.update`, and `index.manage`
+- `analyst` grants `catalog.read`, `schema.read`, `relationship.read`, `content.search`, and `data.read`
+- `auditor` grants `catalog.read`, `schema.read`, `relationship.read`, `audit.read`, and `data.read`
+
+### AC-05 (P1)
+The system shall support admin-only CRUD management for users and user lifecycle state through `cloud_dog_idam`.
+Acceptance criteria:
+- admin-authenticated API, Web, MCP, and A2A flows support create, read, update, disable, enable, and delete operations for users
+- user records include role assignments and audit metadata
+
+### AC-06 (P1)
+The system shall support admin-only CRUD management for groups, group membership, and profile-scoped API keys through `cloud_dog_idam`.
+Acceptance criteria:
+- admin-authenticated flows support create, read, update, and delete operations for groups plus add/remove user membership changes
+- API keys can be created, listed, and revoked with explicit scopes and assigned profile IDs
+- group and API-key operations emit audit events and enforce admin role checks
 
 ## CFG — Configuration
 ### CFG-01 (P1)

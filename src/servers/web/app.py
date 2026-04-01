@@ -20,7 +20,6 @@
 
 from __future__ import annotations
 
-import os
 import secrets
 import time
 from collections.abc import Iterable
@@ -62,8 +61,9 @@ def create_web_app(explicit_env_files: list[str] | None = None):
 
     # In-memory token session store (no itsdangerous dependency).
     _sessions: dict[str, dict] = {}
-    _admin_username = os.environ.get("CLOUD_DOG_WEB_LOGIN_USERNAME", "admin")
-    _admin_password = os.environ.get("CLOUD_DOG_WEB_LOGIN_PASSWORD", "")
+    _admin_username = str(runtime.config.get("web_login.username", "admin") or "admin").strip() or "admin"
+    _admin_password = str(runtime.config.get("web_login.password", "") or "")
+    _service_api_key = str(runtime.config.get("auth.api_key", "") or "").strip()
     _cookie_name = "db_web_session"
 
     def _get_session(request: Request) -> dict | None:
@@ -117,8 +117,47 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         """Proxy same-origin API requests to the dedicated API server."""
         return await _proxy_request(
             request,
-            target_base=_server_base(runtime.config.get("api_server.host", "127.0.0.1"), runtime.config.get("api_server.port", 8086)),
+            target_base=_server_base(runtime.config.get("api_server.host"), runtime.config.get("api_server.port")),
             strip_prefix="",
+            session_api_key=_service_api_key if _get_session(request) else "",
+        )
+
+    @app.api_route("/webapi", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route("/webapi/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    async def proxy_web_api(request: Request, full_path: str = "") -> Response:
+        """Proxy cookie-authenticated browser API requests on a dedicated path.
+
+        Rewrites /webapi/v1/… → /api/v1/… so the API server receives the
+        correct route prefix.
+        """
+        return await _proxy_request(
+            request,
+            target_base=_server_base(runtime.config.get("api_server.host"), runtime.config.get("api_server.port")),
+            strip_prefix="/webapi",
+            rewrite_prefix="/api",
+            session_api_key=_service_api_key if _get_session(request) else "",
+        )
+
+    @app.api_route("/webapi-docs", methods=["GET"])
+    async def proxy_web_api_docs(request: Request) -> Response:
+        """Proxy the API Swagger UI without the /api prefix rewrite."""
+        return await _proxy_request(
+            request,
+            target_base=_server_base(runtime.config.get("api_server.host"), runtime.config.get("api_server.port")),
+            strip_prefix="/webapi-docs",
+            rewrite_prefix="/docs",
+            session_api_key=_service_api_key if _get_session(request) else "",
+        )
+
+    @app.api_route("/webapi-openapi.json", methods=["GET"])
+    async def proxy_web_api_openapi(request: Request) -> Response:
+        """Proxy the API OpenAPI schema without the /api prefix rewrite."""
+        return await _proxy_request(
+            request,
+            target_base=_server_base(runtime.config.get("api_server.host"), runtime.config.get("api_server.port")),
+            strip_prefix="/webapi-openapi.json",
+            rewrite_prefix="/openapi.json",
+            session_api_key=_service_api_key if _get_session(request) else "",
         )
 
     @app.api_route("/mcp", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
@@ -127,8 +166,36 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         """Proxy same-origin MCP requests to the dedicated MCP server."""
         return await _proxy_request(
             request,
-            target_base=_server_base(runtime.config.get("mcp_server.host", "127.0.0.1"), runtime.config.get("mcp_server.port", 8088)),
+            target_base=_server_base(runtime.config.get("mcp_server.host"), runtime.config.get("mcp_server.port")),
             strip_prefix="",
+            session_api_key=_service_api_key if _get_session(request) else "",
+        )
+
+    @app.api_route("/webmcp", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route("/webmcp/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    async def proxy_web_mcp(request: Request, full_path: str = "") -> Response:
+        """Proxy cookie-authenticated browser MCP requests on a dedicated path.
+
+        Rewrites /webmcp/tools/… → /mcp/tools/… so the MCP server receives the
+        correct route prefix.
+        """
+        return await _proxy_request(
+            request,
+            target_base=_server_base(runtime.config.get("mcp_server.host"), runtime.config.get("mcp_server.port")),
+            strip_prefix="/webmcp",
+            rewrite_prefix="/mcp",
+            session_api_key=_service_api_key if _get_session(request) else "",
+        )
+
+    @app.api_route("/weba2a", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route("/weba2a/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    async def proxy_web_a2a(request: Request, full_path: str = "") -> Response:
+        """Proxy cookie-authenticated browser A2A requests on a dedicated path."""
+        return await _proxy_request(
+            request,
+            target_base=_server_base(runtime.config.get("a2a_server.host"), runtime.config.get("a2a_server.port")),
+            strip_prefix="/weba2a",
+            session_api_key=_service_api_key if _get_session(request) else "",
         )
 
     @app.get("/")
@@ -153,10 +220,19 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     return app
 
 
-async def _proxy_request(request: Request, *, target_base: str, strip_prefix: str) -> Response:
+async def _proxy_request(
+    request: Request,
+    *,
+    target_base: str,
+    strip_prefix: str,
+    rewrite_prefix: str = "",
+    session_api_key: str = "",
+) -> Response:
     target_path = request.url.path
     if strip_prefix and target_path.startswith(strip_prefix):
         target_path = target_path[len(strip_prefix):] or "/"
+    if rewrite_prefix:
+        target_path = rewrite_prefix + target_path
     target_url = httpx.URL(target_base.rstrip("/") + target_path).copy_merge_params(request.query_params)
     body = await request.body()
     headers = {
@@ -164,6 +240,12 @@ async def _proxy_request(request: Request, *, target_base: str, strip_prefix: st
         for key, value in request.headers.items()
         if key.lower() not in _HOP_BY_HOP_HEADERS
     }
+    lower_headers = {key.lower() for key in headers}
+    if session_api_key:
+        if "x-api-key" not in lower_headers:
+            headers["x-api-key"] = session_api_key
+        if "authorization" not in lower_headers:
+            headers["authorization"] = f"Bearer {session_api_key}"
     async with httpx.AsyncClient(timeout=60.0) as client:
         proxied = await client.request(
             request.method,

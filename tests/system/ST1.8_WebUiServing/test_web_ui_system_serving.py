@@ -26,6 +26,8 @@ from pathlib import Path
 import httpx
 import pytest
 
+from tests.helpers.server_runtime import resolved_api_key, service_base_url
+
 pytestmark = [pytest.mark.system, pytest.mark.timeout(180)]
 
 
@@ -36,10 +38,11 @@ def test_web_server_serves_spa_runtime_config_and_api_proxy() -> None:
 
     subprocess.run(["bash", str(control), "--env", str(env_file), "start", "all"], check=True, cwd=root)
     try:
+        web_base_url = service_base_url("web", env_file)
         deadline = time.time() + 60
         while time.time() < deadline:
             try:
-                if httpx.get("http://127.0.0.1:8087/health", timeout=5.0).status_code == 200:
+                if httpx.get(f"{web_base_url}/health", timeout=5.0).status_code == 200:
                     break
             except httpx.HTTPError:
                 pass
@@ -47,19 +50,19 @@ def test_web_server_serves_spa_runtime_config_and_api_proxy() -> None:
         else:
             pytest.fail("Timed out waiting for web server health")
 
-        runtime = httpx.get("http://127.0.0.1:8087/runtime-config.js", timeout=10.0)
+        runtime = httpx.get(f"{web_base_url}/runtime-config.js", timeout=10.0)
         assert runtime.status_code == 200
         assert 'window.__RUNTIME_CONFIG__' in runtime.text
 
-        root_page = httpx.get("http://127.0.0.1:8087/", timeout=10.0)
+        root_page = httpx.get(f"{web_base_url}/", timeout=10.0)
         assert root_page.status_code == 200
 
-        search_page = httpx.get("http://127.0.0.1:8087/search", timeout=10.0)
+        search_page = httpx.get(f"{web_base_url}/search", timeout=10.0)
         assert search_page.status_code == 200
 
         proxied_ping = httpx.get(
-            "http://127.0.0.1:8087/api/v1/ping",
-            headers={"X-API-Key": "test-api-key"},
+            f"{web_base_url}/api/v1/ping",
+            headers={"X-API-Key": resolved_api_key(env_file)},
             timeout=10.0,
         )
         assert proxied_ping.status_code == 200, proxied_ping.text

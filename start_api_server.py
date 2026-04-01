@@ -32,8 +32,8 @@ def main() -> None:
     config = load_runtime_config()
     uvicorn.run(
         create_api_app(),
-        host=str(config.get("api_server.host", "0.0.0.0")),
-        port=int(config.get("api_server.port", 8086)),
+        host=str(config.get("api_server.host")),
+        port=int(config.get("api_server.port")),
         log_level=str(config.get("log.level", "info")).lower(),
     )
 

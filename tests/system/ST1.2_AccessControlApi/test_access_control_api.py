@@ -27,6 +27,8 @@ from pathlib import Path
 import httpx
 import pytest
 
+from tests.helpers.server_runtime import resolved_api_key, service_base_url
+
 pytestmark = [pytest.mark.system, pytest.mark.timeout(180)]
 
 
@@ -41,9 +43,10 @@ def _stop_servers(root: Path, env_file: Path) -> None:
 
 def _wait_for_api() -> None:
     deadline = time.time() + 90
+    api_health_url = f"{service_base_url('api')}/health"
     while time.time() < deadline:
         try:
-            response = httpx.get("http://127.0.0.1:8086/health", timeout=5.0)
+            response = httpx.get(api_health_url, timeout=5.0)
             if response.status_code == 200:
                 return
         except httpx.HTTPError:
@@ -62,12 +65,12 @@ def test_access_control_api_crud_and_audit() -> None:
     _start_servers(root, env_file)
     try:
         _wait_for_api()
-        client = httpx.Client(base_url="http://127.0.0.1:8086", timeout=10.0)
+        client = httpx.Client(base_url=service_base_url("api", env_file), timeout=10.0)
 
         unauth = client.get("/api/v1/profiles")
         assert unauth.status_code == 401
 
-        headers = {"X-API-Key": "test-api-key"}
+        headers = {"X-API-Key": resolved_api_key(env_file)}
         created_profile = client.post(
             "/api/v1/profiles",
             headers=headers,

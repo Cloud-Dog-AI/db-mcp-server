@@ -60,33 +60,7 @@ else
   PYTHON_BIN="python3"
 fi
 
-load_env_file() {
-  local file="$1"
-  [ ! -f "$file" ] && return 0
-  while IFS= read -r line || [ -n "$line" ]; do
-    line="${line#export }"
-    case "$line" in
-      ''|'#'*) continue ;;
-      *=*)
-        local key="${line%%=*}"
-        local value="${line#*=}"
-        if [ -z "${!key+x}" ]; then
-          export "$key=$value"
-        fi
-        ;;
-    esac
-  done < "$file"
-}
-
-ORIGINAL_ENV_KEYS="$(mktemp)"
-env | cut -d= -f1 > "$ORIGINAL_ENV_KEYS"
-trap 'rm -f "$ORIGINAL_ENV_KEYS"' EXIT
-
-load_env_file "$ENV_FILE"
-if [ -f "${ENV_FILE}-secrets" ]; then
-  load_env_file "${ENV_FILE}-secrets"
-fi
-export DB_MCP_SERVER_ENV_FILE="$ENV_FILE"
+export CLOUD_DOG_ENV_FILES="$ENV_FILE"
 
 config_get() {
   local key="$1"

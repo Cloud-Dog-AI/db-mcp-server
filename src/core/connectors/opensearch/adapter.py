@@ -479,6 +479,9 @@ class OpenSearchConnector:
     @staticmethod
     def _build_update_script(update: dict[str, Any]) -> dict[str, Any]:
         payload = dict(update or {})
+        # Auto-wrap plain dicts in $set if no $ operators present
+        if payload and not any(k.startswith("$") for k in payload):
+            payload = {"$set": payload}
         set_values = dict(payload.get("$set") or {})
         unset_fields = payload.get("$unset") or []
         if isinstance(unset_fields, dict):

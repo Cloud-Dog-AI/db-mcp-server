@@ -46,6 +46,7 @@ class CouchDBConnector:
         if auth is not None:
             self._session.auth = auth
         self._session.headers.update({"Accept": "application/json"})
+        self._verified_namespaces: set[str] = set()  # lazy auto-create cache
 
     @property
     def uri(self) -> str:
@@ -198,8 +199,21 @@ class CouchDBConnector:
             ordered = ordered[: max(0, int(limit))]
         return [self._apply_projection(item, projection) for item in ordered]
 
+    def _ensure_namespace_exists(self, namespace: str) -> None:
+        """Lazy auto-create: ensure CouchDB database exists (called on first write)."""
+        if namespace in self._verified_namespaces:
+            return
+        try:
+            r = self._session.head(f"{self._base_url}/{namespace}", timeout=10)
+            if r.status_code == 404:
+                self._session.put(f"{self._base_url}/{namespace}", timeout=10).raise_for_status()
+        except Exception:
+            pass  # Proceed — the actual write will surface a clear error if DB is missing
+        self._verified_namespaces.add(namespace)
+
     def create(self, namespace: str, entity: str, document: dict[str, Any]) -> dict[str, Any]:
         """Create a CouchDB content item within a logical entity."""
+        self._ensure_namespace_exists(namespace)
         self._ensure_mutable_entity(namespace, entity)
         payload = self._prepare_write_document(entity, document)
         if "_id" in payload and str(payload["_id"]).strip():
@@ -216,6 +230,7 @@ class CouchDBConnector:
 
     def update(self, namespace: str, entity: str, filter: dict[str, Any], update: dict[str, Any]) -> dict[str, Any]:
         """Update CouchDB documents matching the structured filter."""
+        self._ensure_namespace_exists(namespace)
         self._ensure_mutable_entity(namespace, entity)
         matched = self._matching_documents(namespace, entity, filter or {})
         modified = 0

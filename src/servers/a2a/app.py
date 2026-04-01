@@ -25,6 +25,7 @@ import json
 from fastapi import WebSocket, WebSocketDisconnect
 
 from cloud_dog_api_kit import create_app
+from cloud_dog_api_kit.a2a.card import create_a2a_card_router, A2ASkill
 
 from src.common.http import APIKeyAuthMiddleware
 from src.common.runtime import RuntimeFactory, build_health_router
@@ -59,6 +60,10 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
             "/docs",
             "/redoc",
             "/openapi.json",
+            "/.well-known/agent.json",
+            "/tasks",
+            "/a2a/tasks",
+            "/a2a/health",
         },
     )
 
@@ -67,8 +72,7 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
         """Return basic A2A server metadata."""
         return {"status": "ok", "surface": "a2a", "websocket_path": runtime.config.get("a2a_server.websocket_path")}
 
-    @app.websocket("/a2a/ws")
-    async def a2a_socket(websocket: WebSocket) -> None:
+    async def _serve_a2a_socket(websocket: WebSocket) -> None:
         """Serve a minimal A2A websocket with a health topic."""
         if not await _verify_websocket_api_key(websocket, runtime):
             await websocket.close(code=4401)
@@ -92,5 +96,29 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
                     await websocket.send_json({"topic": topic, "status": "ok", "payload": payload})
         except WebSocketDisconnect:
             return
+
+    @app.websocket("/a2a/ws")
+    async def a2a_socket(websocket: WebSocket) -> None:
+        """Serve the canonical A2A websocket path."""
+        await _serve_a2a_socket(websocket)
+
+    @app.websocket("/ws")
+    async def a2a_socket_proxy_alias(websocket: WebSocket) -> None:
+        """Serve the proxy-compatible websocket alias used behind /a2a strip-prefix routes."""
+        await _serve_a2a_socket(websocket)
+
+    # A2A agent card and task submission router
+    _a2a_skills = [
+        A2ASkill(id="data_create", name="Data Create", description="Create new records in the database"),
+        A2ASkill(id="data_query", name="Data Query", description="Query data from the database"),
+        A2ASkill(id="data_update", name="Data Update", description="Update existing records in the database"),
+        A2ASkill(id="schema_list", name="Schema List", description="List database schemas and table structures"),
+    ]
+    _a2a_card_router = create_a2a_card_router(
+        name="db-mcp",
+        description="Database MCP A2A server for data operations and schema management",
+        skills=_a2a_skills,
+    )
+    app.include_router(_a2a_card_router)
 
     return app

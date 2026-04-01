@@ -2,12 +2,16 @@ services:
   cassandra:
     image: cassandra:4.1
     container_name: db-mcp-cassandra
+    network_mode: host
     environment:
       CASSANDRA_CLUSTER_NAME: db-mcp-test
+      CASSANDRA_SEEDS: 127.0.0.1
+      CASSANDRA_LISTEN_ADDRESS: 127.0.0.1
+      CASSANDRA_RPC_ADDRESS: 127.0.0.1
+      CASSANDRA_BROADCAST_ADDRESS: 127.0.0.1
+      CASSANDRA_BROADCAST_RPC_ADDRESS: 127.0.0.1
       HEAP_NEWSIZE: 128M
       MAX_HEAP_SIZE: 512M
-    ports:
-      - "9042:9042"
     volumes:
       - cassandra-data:/var/lib/cassandra
     healthcheck:
@@ -21,6 +25,7 @@ services:
     image: python:3.10-slim
     container_name: db-mcp-cassandra-seed
     restart: "no"
+    network_mode: host
     depends_on:
       cassandra:
         condition: service_healthy
@@ -28,7 +33,7 @@ services:
     volumes:
       - ..:/workspace/db-mcp-server
     environment:
-      DB_MCP_TEST_CASSANDRA_HOST: cassandra
+      DB_MCP_TEST_CASSANDRA_HOST: 127.0.0.1
       DB_MCP_TEST_CASSANDRA_PORT: '9042'
       DB_MCP_TEST_CASSANDRA_KEYSPACE: dbmcp_ecommerce
       DB_MCP_TEST_CASSANDRA_USERNAME: cassandra

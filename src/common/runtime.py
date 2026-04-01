@@ -21,6 +21,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -30,7 +31,7 @@ from sqlalchemy import Engine
 from cloud_dog_api_kit.auth import create_auth_dependency
 from cloud_dog_api_kit.routers.health import create_health_router
 from cloud_dog_db import DatabaseSettings, build_sync_engine, probe_database
-from cloud_dog_jobs import JobQueue, MemoryQueueBackend
+from cloud_dog_jobs import JobQueue, SQLQueueBackend
 from cloud_dog_logging import get_audit_logger, get_logger, setup_logging
 
 from src.common.auth import APIKeyAuthoriser
@@ -55,7 +56,8 @@ class RuntimeContext:
     auth: APIKeyAuthoriser
     metadata_engine: Engine
     audit_engine: Engine
-    job_backend: MemoryQueueBackend
+    job_backend: Any
+    job_backend_name: str
     job_queue: JobQueue
     access_control: AccessControlService
     connectors: ConnectorManager
@@ -65,6 +67,7 @@ class RuntimeContext:
     schema_changes: SchemaChangeService
     search: DiscoverySearchService
     env_files: list[str]
+    started_at: datetime
 
     def health_checks(self) -> dict[str, Callable[[], Any]]:
         """Return async health-check callables for API-kit routers."""
@@ -79,7 +82,7 @@ class RuntimeContext:
 
         async def jobs_check() -> dict[str, Any]:
             ok = self.job_queue.health()
-            return {"status": "ok" if ok else "error", "backend": "memory"}
+            return {"status": "ok" if ok else "error", "backend": self.job_backend_name}
 
         async def search_check() -> dict[str, Any]:
             return self.search.health_check()
@@ -132,7 +135,14 @@ class RuntimeFactory:
             audit_logger=audit_logger,
         )
         auth = APIKeyAuthoriser(access_control)
-        job_backend = MemoryQueueBackend()
+        job_database_url = str(
+            config.get("jobs.sql_database_url") or config.get("metadata_store.uri") or ""
+        ).strip()
+        if not job_database_url:
+            raise RuntimeError("Missing required configuration: jobs.sql_database_url or metadata_store.uri")
+
+        job_backend = SQLQueueBackend(database_url=job_database_url)
+        job_backend_name = "sql"
         job_queue = JobQueue(
             job_backend,
             payload_max_bytes=int(config.get("jobs.payload_max_bytes", 16384)),
@@ -141,6 +151,7 @@ class RuntimeFactory:
             "db-mcp-server runtime initialised",
             server_id=config.get("service_instance", "db-mcp-local"),
             env_files=env_files,
+            jobs_backend=job_backend_name,
         )
 
         runtime = RuntimeContext(
@@ -151,6 +162,7 @@ class RuntimeFactory:
             metadata_engine=metadata_engine,
             audit_engine=audit_engine,
             job_backend=job_backend,
+            job_backend_name=job_backend_name,
             job_queue=job_queue,
             access_control=access_control,
             connectors=None,  # type: ignore[arg-type]
@@ -160,6 +172,7 @@ class RuntimeFactory:
             schema_changes=None,  # type: ignore[arg-type]
             search=None,  # type: ignore[arg-type]
             env_files=env_files,
+            started_at=datetime.now(timezone.utc),
         )
         runtime.connectors = ConnectorManager(runtime)
         runtime.mongodb_connectors = MongoDBConnectorService(runtime)

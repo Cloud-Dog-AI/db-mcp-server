@@ -27,6 +27,7 @@ import pytest
 from pymongo import MongoClient
 
 from tests.helpers.mongo_runtime import cleanup_database, ensure_real_mongodb
+from tests.helpers.server_runtime import resolved_api_key, service_base_url
 
 pytestmark = [pytest.mark.integration, pytest.mark.timeout(240)]
 
@@ -69,10 +70,12 @@ def test_mongodb_mcp_tools_crud_lifecycle() -> None:
 
     _start_servers(root, env_file)
     try:
-        _wait("http://127.0.0.1:8088/health")
-        api = httpx.Client(base_url="http://127.0.0.1:8086", timeout=10.0)
-        mcp = httpx.Client(base_url="http://127.0.0.1:8088", timeout=10.0)
-        headers = {"X-API-Key": "test-api-key"}
+        api_base_url = service_base_url("api", env_file, default_tier="IT")
+        mcp_base_url = service_base_url("mcp", env_file, default_tier="IT")
+        _wait(f"{mcp_base_url}/health")
+        api = httpx.Client(base_url=api_base_url, timeout=10.0)
+        mcp = httpx.Client(base_url=mcp_base_url, timeout=10.0)
+        headers = {"X-API-Key": resolved_api_key(env_file, default_tier="IT")}
 
         profile_response = api.post(
             "/api/v1/profiles",

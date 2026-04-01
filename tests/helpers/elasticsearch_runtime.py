@@ -26,12 +26,16 @@ import os
 import socket
 import subprocess
 import time
+from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
 import requests
 
 ELASTICSEARCH_TEST_CONTAINER = "db-mcp-server-test-elasticsearch8"
+ELASTICSEARCH_COMPOSE_CONTAINER = "db-mcp-elasticsearch"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+ELASTICSEARCH_COMPOSE_FILE = PROJECT_ROOT / "docker" / "docker-compose.elasticsearch.yml"
 ELASTICSEARCH_DEFAULT_URL = os.getenv(
     "DB_MCP_TEST_ELASTICSEARCH_URL", "http://127.0.0.1:9201"
 )
@@ -56,6 +60,25 @@ def _port_open(host: str, port: int) -> bool:
         return False
     finally:
         sock.close()
+
+
+def _container_health(container_name: str) -> str:
+    result = subprocess.run(
+        [
+            "docker",
+            "inspect",
+            "--format",
+            "{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}",
+            container_name,
+        ],
+        check=False,
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
 
 
 def ensure_real_elasticsearch() -> str:
@@ -89,7 +112,7 @@ def ensure_real_elasticsearch() -> str:
         except requests.RequestException:
             pass
 
-    # Fall back to a local Docker container
+    # Fall back to the local Docker Compose runtime
     subprocess.run(
         ["docker", "rm", "-f", ELASTICSEARCH_TEST_CONTAINER],
         check=False,
@@ -99,35 +122,33 @@ def ensure_real_elasticsearch() -> str:
     subprocess.run(
         [
             "docker",
-            "run",
+            "compose",
+            "-f",
+            str(ELASTICSEARCH_COMPOSE_FILE),
+            "up",
             "-d",
-            "--name",
-            ELASTICSEARCH_TEST_CONTAINER,
-            "-p",
-            "9201:9200",
-            "-e",
-            "discovery.type=single-node",
-            "-e",
-            "xpack.security.enabled=false",
-            "-e",
-            "ES_JAVA_OPTS=-Xms512m -Xmx512m",
-            "docker.elastic.co/elasticsearch/elasticsearch:8.15.0",
+            "elasticsearch",
         ],
         check=True,
+        cwd=PROJECT_ROOT,
         stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
     local_url = "http://127.0.0.1:9201"
-    deadline = time.time() + 180
+    deadline = time.time() + 300
     while time.time() < deadline:
+        if _container_health(ELASTICSEARCH_COMPOSE_CONTAINER) != "healthy":
+            time.sleep(2)
+            continue
         try:
             response = requests.get(f"{local_url}/_cluster/health", timeout=5)
             if response.status_code == 200:
                 return local_url
         except requests.RequestException:
-            time.sleep(1)
+            time.sleep(2)
             continue
-        time.sleep(1)
+        time.sleep(2)
     pytest.fail("Elasticsearch test instance did not become ready")
 
 

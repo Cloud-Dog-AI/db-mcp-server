@@ -20,13 +20,116 @@
 
 from __future__ import annotations
 
+import json
+import os
+import resource
+import shutil
+from datetime import datetime, timezone
+from pathlib import Path
+
 from fastapi import APIRouter
 
 from cloud_dog_api_kit import create_app, success_envelope
+from cloud_dog_logging.middleware.audit import AuditMiddleware
 
 from src.common.http import APIKeyAuthMiddleware
 from src.common.runtime import RuntimeFactory, build_health_router
 from src.servers.api.access_control import create_access_control_router
+
+
+def _checked_out_connections(runtime) -> int:
+    """Return the current checked-out SQLAlchemy connection count."""
+    total = 0
+    for engine in (runtime.metadata_engine, runtime.audit_engine):
+        pool = getattr(engine, "pool", None)
+        checked_out = getattr(pool, "checkedout", None)
+        if callable(checked_out):
+            total += int(checked_out())
+    return total
+
+
+def _resource_metrics(runtime) -> dict[str, object]:
+    """Build structured host and service metrics for the dashboard."""
+    uptime_seconds = int((datetime.now(timezone.utc) - runtime.started_at).total_seconds())
+    rss_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    memory_mb = round(rss_kb / 1024, 2)
+    cpu_count = os.cpu_count() or 1
+    try:
+        cpu_percent = round((os.getloadavg()[0] / cpu_count) * 100, 2)
+    except OSError:
+        cpu_percent = 0.0
+    disk = shutil.disk_usage(Path.cwd())
+    disk_percent = round((disk.used / disk.total) * 100, 2) if disk.total else 0.0
+    return {
+        "uptime": uptime_seconds,
+        "memory_mb": memory_mb,
+        "cpu_percent": cpu_percent,
+        "disk_percent": disk_percent,
+        "active_connections": _checked_out_connections(runtime),
+    }
+
+
+def _serialise_job(job) -> dict[str, object]:
+    """Convert a platform job record into a JSON-safe response payload."""
+    status = getattr(job.status, "value", str(job.status))
+    created_at = job.created_at.isoformat() if job.created_at else None
+    updated_at = job.updated_at.isoformat() if job.updated_at else None
+    progress = {
+        "queued": 0,
+        "running": 50,
+        "completed": 100,
+        "failed": 100,
+        "cancelled": 100,
+    }.get(str(status), None)
+    duration_seconds = None
+    if job.created_at and job.updated_at:
+        duration_seconds = max(int((job.updated_at - job.created_at).total_seconds()), 0)
+    return {
+        "id": job.job_id,
+        "name": job.job_type,
+        "queue_name": job.queue_name,
+        "status": status,
+        "progress": progress,
+        "created_at": created_at,
+        "updated_at": updated_at,
+        "duration_seconds": duration_seconds,
+        "correlation_id": job.correlation_id,
+        "user_id": job.user_id,
+        "payload": job.payload,
+    }
+
+
+def _read_log_entries(surface: str, limit: int) -> list[dict[str, object]]:
+    """Read JSON log entries for a server surface from the local log file."""
+    log_path = Path("logs") / f"{surface}.log"
+    if not log_path.exists():
+        return []
+    entries: list[dict[str, object]] = []
+    for line in log_path.read_text(encoding="utf-8").splitlines():
+        record = line.strip()
+        if not record.startswith("{"):
+            continue
+        try:
+            payload = json.loads(record)
+        except json.JSONDecodeError:
+            continue
+        message = str(payload.get("message", "")).strip()
+        if not message:
+            continue
+        logger_name = str(payload.get("logger", surface))
+        correlation_id = str(payload.get("correlation_id", "")).strip() or "-"
+        entries.append(
+            {
+                "id": correlation_id if correlation_id != "-" else f"{surface}:{len(entries)}",
+                "timestamp": payload.get("timestamp"),
+                "level": payload.get("level", "INFO"),
+                "logger": logger_name,
+                "message": message,
+                "correlation_id": correlation_id,
+                "source": logger_name,
+            }
+        )
+    return list(reversed(entries[-max(1, min(limit, 500)):]))
 
 
 def create_api_app(explicit_env_files: list[str] | None = None):
@@ -37,6 +140,7 @@ def create_api_app(explicit_env_files: list[str] | None = None):
         version=str(runtime.config.get("app.version", "0.1.0")),
         enable_health=False,
         cors_origins=list(runtime.config.get("api_server.cors_origins", [])),
+        enable_audit_logging=False,
     )
     app.state.runtime = runtime
     app.include_router(build_health_router(runtime, "db-mcp-server-api"))
@@ -53,6 +157,11 @@ def create_api_app(explicit_env_files: list[str] | None = None):
             "/openapi.json",
         },
     )
+    # W28A-529: Outermost audit middleware — captures auth failures (401/403)
+    # that are returned by APIKeyAuthMiddleware before reaching create_app()'s
+    # inner AuditMiddleware.  The inner copy is skipped for paths already
+    # audited here (duplicate suppression is handled by the ASGI ordering).
+    app.add_middleware(AuditMiddleware)
 
     router = APIRouter(prefix="/api/v1", tags=["api"])
 
@@ -63,20 +172,55 @@ def create_api_app(explicit_env_files: list[str] | None = None):
             {
                 "service": "db-mcp-server",
                 "surface": "api",
-                "jobs_backend": "memory",
+                "jobs_backend": runtime.job_backend_name,
                 "metadata_store": str(runtime.config.get("metadata_store.uri")),
             }
         )
 
-    @router.get("/jobs/health")
-    async def jobs_health() -> dict:
-        """Return queue health and current queue counters."""
+    @router.get("/jobs/status")
+    async def jobs_status() -> dict:
+        """Return queue status counters from the configured platform backend."""
         return success_envelope(
             {
-                "ok": runtime.job_queue.health(),
+                "backend": runtime.job_backend_name,
                 "queue_status": runtime.job_backend.get_queue_status(),
             }
         )
+
+    @router.get("/metrics")
+    async def metrics() -> dict:
+        """Return structured resource metrics for the db-mcp dashboard."""
+        return success_envelope(_resource_metrics(runtime))
+
+    @router.get("/logs")
+    async def logs(surface: str = "api", limit: int = 200) -> dict:
+        """Return parsed JSON log entries for the requested server surface."""
+        return success_envelope(
+            {
+                "surface": surface,
+                "items": _read_log_entries(surface, limit),
+            }
+        )
+
+    @router.get("/jobs")
+    async def jobs(limit: int = 50, job_type: str | None = None) -> dict:
+        """Return recent platform jobs for the jobs page."""
+        return success_envelope(
+            {
+                "items": [_serialise_job(job) for job in runtime.job_queue.list(limit=limit, job_type=job_type)],
+            }
+        )
+
+    @router.get("/jobs/{job_id}")
+    async def get_job(job_id: str) -> dict:
+        """Return a single platform job by identifier."""
+        job = runtime.job_queue.get(job_id)
+        return success_envelope(_serialise_job(job) if job else {})
+
+    @router.post("/jobs/{job_id}/cancel")
+    async def cancel_job(job_id: str) -> dict:
+        """Cancel a running or queued platform job."""
+        return success_envelope({"cancelled": runtime.job_queue.cancel(job_id), "job_id": job_id})
 
     app.include_router(router)
     app.include_router(create_access_control_router(runtime))

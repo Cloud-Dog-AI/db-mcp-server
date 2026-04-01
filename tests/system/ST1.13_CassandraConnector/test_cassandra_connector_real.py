@@ -25,8 +25,9 @@ import os
 import pytest
 
 from src.core.connectors.cassandra.adapter import CassandraConnector
+from tests.helpers.cassandra_runtime import ensure_real_cassandra
 
-pytestmark = [pytest.mark.system, pytest.mark.timeout(120)]
+pytestmark = [pytest.mark.system, pytest.mark.timeout(240)]
 
 CASSANDRA_HOST = os.getenv("DB_MCP_TEST_CASSANDRA_HOST", "127.0.0.1")
 CASSANDRA_PORT = int(os.getenv("DB_MCP_TEST_CASSANDRA_PORT", "9042"))
@@ -36,8 +37,9 @@ KEYSPACE = os.getenv("DB_MCP_TEST_CASSANDRA_KEYSPACE", "dbmcp_ecommerce")
 def _ensure_cassandra() -> CassandraConnector:
     """Connect to Cassandra or fail (not skip) if unavailable."""
     try:
+        host, port, _ = ensure_real_cassandra()
         connector = CassandraConnector(
-            host=CASSANDRA_HOST, port=CASSANDRA_PORT, timeout_seconds=15
+            host=host, port=port, timeout_seconds=15
         )
         connector.validate_profile()
         return connector

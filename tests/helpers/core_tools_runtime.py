@@ -29,10 +29,11 @@ import httpx
 
 from tests.fixtures.seed_data import clone_seed_collections
 from tests.helpers.mongo_runtime import ensure_real_mongodb
+from tests.helpers.server_runtime import resolved_api_key, service_base_url
 
-API_BASE_URL = "http://127.0.0.1:8086"
-MCP_BASE_URL = "http://127.0.0.1:8088"
-TEST_HEADERS = {"X-API-Key": "test-api-key"}
+API_BASE_URL = service_base_url("api")
+MCP_BASE_URL = service_base_url("mcp")
+TEST_HEADERS = {"X-API-Key": resolved_api_key()}
 
 
 def _read_env_map(env_file: Path) -> dict[str, str]:

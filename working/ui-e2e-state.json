@@ -1,16 +1,16 @@
 {
-  "profile_id": "839c07f1-63c6-47bc-ae24-7bd89d051f4d",
+  "profile_id": "eaa3cb19-e9c1-4cf0-b4e2-33374d42caa9",
   "profile_name": "ui-e2e-profile",
   "namespace": "dbmcp_ui_e2e",
   "mongo_uri": "mongodb://127.0.0.1:27018",
   "sync_result": {
-    "job_id": "b7c8e763-7056-4a8e-9c01-53e0082866d7",
+    "job_id": "96972e83-dc5c-4a4a-92b4-090b8fd88b6c",
     "job_status": "succeeded",
     "profile_status": {
-      "profile_id": "839c07f1-63c6-47bc-ae24-7bd89d051f4d",
-      "last_job_id": "b7c8e763-7056-4a8e-9c01-53e0082866d7",
+      "profile_id": "eaa3cb19-e9c1-4cf0-b4e2-33374d42caa9",
+      "last_job_id": "96972e83-dc5c-4a4a-92b4-090b8fd88b6c",
       "last_job_status": "succeeded",
-      "last_synced_at": "2026-03-25T08:57:54.793769+00:00",
+      "last_synced_at": "2026-03-30T18:06:18.391223+00:00",
       "freshness_state": "fresh",
       "namespace_count": 1,
       "entity_count": 5,

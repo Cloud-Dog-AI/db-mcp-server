@@ -27,6 +27,8 @@ from pathlib import Path
 import httpx
 import pytest
 
+from tests.helpers.server_runtime import service_base_url
+
 pytestmark = [pytest.mark.system, pytest.mark.timeout(120)]
 
 
@@ -41,10 +43,10 @@ def test_all_servers_start_and_report_health() -> None:
     try:
         deadline = time.time() + 90
         urls = [
-            "http://127.0.0.1:8086/health",
-            "http://127.0.0.1:8087/health",
-            "http://127.0.0.1:8088/health",
-            "http://127.0.0.1:8089/health",
+            f"{service_base_url('api', env_file)}/health",
+            f"{service_base_url('web', env_file)}/health",
+            f"{service_base_url('mcp', env_file)}/health",
+            f"{service_base_url('a2a', env_file)}/health",
         ]
         for url in urls:
             while True:

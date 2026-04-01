@@ -32,8 +32,8 @@ def main() -> None:
     config = load_runtime_config()
     uvicorn.run(
         create_mcp_app(),
-        host=str(config.get("mcp_server.host", "0.0.0.0")),
-        port=int(config.get("mcp_server.port", 8088)),
+        host=str(config.get("mcp_server.host")),
+        port=int(config.get("mcp_server.port")),
         log_level=str(config.get("log.level", "info")).lower(),
     )
 

@@ -659,7 +659,7 @@ class CassandraConnector:
     # ------------------------------------------------------------------
 
     def _ensure_namespace(self, namespace: str) -> None:
-        """Verify that the namespace (keyspace) exists."""
+        """Ensure the keyspace exists, creating it if missing (lazy auto-create)."""
         if not namespace:
             raise ValueError("Namespace (keyspace) is required for Cassandra operations")
         rows = self._session.execute(
@@ -667,7 +667,10 @@ class CassandraConnector:
             (namespace,),
         )
         if not rows.one():
-            raise ValueError(f"Unknown Cassandra keyspace: {namespace}")
+            self._session.execute(
+                f"CREATE KEYSPACE IF NOT EXISTS {namespace} "
+                "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}"
+            )
 
     def _get_partition_keys(self, namespace: str, entity: str) -> list[str]:
         """Return the partition key column names for a table."""

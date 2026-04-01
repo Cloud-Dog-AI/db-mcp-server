@@ -32,8 +32,8 @@ def main() -> None:
     config = load_runtime_config()
     uvicorn.run(
         create_web_app(),
-        host=str(config.get("web_server.host", "0.0.0.0")),
-        port=int(config.get("web_server.port", 8087)),
+        host=str(config.get("web_server.host")),
+        port=int(config.get("web_server.port")),
         log_level=str(config.get("log.level", "info")).lower(),
     )
 

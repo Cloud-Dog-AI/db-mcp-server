@@ -28,9 +28,36 @@ from typing import Any
 import httpx
 from pymongo import MongoClient
 
+from src.common.config_loader import load_runtime_config
+
 ROOT = Path(__file__).resolve().parents[1]
-API_BASE_URL = os.environ.get("DB_MCP_UI_API_BASE_URL", "http://127.0.0.1:8086").rstrip("/")
-MCP_BASE_URL = os.environ.get("DB_MCP_UI_MCP_BASE_URL", "http://127.0.0.1:8088").rstrip("/")
+
+
+def _runtime_config():
+    env_file = os.environ.get("DB_MCP_SERVER_ENV_FILE", "tests/env-AT")
+    return load_runtime_config([env_file])
+
+
+def _loopback_host(host: str | None) -> str:
+    resolved = str(host or "").strip()
+    if resolved in {"", "0.0.0.0", "::"}:
+        return "127.0.0.1"
+    return resolved
+
+
+def _base_url(env_var: str, surface: str) -> str:
+    override = os.environ.get(env_var)
+    if override:
+        return override.rstrip("/")
+    config = _runtime_config()
+    return (
+        f"http://{_loopback_host(config.get(f'{surface}_server.host'))}:"
+        f"{int(config.get(f'{surface}_server.port'))}"
+    )
+
+
+API_BASE_URL = _base_url("DB_MCP_UI_API_BASE_URL", "api")
+MCP_BASE_URL = _base_url("DB_MCP_UI_MCP_BASE_URL", "mcp")
 API_KEY = os.environ.get("DB_MCP_UI_API_KEY", "test-api-key")
 PROFILE_NAME = os.environ.get("DB_MCP_UI_PROFILE_NAME", "ui-e2e-profile")
 NAMESPACE = os.environ.get("DB_MCP_UI_NAMESPACE", "dbmcp_ui_e2e")

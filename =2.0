@@ -1,0 +1,10 @@
+Collecting hvac
+  Using cached hvac-2.4.0-py3-none-any.whl.metadata (3.3 kB)
+Requirement already satisfied: requests<3.0.0,>=2.27.1 in ./venv/lib/python3.10/site-packages (from hvac) (2.32.5)
+Requirement already satisfied: charset_normalizer<4,>=2 in ./venv/lib/python3.10/site-packages (from requests<3.0.0,>=2.27.1->hvac) (3.4.6)
+Requirement already satisfied: idna<4,>=2.5 in ./venv/lib/python3.10/site-packages (from requests<3.0.0,>=2.27.1->hvac) (3.11)
+Requirement already satisfied: urllib3<3,>=1.21.1 in ./venv/lib/python3.10/site-packages (from requests<3.0.0,>=2.27.1->hvac) (2.6.3)
+Requirement already satisfied: certifi>=2017.4.17 in ./venv/lib/python3.10/site-packages (from requests<3.0.0,>=2.27.1->hvac) (2026.2.25)
+Using cached hvac-2.4.0-py3-none-any.whl (155 kB)
+Installing collected packages: hvac
+Successfully installed hvac-2.4.0

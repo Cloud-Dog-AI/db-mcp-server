@@ -32,8 +32,8 @@ def main() -> None:
     config = load_runtime_config()
     uvicorn.run(
         create_a2a_app(),
-        host=str(config.get("a2a_server.host", "0.0.0.0")),
-        port=int(config.get("a2a_server.port", 8089)),
+        host=str(config.get("a2a_server.host")),
+        port=int(config.get("a2a_server.port")),
         log_level=str(config.get("log.level", "info")).lower(),
     )
 

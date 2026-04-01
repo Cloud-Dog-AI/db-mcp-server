@@ -5,12 +5,14 @@ services:
     build:
       context: ..
       dockerfile: db-mcp-server/Dockerfile
+    env_file:
+      - ../tests/env-ST
     environment:
       DB_MCP_SERVER_ENV_FILE: tests/env-ST
       CLOUD_DOG__AUTH__API_KEY: test-api-key
     ports:
-      - "8086:8086"
-      - "8087:8087"
-      - "8088:8088"
-      - "8089:8089"
+      - "${CLOUD_DOG__API_SERVER__PORT}:${CLOUD_DOG__API_SERVER__PORT}"
+      - "${CLOUD_DOG__WEB_SERVER__PORT}:${CLOUD_DOG__WEB_SERVER__PORT}"
+      - "${CLOUD_DOG__MCP_SERVER__PORT}:${CLOUD_DOG__MCP_SERVER__PORT}"
+      - "${CLOUD_DOG__A2A_SERVER__PORT}:${CLOUD_DOG__A2A_SERVER__PORT}"
     command: ["bash", "-lc", "./server_control.sh --env tests/env-ST start all && tail -f logs/api.log logs/web.log logs/mcp.log logs/a2a.log"]

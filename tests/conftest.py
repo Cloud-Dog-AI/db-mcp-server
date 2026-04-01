@@ -21,8 +21,11 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import time
 from pathlib import Path
 
+import httpx
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -78,3 +81,42 @@ def pytest_configure(config: pytest.Config) -> None:
     os.environ.setdefault("DB_MCP_SERVER_ENV_FILE", str(env_files[0]))
     for env_path in env_files:
         _load_env_file(env_path)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def ensure_application_stack(request: pytest.FixtureRequest):
+    """Start the four-surface stack for application tests via server_control.sh."""
+    if request.node.get_closest_marker("application") is None:
+        yield
+        return
+
+    from tests.helpers.server_runtime import resolve_env_file, service_base_url
+
+    env_file = resolve_env_file(os.environ.get("DB_MCP_SERVER_ENV_FILE"), default_tier="AT")
+    control = PROJECT_ROOT / "server_control.sh"
+
+    subprocess.run(["bash", str(control), "--env", str(env_file), "stop", "all"], check=False, cwd=PROJECT_ROOT)
+    subprocess.run(["bash", str(control), "--env", str(env_file), "start", "all"], check=True, cwd=PROJECT_ROOT)
+
+    deadline = time.time() + 90
+    health_urls = [
+        f"{service_base_url('api', env_file)}/health",
+        f"{service_base_url('web', env_file)}/health",
+        f"{service_base_url('mcp', env_file)}/health",
+        f"{service_base_url('a2a', env_file)}/health",
+    ]
+
+    try:
+        for url in health_urls:
+            while time.time() < deadline:
+                try:
+                    if httpx.get(url, timeout=5.0).status_code == 200:
+                        break
+                except httpx.HTTPError:
+                    pass
+                time.sleep(1)
+            else:
+                pytest.fail(f"Timed out waiting for application stack health endpoint: {url}")
+        yield
+    finally:
+        subprocess.run(["bash", str(control), "--env", str(env_file), "stop", "all"], check=True, cwd=PROJECT_ROOT)

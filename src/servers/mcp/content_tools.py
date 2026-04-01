@@ -20,11 +20,49 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 from typing import Any
 
+from bson.binary import Binary
 from cloud_dog_api_kit import ToolContract
+from cloud_dog_api_kit.errors import ValidationError
 
 from src.core.filters import parse_filter
+
+
+def _coerce_binary_value(value: Any) -> Any:
+    """Convert JSON-safe binary envelopes into BSON Binary values.
+
+    The MCP and API surfaces accept binary payloads using a structured JSON
+    envelope because raw bytes are not JSON serialisable:
+
+    ``{"__type__": "binary", "encoding": "hex"|"base64", "data": "..."}``
+    """
+
+    if isinstance(value, list):
+        return [_coerce_binary_value(item) for item in value]
+    if not isinstance(value, dict):
+        return value
+
+    marker = str(value.get("__type__", "") or "").strip().lower()
+    if marker == "binary":
+        encoding = str(value.get("encoding", "hex") or "hex").strip().lower()
+        payload = value.get("data")
+        if not isinstance(payload, str) or not payload.strip():
+            raise ValidationError(message="Binary envelope requires non-empty string data")
+        try:
+            if encoding == "hex":
+                raw = bytes.fromhex(payload.strip())
+            elif encoding == "base64":
+                raw = base64.b64decode(payload.strip(), validate=True)
+            else:
+                raise ValidationError(message=f"Unsupported binary encoding: {encoding}")
+        except (ValueError, binascii.Error) as exc:
+            raise ValidationError(message=f"Invalid {encoding} binary payload") from exc
+        return Binary(raw)
+
+    return {key: _coerce_binary_value(item) for key, item in value.items()}
 
 
 def build_content_tool_registry(runtime) -> dict[str, ToolContract]:
@@ -77,7 +115,10 @@ def build_content_tool_registry(runtime) -> dict[str, ToolContract]:
             documents = payload.get("documents")
             if documents is None:
                 documents = [payload.get("document") or {}]
-            created = [session.connector.create(namespace, entity, item) for item in list(documents)]
+            created = [
+                session.connector.create(namespace, entity, _coerce_binary_value(item))
+                for item in list(documents)
+            ]
             if len(created) == 1 and not bulk_mode:
                 single = created[0]
                 single["document"] = connectors.mask_record(profile_id, single.get("document", {}))
@@ -104,7 +145,12 @@ def build_content_tool_registry(runtime) -> dict[str, ToolContract]:
         def callback(session):
             connectors.ensure_entity_allowed(session.profile, namespace, entity)
             filter_query = session.translator.translate(parse_filter(payload.get("filter")))
-            return session.connector.update(namespace, entity, filter_query, payload.get("update") or {})
+            return session.connector.update(
+                namespace,
+                entity,
+                filter_query,
+                _coerce_binary_value(payload.get("update") or {}),
+            )
 
         return connectors.execute(
             request,
