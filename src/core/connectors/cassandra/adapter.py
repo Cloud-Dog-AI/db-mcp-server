@@ -747,6 +747,25 @@ class CassandraConnector:
         else:
             result = dict(row)
         for key, value in result.items():
-            if isinstance(value, date) and not isinstance(value, datetime):
-                result[key] = value.isoformat()
+            result[key] = CassandraConnector._normalise_value(value)
         return result
+
+    @staticmethod
+    def _normalise_value(value: Any) -> Any:
+        """Convert Cassandra-specific scalar values into JSON-safe primitives."""
+        if isinstance(value, datetime):
+            return value.isoformat()
+        if isinstance(value, date):
+            return value.isoformat()
+        if isinstance(value, dict):
+            return {key: CassandraConnector._normalise_value(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple, set)):
+            return [CassandraConnector._normalise_value(item) for item in value]
+        if hasattr(value, "isoformat") and callable(value.isoformat):
+            try:
+                return value.isoformat()
+            except Exception:
+                pass
+        if value.__class__.__name__ == "Date":
+            return str(value)
+        return value

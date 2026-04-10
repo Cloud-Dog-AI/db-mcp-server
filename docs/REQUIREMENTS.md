@@ -1,14 +1,15 @@
 # db-mcp-server — REQUIREMENTS
 ## W28A-421 Review Status
 - Reviewed for external/shareable publication during W28A-421.
-- Source basis: `defaults.yaml`, 4 server source files, 31 discovered routes/endpoints, and 46 MCP tools.
+- Source basis: `defaults.yaml`, current server and connector source, current db-mcp WebUI routes, and current MCP tool registry definitions.
+- W28A-871 Phase 1 refresh: source-verified 7 connector adapters, 18 routed WebUI pages, 45 `ToolContract` MCP tools plus the legacy MCP alias path enabled by `include_legacy_tools_alias=True`.
 - Internal-only absolute paths, environment-specific hosts, and private registries have been removed from this shareable document set.
 
-**Version:** 0.1 • 2026-03-21
-**Status:** Planning
+**Version:** 0.2 • 2026-04-09
+**Status:** Planning + W28A-871 Phase 1 merge
 
 ## Executive Summary
-`db-mcp-server` is a planned Cloud-Dog AI MCP and admin service for NoSQL/search platform discovery, schema inspection, structured content operations, relationship management, and discovery indexing. Phase 1 focuses on MongoDB, CouchDB, OpenSearch, Elasticsearch, and Cassandra using a profile-based connection model with RBAC, structured filters instead of free-text query generation, auditable schema-change workflows, and indexed discovery/search.
+`db-mcp-server` is a Cloud-Dog AI MCP and admin service for multi-connector discovery, schema inspection, structured content operations, relationship management, and discovery indexing. The current Phase 1 specification covers seven connectors: MongoDB, PostgreSQL, MariaDB, CouchDB, OpenSearch, Elasticsearch, and Cassandra. The service uses a profile-based connection model with RBAC, structured filters instead of free-text query generation, auditable schema-change workflows, and indexed discovery/search.
 
 ## Platform Alignment
 - Configuration: `cloud_dog_config`
@@ -286,3 +287,60 @@ The system shall be maintainable through connector isolation, platform package r
 Acceptance criteria:
 - connector-per-source isolation is documented
 - implementation backlog is split into sequenced follow-up tasks
+
+## W28A-871 Spec Merge — Source-Verified Requirement Matrix
+
+This section merges the W28A-871 sections `a` through `g` into the published requirements set. Each merged requirement is marked `EXISTING` when it is already materially covered by the earlier requirements above, or `NEW` when W28A-871 adds a concrete requirement that was not previously stated with sufficient specificity.
+
+| ID | Section | Status | Requirement | Existing anchors |
+|----|---------|--------|-------------|------------------|
+| A1 | Profile Configuration | EXISTING | The system shall provide CRUD management for connection profiles across API, MCP, A2A, and Web UI surfaces. | CFG-01, AC-01, AC-05, AC-06 |
+| A2 | Profile Configuration | NEW | The system shall publish connector profile templates and validation guidance for all seven Phase 1 connectors: MongoDB, PostgreSQL, MariaDB, CouchDB, OpenSearch, Elasticsearch, and Cassandra. | CFG-02, CN-01..CN-05 |
+| A3 | Profile Configuration | EXISTING | Profiles shall remain scope boundaries for namespaces, entities, API keys, and allowed permissions, with role-aware access checks and audit events. | AC-01, AC-02, AC-04, AC-06 |
+| A4 | Profile Configuration | NEW | Per-tool RBAC coverage shall be documented and kept aligned with the built-in five-role permission model, including explicit review of any tool/role naming mismatches. | AC-04 |
+| B1 | Catalogue | EXISTING | The system shall browse namespaces and entities per profile and per connector using auditable discovery flows. | CD-01, CD-02 |
+| B2 | Catalogue | NEW | Catalogue views shall expose profile-scoped navigation from namespace browsing to entity detail and data browser flows without losing profile context. | CD-02, SC-01 |
+| C1 | Entity Detail | EXISTING | Entity detail shall expose schema, fields, indexes, relationship metadata, and sample-shape introspection for the selected entity. | SC-01, RL-01 |
+| C2 | Entity Detail | NEW | Entity detail shall distinguish source-specific metadata from normalised summaries and show relationship provenance and sample data evidence where available. | SC-01, RL-01 |
+| D1 | Data Browser | EXISTING | The service shall support structured filter-builder driven reads, counts, existence checks, projection, sorting, and paging. | CO-01, CO-05 |
+| D2 | Data Browser | NEW | The Web UI data browser shall present queryable results with pagination, dynamic columns, and explicit empty/error/loading states rather than raw JSON-only result cards. | CO-01, CO-05 |
+| D3 | Data Browser | EXISTING | Data browser access shall be profile-scoped, RBAC-enforced, and auditable for read and mutation flows. | CO-02, CO-04, AC-01, AC-02 |
+| E1 | Search | EXISTING | The system shall support profile-scoped metadata discovery across profiles, namespaces, entities, fields, and relationships. | CD-03, SI-01, SI-02 |
+| E2 | Search | EXISTING | The system shall support content search plus explain-style search result interpretation where connector capabilities allow. | SI-02, SI-03 |
+| E3 | Search | NEW | Search and indexing requirements shall explicitly cover deterministic explain/debug output, refresh expectations, and audit visibility for discovery-index maintenance. | SI-01, SI-04, AC-02 |
+| F1 | Relationships | EXISTING | The system shall list declared, curated, and inferred relationships with provenance and profile scoping. | RL-01 |
+| F2 | Relationships | EXISTING | The system shall support curated relationship create/update/delete flows and candidate inference with review before promotion. | RL-02, RL-03 |
+| G1 | Multi-Connector Verification | NEW | The published requirements shall include a seven-connector verification matrix covering MongoDB, PostgreSQL, MariaDB, CouchDB, OpenSearch, Elasticsearch, and Cassandra. | CN-01..CN-05 |
+| G2 | Multi-Connector Verification | NEW | The published requirements shall identify the preprod/runtime overlay inputs required to exercise each connector safely in ST/IT/AT tiers. | CFG-03, NF-02 |
+| G3 | Multi-Connector Verification | NEW | Each connector shall have a minimum lifecycle verification path: create profile, discover namespaces/entities, run a representative query, and verify the result through the service interfaces. | CD-01, CD-02, CO-01, SI-02 |
+
+## W28A-871 Source-Verified Notes
+
+- Source tree currently contains connector adapters for `mongodb`, `postgresql`, `mariadb`, `couchdb`, `opensearch`, `elasticsearch`, and `cassandra`.
+- The current MCP source defines 45 `ToolContract` tools. `docs/MCP_DOCUMENTATION.md` still states 46 tools because the runtime also enables a legacy alias path; there is no source evidence in this repo for the 56-tool count cited in the W28A-871 context paragraph.
+- The current db-mcp WebUI exposes 18 routed pages excluding redirects: dashboard, profiles, users, groups, API keys, RBAC, catalogue, entity detail, data browser, search, relationships, schema planner, audit, jobs, MCP console, A2A console, API docs, and settings.
+
+
+## W28A-883 PS-78 Cross-Platform File Handling Addendum
+
+### Verified current state
+
+- Current source evidence shows binary-envelope handling in MCP content tools, but no standard service file lifecycle API.
+- `cloud_dog_storage` is currently used for SPA/static file serving and common local path helpers, not for end-user file lifecycle features.
+- No dedicated WebUI file upload/download/browser surface was found.
+
+### Required additions to satisfy PS-78
+
+- Add a `cloud_dog_storage`-backed file lifecycle module with `/files/upload`, `/files/upload_base64`, `/files`, `/files/{id}`, `DELETE /files/{id}`, and `/files/{id}/download`.
+- Add MCP `file_upload` and `file_download` tools using base64 payloads instead of relying only on generic binary envelopes.
+- Add A2A file transfer conventions for connector-bound data artifacts.
+- Add WebUI file upload/download/browser surfaces for connector exports and operator-provided files.
+- Add chat/delegated file handling requirements for downstream consumers.
+
+### Required PS-78 test plan
+
+- API: upload, list, metadata, download, delete.
+- MCP: base64 upload/download and URI-source import.
+- A2A: transfer file-bearing database artifacts between agents.
+- WebUI: upload control, browser/inventory, download, delete.
+- Connector flow: verify a connector-generated artifact can be stored, listed, downloaded, and deleted through the standard file lifecycle.

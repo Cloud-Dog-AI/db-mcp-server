@@ -23,7 +23,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from cloud_dog_api_kit import ToolContract
-from cloud_dog_logging import Actor
+from cloud_dog_logging import Actor, Target
 
 
 def build_search_tool_registry(runtime) -> dict[str, ToolContract]:
@@ -57,6 +57,7 @@ def build_search_tool_registry(runtime) -> dict[str, ToolContract]:
                 params={"profile_id": profile_id, "target": audit_target_id},
                 outcome="failure",
                 duration_ms=0,
+                target=Target(type="search", id=audit_target_id or "unknown"),
                 error=str(exc),
             )
             raise
@@ -66,6 +67,7 @@ def build_search_tool_registry(runtime) -> dict[str, ToolContract]:
             params={"profile_id": profile_id, "target": audit_target_id},
             outcome="success",
             duration_ms=0,
+            target=Target(type="search", id=audit_target_id or "unknown"),
         )
         return result
 

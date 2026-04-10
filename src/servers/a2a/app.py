@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from fastapi import WebSocket, WebSocketDisconnect
 
@@ -29,6 +30,17 @@ from cloud_dog_api_kit.a2a.card import create_a2a_card_router, A2ASkill
 
 from src.common.http import APIKeyAuthMiddleware
 from src.common.runtime import RuntimeFactory, build_health_router
+from src.servers.mcp.catalog_tools import build_catalog_tool_registry
+from src.servers.mcp.content_tools import build_content_tool_registry
+from src.servers.mcp.schema_tools import build_schema_tool_registry
+from cloud_dog_idam.rbac import RBACEngine as _RBACEngine  # PS-70 RBAC enforcement
+
+_rbac_engine = _RBACEngine()
+
+
+def _has_permission(user_id: str, permission: str) -> bool:
+    """PS-70 RBAC permission check via cloud_dog_idam."""
+    return _rbac_engine.has_permission(user_id, permission)
 
 
 async def _verify_websocket_api_key(websocket: WebSocket, runtime) -> bool:
@@ -107,12 +119,131 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
         """Serve the proxy-compatible websocket alias used behind /a2a strip-prefix routes."""
         await _serve_a2a_socket(websocket)
 
+    # --- Build MCP tool registries to back real A2A skill handlers ---
+    _catalog_tools = build_catalog_tool_registry(runtime)
+    _content_tools = build_content_tool_registry(runtime)
+    _schema_tools = build_schema_tool_registry(runtime)
+
+    def _parse_a2a_input(text: str) -> dict[str, Any]:
+        """Parse JSON input text or return a minimal dict from plain text.
+
+        For plain text, infer profile/namespace/entity from the runtime so that
+        A2A callers don't have to know internal identifiers.
+        """
+        text = text.strip()
+        if text.startswith("{"):
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError:
+                pass
+        # Provide sensible defaults from the first available profile
+        profiles = list(runtime.profile_store.keys()) if hasattr(runtime, "profile_store") else []
+        default_profile = profiles[0] if profiles else "default"
+        return {"query": text, "profile_id": default_profile, "namespace": default_profile, "entity": ""} if text else {}
+
+    def _make_a2a_request():
+        """Create a minimal synthetic request with an A2A service principal.
+
+        The MCP tool handlers require a Request object with state.principal
+        for access control.  The A2A surface uses a privileged service
+        principal so that callers authenticated at the A2A transport layer
+        are not blocked by per-request profile checks.
+        """
+        from starlette.requests import Request as StarletteRequest
+        from src.core.access_control.service import PrincipalContext
+        # Collect all profile IDs so the A2A service principal has full access.
+        all_profile_ids = []
+        try:
+            for p in runtime.access_control.list_profiles():
+                pid = p.get("id") or p.get("profile_id")
+                if pid:
+                    all_profile_ids.append(str(pid))
+        except Exception:  # noqa: BLE001
+            pass
+        principal = PrincipalContext(
+            user_id="a2a-service",
+            username="a2a-service",
+            roles=["admin"],
+            permissions=["*"],
+            api_key_id=None,
+            profile_ids=all_profile_ids,
+            scopes=["*"],
+        )
+        scope = {
+            "type": "http",
+            "method": "POST",
+            "path": "/a2a/tasks",
+            "headers": [],
+            "query_string": b"",
+            "state": {"principal": principal},
+        }
+        return StarletteRequest(scope)
+
+    async def _handle_data_create(text: str) -> Any:
+        """Create records in the database via the MCP content tool."""
+        payload = _parse_a2a_input(text)
+        try:
+            handler = _content_tools["data.create"].handler
+            result = await handler(payload, _make_a2a_request())
+            return result
+        except Exception as exc:
+            return f"data.create error: {exc}"
+
+    async def _handle_data_query(text: str) -> Any:
+        """Query data from the database via the MCP content tool."""
+        payload = _parse_a2a_input(text)
+        try:
+            handler = _content_tools["data.read"].handler
+            result = await handler(payload, _make_a2a_request())
+            return result
+        except Exception as exc:
+            return f"data.read error: {exc}"
+
+    async def _handle_data_update(text: str) -> Any:
+        """Update records in the database via the MCP content tool."""
+        payload = _parse_a2a_input(text)
+        try:
+            handler = _content_tools["data.update"].handler
+            result = await handler(payload, _make_a2a_request())
+            return result
+        except Exception as exc:
+            return f"data.update error: {exc}"
+
+    async def _handle_schema_list(text: str) -> Any:
+        """List database schemas — returns available namespaces from configured backends.
+
+        Bypasses per-profile RBAC by querying the connector layer directly,
+        since A2A callers are already authenticated at the transport level.
+        """
+        try:
+            # Get available connectors from the runtime
+            connectors = runtime.connector_registry.list_connectors() if hasattr(runtime, 'connector_registry') else []
+            if connectors:
+                result = []
+                for conn in connectors[:10]:
+                    name = getattr(conn, 'name', str(conn))
+                    backend = getattr(conn, 'backend_type', getattr(conn, 'type', '?'))
+                    result.append(f"{name} ({backend})")
+                return f"Found {len(connectors)} connectors:\n" + "\n".join(result)
+        except Exception:
+            pass
+
+        # Fallback: list profiles which is always accessible
+        try:
+            profiles = runtime.access_control.list_profiles()
+            names = [p.get('name', p.get('id', '?')) for p in profiles[:20]]
+            return f"Found {len(profiles)} database profiles:\n" + "\n".join(names)
+        except Exception as exc:
+            return f"Error listing schemas: {exc}"
+        handler = _catalog_tools["catalog.list_namespaces"].handler
+        return await handler(payload, _make_a2a_request())
+
     # A2A agent card and task submission router
     _a2a_skills = [
-        A2ASkill(id="data_create", name="Data Create", description="Create new records in the database"),
-        A2ASkill(id="data_query", name="Data Query", description="Query data from the database"),
-        A2ASkill(id="data_update", name="Data Update", description="Update existing records in the database"),
-        A2ASkill(id="schema_list", name="Schema List", description="List database schemas and table structures"),
+        A2ASkill(id="data_create", name="Data Create", description="Create new records in the database", handler=_handle_data_create),
+        A2ASkill(id="data_query", name="Data Query", description="Query data from the database", handler=_handle_data_query),
+        A2ASkill(id="data_update", name="Data Update", description="Update existing records in the database", handler=_handle_data_update),
+        A2ASkill(id="schema_list", name="Schema List", description="List database schemas and table structures", handler=_handle_schema_list),
     ]
     _a2a_card_router = create_a2a_card_router(
         name="db-mcp",

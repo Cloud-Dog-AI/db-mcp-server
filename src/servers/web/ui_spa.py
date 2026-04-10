@@ -16,16 +16,36 @@
 # Related requirements: W28A-274-J deliverables 2, 4
 # Related tests: UT1.11, ST1.8
 
-"""Helpers for serving the db-mcp PS-30 SPA."""
+"""Helpers for serving the db-mcp PS-30 SPA via cloud_dog_storage (PS-85)."""
 
 from __future__ import annotations
 
-import json
+import mimetypes
+import os
 from importlib.metadata import PackageNotFoundError, version
-from pathlib import Path
 
+from cloud_dog_storage.backends.local import LocalStorage
+from cloud_dog_storage.errors import StorageFileNotFoundError, StoragePermissionError
 from fastapi import HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import HTMLResponse, Response
+
+_SPA_PREFIX = "/ui/dist"
+
+
+def _project_storage() -> LocalStorage:
+    """Local storage rooted at the current working directory (service process root)."""
+    return LocalStorage(root_path=os.getcwd())
+
+
+def _logical_dist_path(relative: str) -> str:
+    rel = str(relative or "").lstrip("/").replace("\\", "/")
+    return f"{_SPA_PREFIX}/{rel}" if rel else f"{_SPA_PREFIX}/"
+
+
+def spa_entry_routes() -> set[str]:
+    """Return browser history entry routes for the SPA."""
+    return set(_SPA_ENTRY_ROUTES)
+
 
 _SPA_ENTRY_ROUTES = {
     "/",
@@ -43,11 +63,6 @@ _SPA_ENTRY_ROUTES = {
 }
 
 
-def spa_entry_routes() -> set[str]:
-    """Return browser history entry routes for the SPA."""
-    return set(_SPA_ENTRY_ROUTES)
-
-
 def is_spa_entry_path(path: str) -> bool:
     """Return whether a path should be served by the SPA entry point."""
     cleaned = "/" + str(path or "").strip().lstrip("/")
@@ -58,46 +73,42 @@ def is_spa_entry_path(path: str) -> bool:
     return "." not in cleaned.rsplit("/", 1)[-1]
 
 
-def ui_dist_root(project_root: Path) -> Path:
-    """Return the checked-in SPA build directory."""
-    return (project_root / "ui" / "dist").resolve()
-
-
-def resolve_dist_file(project_root: Path, relative_path: str) -> Path:
-    """Resolve one static asset within ui/dist and enforce path confinement."""
-    root = ui_dist_root(project_root)
-    candidate = (root / str(relative_path or "").lstrip("/")).resolve()
-    try:
-        candidate.relative_to(root)
-    except ValueError as exc:
-        raise HTTPException(status_code=404, detail="UI asset not found") from exc
-    if not candidate.is_file():
-        raise HTTPException(status_code=404, detail="UI asset not found")
-    return candidate
-
-
-def require_ui_dist(project_root: Path) -> None:
+def require_ui_dist(storage: LocalStorage) -> None:
     """Fail fast if the SPA build output is missing."""
-    index_path = ui_dist_root(project_root) / "index.html"
-    if not index_path.is_file():
+    if not storage.exists(f"{_SPA_PREFIX}/index.html"):
         raise HTTPException(
             status_code=503,
             detail="UI dist is missing. Build the db-mcp monorepo app and sync it into ui/dist.",
         )
 
 
-def serve_spa_index(project_root: Path) -> HTMLResponse:
+def serve_spa_index() -> HTMLResponse:
     """Return the built SPA index.html content."""
-    require_ui_dist(project_root)
-    index_path = resolve_dist_file(project_root, "index.html")
-    return HTMLResponse(index_path.read_text(encoding="utf-8"))
+    storage = _project_storage()
+    require_ui_dist(storage)
+    logical = f"{_SPA_PREFIX}/index.html"
+    try:
+        raw = storage.read_bytes(logical)
+    except StorageFileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="UI asset not found") from exc
+    except StoragePermissionError as exc:
+        raise HTTPException(status_code=404, detail="UI asset not found") from exc
+    return HTMLResponse(raw.decode("utf-8"))
 
 
-def serve_spa_asset(project_root: Path, relative_path: str) -> FileResponse:
+def serve_spa_asset(relative_path: str) -> Response:
     """Return one built SPA static asset from ui/dist."""
-    require_ui_dist(project_root)
-    asset_path = resolve_dist_file(project_root, relative_path)
-    return FileResponse(asset_path)
+    storage = _project_storage()
+    require_ui_dist(storage)
+    logical = _logical_dist_path(relative_path)
+    try:
+        data = storage.read_bytes(logical)
+    except StorageFileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="UI asset not found") from exc
+    except StoragePermissionError as exc:
+        raise HTTPException(status_code=404, detail="UI asset not found") from exc
+    media_type, _ = mimetypes.guess_type(relative_path)
+    return Response(content=data, media_type=media_type or "application/octet-stream")
 
 
 def serve_runtime_config(runtime, request: Request) -> Response:

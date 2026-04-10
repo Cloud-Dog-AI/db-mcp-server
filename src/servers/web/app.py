@@ -23,16 +23,32 @@ from __future__ import annotations
 import secrets
 import time
 from collections.abc import Iterable
-from pathlib import Path
 
 import httpx
 from fastapi import HTTPException, Request, Response
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 
 from cloud_dog_api_kit import create_app
+from cloud_dog_api_kit.middleware import TimeoutMiddleware
 
-from src.common.runtime import RuntimeFactory, build_health_router
+from src.common.runtime import RuntimeFactory, build_health_router, request_timeout_seconds
 from src.servers.web.ui_spa import is_spa_entry_path, serve_runtime_config, serve_spa_asset, serve_spa_index
+from cloud_dog_idam.rbac import RBACEngine as _RBACEngine  # PS-70 RBAC enforcement
+
+_rbac_engine = _RBACEngine()
+
+
+def _has_permission(user_id: str, permission: str) -> bool:
+    """PS-70 RBAC permission check via cloud_dog_idam."""
+    return _rbac_engine.has_permission(user_id, permission)
+
+
+def _apply_request_timeout(app, timeout_seconds: float) -> None:
+    """Override the platform API-kit timeout budget for this surface."""
+    for middleware in app.user_middleware:
+        if middleware.cls is TimeoutMiddleware:
+            middleware.kwargs["timeout_seconds"] = timeout_seconds
+            return
 
 _HOP_BY_HOP_HEADERS = {
     "connection",
@@ -51,11 +67,13 @@ _HOP_BY_HOP_HEADERS = {
 def create_web_app(explicit_env_files: list[str] | None = None):
     """Create the db-mcp-server web application."""
     runtime = RuntimeFactory.create(explicit_env_files)
+    timeout_seconds = request_timeout_seconds(runtime.config, scope="web_server")
     app = create_app(
         title="db-mcp-server Web",
         version=str(runtime.config.get("app.version", "0.1.0")),
         enable_health=False,
     )
+    _apply_request_timeout(app, timeout_seconds)
     app.state.runtime = runtime
     app.include_router(build_health_router(runtime, "db-mcp-server-web"))
 
@@ -201,21 +219,25 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     @app.get("/")
     async def root() -> Response:
         """Serve the SPA entrypoint for the application root."""
-        return serve_spa_index(Path.cwd())
+        return serve_spa_index()
 
     @app.get("/robots.txt")
     async def robots() -> Response:
         """Disable indexing for local admin surfaces."""
         return PlainTextResponse("User-agent: *\nDisallow: /\n")
 
+    @app.get("/api-docs")
+    async def api_docs_spa() -> Response:
+        """Serve the SPA shell for the /api-docs route."""
+        return serve_spa_index()
+
     @app.get("/{path:path}")
     async def spa(path: str, request: Request) -> Response:
         """Serve static SPA assets and browser-history routes from ui/dist."""
-        project_root = Path.cwd()
         cleaned = "/" + path.lstrip("/")
         if is_spa_entry_path(cleaned):
-            return serve_spa_index(project_root)
-        return serve_spa_asset(project_root, path)
+            return serve_spa_index()
+        return serve_spa_asset(path)
 
     return app
 

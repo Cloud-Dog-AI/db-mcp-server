@@ -33,7 +33,7 @@ from requests import RequestException
 from sqlalchemy.exc import SQLAlchemyError
 
 from cloud_dog_api_kit.errors import InternalError, UnauthorisedError, ValidationError
-from cloud_dog_logging import Actor
+from cloud_dog_logging import Actor, Target
 
 from src.core.connectors.cassandra import CassandraConnector
 from src.core.connectors.couchdb import CouchDBConnector
@@ -136,6 +136,7 @@ class ConnectorManager:
                 params={"profile_id": profile_id, "target": audit_target_id},
                 outcome="failure",
                 duration_ms=0,
+                target=Target(type="connector", id=audit_target_id or profile_id),
                 error=str(exc),
             )
             raise InternalError(message=f"Connector operation failed: {exc}") from exc
@@ -149,6 +150,7 @@ class ConnectorManager:
             params={"profile_id": profile_id, "target": audit_target_id},
             outcome="success",
             duration_ms=0,
+            target=Target(type="connector", id=audit_target_id or profile_id),
         )
         return result
 
@@ -203,7 +205,7 @@ class ConnectorManager:
             raise ValidationError(message="MongoDB connector URI is not configured")
         connector = MongoDBConnector(
             uri=uri,
-            timeout_ms=int(self._runtime.config.get("connectors.mongodb.timeout_ms", 30000)),
+            timeout_ms=int(self._runtime.config.get("connectors.mongodb.timeout_ms", 60000)),
         )
         connector.validate_profile()
         return connector

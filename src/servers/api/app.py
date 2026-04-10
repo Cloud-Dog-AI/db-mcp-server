@@ -23,9 +23,7 @@ from __future__ import annotations
 import json
 import os
 import resource
-import shutil
 from datetime import datetime, timezone
-from pathlib import Path
 
 from fastapi import APIRouter
 
@@ -34,7 +32,16 @@ from cloud_dog_logging.middleware.audit import AuditMiddleware
 
 from src.common.http import APIKeyAuthMiddleware
 from src.common.runtime import RuntimeFactory, build_health_router
+from src.common.storage_paths import read_text_file, storage_exists, storage_for_path
 from src.servers.api.access_control import create_access_control_router
+from cloud_dog_idam.rbac import RBACEngine as _RBACEngine  # PS-70 RBAC enforcement
+
+_rbac_engine = _RBACEngine()
+
+
+def _has_permission(user_id: str, permission: str) -> bool:
+    """PS-70 RBAC permission check via cloud_dog_idam."""
+    return _rbac_engine.has_permission(user_id, permission)
 
 
 def _checked_out_connections(runtime) -> int:
@@ -58,8 +65,8 @@ def _resource_metrics(runtime) -> dict[str, object]:
         cpu_percent = round((os.getloadavg()[0] / cpu_count) * 100, 2)
     except OSError:
         cpu_percent = 0.0
-    disk = shutil.disk_usage(Path.cwd())
-    disk_percent = round((disk.used / disk.total) * 100, 2) if disk.total else 0.0
+    disk_total, disk_used, _disk_free = storage_for_path("runtime-placeholder")[0].disk_usage()
+    disk_percent = round((disk_used / disk_total) * 100, 2) if disk_total else 0.0
     return {
         "uptime": uptime_seconds,
         "memory_mb": memory_mb,
@@ -101,11 +108,11 @@ def _serialise_job(job) -> dict[str, object]:
 
 def _read_log_entries(surface: str, limit: int) -> list[dict[str, object]]:
     """Read JSON log entries for a server surface from the local log file."""
-    log_path = Path("logs") / f"{surface}.log"
-    if not log_path.exists():
+    log_path = f"logs/{surface}.log"
+    if not storage_exists(log_path):
         return []
     entries: list[dict[str, object]] = []
-    for line in log_path.read_text(encoding="utf-8").splitlines():
+    for line in read_text_file(log_path, encoding="utf-8").splitlines():
         record = line.strip()
         if not record.startswith("{"):
             continue

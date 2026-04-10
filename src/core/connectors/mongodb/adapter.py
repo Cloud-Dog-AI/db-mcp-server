@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime, timezone
+import time
 from typing import Any
 
 from bson import ObjectId
@@ -37,10 +38,18 @@ def _utcnow() -> str:
 class MongoDBConnector:
     """MongoDB adapter implementing the connector contract."""
 
-    def __init__(self, *, uri: str, timeout_ms: int = 30000) -> None:
+    _namespace_cache: dict[str, tuple[float, list[str]]] = {}
+    _namespace_cache_ttl_seconds = 15.0
+
+    def __init__(self, *, uri: str, timeout_ms: int = 60000) -> None:
         self._uri = uri
         self._timeout_ms = timeout_ms
-        self._client = MongoClient(uri, serverSelectionTimeoutMS=timeout_ms)
+        self._client = MongoClient(
+            uri,
+            serverSelectionTimeoutMS=timeout_ms,
+            connectTimeoutMS=timeout_ms,
+            socketTimeoutMS=timeout_ms,
+        )
 
     @property
     def uri(self) -> str:
@@ -79,8 +88,15 @@ class MongoDBConnector:
     def list_namespaces(self) -> list[dict[str, Any]]:
         """List MongoDB databases excluding internal ones."""
         internal = {"admin", "config", "local"}
+        now = time.monotonic()
+        cached = self._namespace_cache.get(self._uri)
+        if cached and now - cached[0] <= self._namespace_cache_ttl_seconds:
+            databases = cached[1]
+        else:
+            databases = list(self._client.list_database_names())
+            self._namespace_cache[self._uri] = (now, databases)
         result = []
-        for database in self._client.list_database_names():
+        for database in databases:
             if database in internal:
                 continue
             result.append({"name": database, "type": "database"})
@@ -111,11 +127,12 @@ class MongoDBConnector:
 
     def describe_fields(self, namespace: str, entity: str) -> dict[str, Any]:
         """Infer field types from sampled documents."""
-        samples = self.sample_shapes(namespace, entity, n=25)
+        collection = self._client[namespace][entity]
+        samples = list(collection.aggregate([{"$sample": {"size": 25}}]))
         field_types: dict[str, set[str]] = defaultdict(set)
         for sample in samples:
             for key, value in sample.items():
-                field_types[key].add(type(value).__name__)
+                field_types[key].add(self._field_type_name(value))
         return {
             "namespace": namespace,
             "entity": entity,
@@ -447,7 +464,9 @@ class MongoDBConnector:
         if isinstance(value, ObjectId):
             return str(value)
         if isinstance(value, Binary):
-            return value.hex()
+            return bytes(value).hex()
+        if isinstance(value, (bytes, bytearray, memoryview)):
+            return bytes(value).hex()
         if isinstance(value, datetime):
             return value.astimezone(timezone.utc).isoformat()
         if isinstance(value, dict):
@@ -457,3 +476,14 @@ class MongoDBConnector:
         if isinstance(value, list):
             return [MongoDBConnector._normalise_value(item) for item in value]
         return value
+
+    @staticmethod
+    def _field_type_name(value: Any) -> str:
+        """Return a stable schema type label for MongoDB sample values."""
+        if isinstance(value, (Binary, bytes, bytearray, memoryview)):
+            return "binary"
+        if isinstance(value, ObjectId):
+            return "object_id"
+        if isinstance(value, datetime):
+            return "datetime"
+        return type(value).__name__

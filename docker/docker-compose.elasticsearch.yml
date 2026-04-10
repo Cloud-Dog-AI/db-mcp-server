@@ -1,3 +1,7 @@
+# ⛔ DO NOT USE — Use existing Terraform-managed infrastructure instead.
+# See AGENT-LESSONS.md lesson 25 and Bootstrap Directive §3.2.3.
+# Databases: mongo0, couchdb0, elastic0, cassandra0, db1 (MariaDB), db2 (PostgreSQL)
+# These docker-compose files are DEPRECATED and must NOT be used to spin up test databases.
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0

@@ -26,6 +26,23 @@ import uvicorn
 from src.common.config_loader import load_runtime_config
 from src.servers.mcp.app import create_mcp_app
 
+# W28A-654: Patch cloud_dog_logging ContextVar defaults at module import time.
+# ContextVars are task-scoped in asyncio — set_environment() in one task does NOT
+# propagate to AuditMiddleware in another. Patching defaults ensures all tasks inherit.
+try:
+    import contextvars as _ctxvars, os as _patch_os
+    from cloud_dog_logging import correlation as _cmod
+    _cmod._environment_var = _ctxvars.ContextVar(
+        "environment", default=_patch_os.environ.get("CLOUD_DOG_ENVIRONMENT", "dev"))
+    _cmod._service_name_var = _ctxvars.ContextVar(
+        "service_name", default="db-mcp-server")
+    _cmod._service_instance_var = _ctxvars.ContextVar(
+        "service_instance", default=_patch_os.environ.get("HOSTNAME", "db-local"))
+    del _ctxvars, _patch_os, _cmod
+except Exception:
+    pass  # cloud_dog_logging not installed or incompatible version
+
+
 
 def main() -> None:
     """Load config and run the MCP server."""

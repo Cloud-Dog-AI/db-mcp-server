@@ -21,12 +21,13 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
 from fastapi import Request
 
 from cloud_dog_api_kit.errors import NotFoundError
+
+from src.common.storage_paths import read_text_file, storage_exists
 
 
 class AuditEventService:
@@ -60,11 +61,11 @@ class AuditEventService:
         raise NotFoundError(message=f"Audit event not found: {event_id}")
 
     def _read_events(self) -> list[dict[str, Any]]:
-        path = Path(str(self._runtime.config.get("log.audit_log", "logs/audit.log.jsonl")))
-        if not path.exists():
+        path = str(self._runtime.config.get("log.audit_log", "logs/audit.log.jsonl"))
+        if not storage_exists(path):
             return []
         events: list[dict[str, Any]] = []
-        for line in path.read_text(encoding="utf-8").splitlines():
+        for line in read_text_file(path, encoding="utf-8").splitlines():
             line = line.strip()
             if not line:
                 continue

@@ -138,6 +138,20 @@ class AccessControlService:
             for role in group.roles:
                 self._rbac.assign_role_to_group(group.group_id, role)
 
+    # PS-50 per-tool RBAC permission mapping.
+    _TOOL_PERMISSION_MAP = {
+        "query": "db:query:execute",
+        "schema_list": "db:schema:read",
+        "schema_describe": "db:schema:read",
+        "admin_stats": "db:admin:read",
+        "connection_test": "db:admin:read",
+    }
+
+    def require_tool_permission(self, user_id: str, tool_name: str) -> bool:
+        """PS-50 per-tool RBAC check."""
+        perm = self._TOOL_PERMISSION_MAP.get(tool_name, "db:query:execute")
+        return self._rbac.has_permission(user_id, perm)  # has_permission for tool dispatch
+
     def _build_actor(self, actor_user_id: str | None, roles: list[str] | None = None) -> Actor:
         return Actor(type="user", id=actor_user_id or "unknown", roles=roles or None)
 

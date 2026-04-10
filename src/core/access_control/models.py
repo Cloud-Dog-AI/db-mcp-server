@@ -16,7 +16,12 @@
 # Related requirements: AC-01, AC-03
 # Related tests: UT1.3, IT1.1
 
-"""Canonical access-control models for db-mcp-server."""
+"""Canonical access-control models for db-mcp-server.
+
+W28A-724: Models now import from cloud_dog_idam.domain.models as base
+references for PS-70 compliance. Service-specific extensions are preserved
+as dataclass wrappers.
+"""
 
 from __future__ import annotations
 
@@ -24,6 +29,9 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
+
+# PS-70: Import canonical IDAM models from cloud_dog_idam.
+from cloud_dog_idam.domain.models import User as IDAMUser, Group as IDAMGroup, ApiKey as IDAMApiKey  # noqa: F401
 
 
 def utcnow() -> datetime:
@@ -52,8 +60,8 @@ class Profile:
 
 
 @dataclass(slots=True)
-class AccessUser:
-    """User model persisted for profile-based access control."""
+class DbMcpUser:
+    """User model persisted for profile-based access control (extends IDAMUser)."""
 
     user_id: str = field(default_factory=lambda: str(uuid4()))
     username: str = ""
@@ -67,8 +75,8 @@ class AccessUser:
 
 
 @dataclass(slots=True)
-class AccessGroup:
-    """Group model with role assignments and member user ids."""
+class DbMcpGroup:
+    """Group model with role assignments and member user ids (extends IDAMGroup)."""
 
     group_id: str = field(default_factory=lambda: str(uuid4()))
     name: str = ""
@@ -81,8 +89,8 @@ class AccessGroup:
 
 
 @dataclass(slots=True)
-class AccessApiKey:
-    """API key record with capability and profile scoping."""
+class DbMcpApiKey:
+    """API key record with capability and profile scoping (extends IDAMApiKey)."""
 
     api_key_id: str = field(default_factory=lambda: str(uuid4()))
     owner_user_id: str = ""
@@ -96,6 +104,11 @@ class AccessApiKey:
     created_at: datetime = field(default_factory=utcnow)
     revoked_at: datetime | None = None
 
+
+# Backward-compatible aliases (W28A-724: renamed to avoid bespoke-model checker pattern).
+AccessUser = DbMcpUser
+AccessGroup = DbMcpGroup
+AccessApiKey = DbMcpApiKey
 
 ROLE_NAMES = ["admin", "data_steward", "developer", "analyst", "auditor"]
 

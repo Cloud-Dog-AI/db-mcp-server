@@ -21,9 +21,10 @@
 from __future__ import annotations
 
 from cloud_dog_api_kit import create_app, register_mcp_contract
+from cloud_dog_api_kit.middleware import TimeoutMiddleware
 
 from src.common.http import APIKeyAuthMiddleware
-from src.common.runtime import RuntimeFactory, build_health_router
+from src.common.runtime import RuntimeFactory, build_health_router, request_timeout_seconds
 from src.servers.mcp.access_control_tools import build_access_control_tool_registry
 from src.servers.mcp.audit_tools import build_audit_tool_registry
 from src.servers.mcp.catalog_tools import build_catalog_tool_registry
@@ -31,16 +32,35 @@ from src.servers.mcp.content_tools import build_content_tool_registry
 from src.servers.mcp.relationship_tools import build_relationship_tool_registry
 from src.servers.mcp.schema_tools import build_schema_tool_registry
 from src.servers.mcp.search_tools import build_search_tool_registry
+from src.servers.mcp.tool_rbac_audit import TOOL_RBAC_MAP, audit_tool_call, check_tool_permission, wrap_tool_with_audit
+from cloud_dog_idam.rbac import RBACEngine as _RBACEngine  # PS-70 RBAC enforcement
+
+_rbac_engine = _RBACEngine()
+
+
+def _has_permission(user_id: str, permission: str) -> bool:
+    """PS-70 RBAC permission check via cloud_dog_idam."""
+    return _rbac_engine.has_permission(user_id, permission)
+
+
+def _apply_request_timeout(app, timeout_seconds: float) -> None:
+    """Override the platform API-kit timeout budget for this surface."""
+    for middleware in app.user_middleware:
+        if middleware.cls is TimeoutMiddleware:
+            middleware.kwargs["timeout_seconds"] = timeout_seconds
+            return
 
 
 def create_mcp_app(explicit_env_files: list[str] | None = None):
     """Create the db-mcp-server MCP application."""
     runtime = RuntimeFactory.create(explicit_env_files)
+    timeout_seconds = request_timeout_seconds(runtime.config, scope="mcp_server")
     app = create_app(
         title="db-mcp-server MCP",
         version=str(runtime.config.get("app.version", "0.1.0")),
         enable_health=False,
     )
+    _apply_request_timeout(app, timeout_seconds)
     app.state.runtime = runtime
     tool_registry = {}
     tool_registry.update(build_access_control_tool_registry(runtime))

@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import quote_plus
 
 from fastapi import Request
 from pymongo.errors import PyMongoError
@@ -40,6 +41,38 @@ class MongoProfileSession:
     connector: MongoDBConnector
 
 
+def resolve_mongodb_uri(config: Any, profile: dict[str, Any]) -> str:
+    """Resolve a MongoDB URI from profile settings or runtime defaults."""
+    source_connection = str(profile.get("source_connection", "") or "").strip()
+    if source_connection and "://" in source_connection:
+        return source_connection
+
+    default_uri = str(config.get("connectors.mongodb.default_uri", "") or "").strip()
+    if default_uri:
+        return default_uri
+
+    host = str(config.get("connectors.mongodb.default_host", "") or "").strip()
+    port = str(config.get("connectors.mongodb.default_port", "") or "").strip()
+    if not host:
+        raise ValidationError(message="MongoDB connector URI is not configured")
+
+    username = str(config.get("connectors.mongodb.default_username", "") or "").strip()
+    password = str(config.get("connectors.mongodb.default_password", "") or "").strip()
+    auth_database = str(config.get("connectors.mongodb.default_auth_database", "") or "").strip()
+    query = str(config.get("connectors.mongodb.default_query", "") or "").strip()
+
+    authority = host if not port else f"{host}:{port}"
+    if username:
+        credentials = quote_plus(username)
+        if password:
+            credentials = f"{credentials}:{quote_plus(password)}"
+        authority = f"{credentials}@{authority}"
+
+    path = f"/{auth_database}" if auth_database else ""
+    suffix = f"?{query}" if query else ""
+    return f"mongodb://{authority}{path}{suffix}"
+
+
 class MongoDBConnectorService:
     """Resolve MongoDB profiles and execute audited connector operations."""
 
@@ -47,13 +80,7 @@ class MongoDBConnectorService:
         self._runtime = runtime
 
     def _resolve_uri(self, profile: dict[str, Any]) -> str:
-        source_connection = str(profile.get("source_connection", "") or "").strip()
-        if source_connection and "://" in source_connection:
-            return source_connection
-        default_uri = str(self._runtime.config.get("connectors.mongodb.default_uri", "") or "").strip()
-        if default_uri:
-            return default_uri
-        raise ValidationError(message="MongoDB connector URI is not configured")
+        return resolve_mongodb_uri(self._runtime.config, profile)
 
     def for_profile(self, profile_id: str) -> MongoProfileSession:
         profile = self._runtime.access_control.get_profile(profile_id)
@@ -97,6 +124,7 @@ class MongoDBConnectorService:
                 params={"profile_id": profile_id, "target": audit_target_id},
                 outcome="failure",
                 duration_ms=0,
+                target=Target(type="mongodb", id=audit_target_id or profile_id),
                 error=str(exc),
             )
             raise InternalError(message=f"MongoDB operation failed: {exc}") from exc
@@ -108,5 +136,6 @@ class MongoDBConnectorService:
             params={"profile_id": profile_id, "target": audit_target_id},
             outcome="success",
             duration_ms=0,
+            target=Target(type="mongodb", id=audit_target_id or profile_id),
         )
         return result

@@ -25,6 +25,7 @@ from cloud_dog_config import get_config, load_config
 from cloud_dog_config.config import GlobalConfig
 
 from src.common.env_loader import repo_root, resolve_env_files
+from src.common.storage_paths import join_fs_path
 
 
 def load_runtime_config(explicit_env_files: list[str] | None = None) -> GlobalConfig:
@@ -33,8 +34,8 @@ def load_runtime_config(explicit_env_files: list[str] | None = None) -> GlobalCo
     env_files = resolve_env_files(explicit_env_files)
     return load_config(
         env_files=env_files,
-        config_yaml=str(root / "config.yaml"),
-        defaults_yaml=str(root / "defaults.yaml"),
+        config_yaml=join_fs_path(root, "config.yaml"),
+        defaults_yaml=join_fs_path(root, "defaults.yaml"),
         unresolved_policy="strict",
     )
 

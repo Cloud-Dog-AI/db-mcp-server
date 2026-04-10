@@ -1,25 +1,22 @@
 # Tests
 
 ## Service Scope
-Multi-backend database and search control plane for discovery, CRUD, relationships, search indexing, schema planning, and PS-30 Web UI administration.
+Multi-connector discovery and governance control plane for profiles, catalogue browsing, entity detail, structured data access, search, relationship management, schema planning, RBAC, and PS-77 Web UI administration.
 
-## Test Inventory
-| Tier | Present | Notes |
-|------|---------|-------|
-| `quality` | Yes | Repository contains the `quality` test tier. |
-| `unit` | Yes | Repository contains the `unit` test tier. |
-| `system` | Yes | Repository contains the `system` test tier. |
-| `integration` | Yes | Repository contains the `integration` test tier. |
-| `application` | Yes | Repository contains the `application` test tier. |
-| `fixtures` | Yes | Repository contains the `fixtures` test tier. |
-| `helpers` | Yes | Repository contains the `helpers` test tier. |
+## Current Test Inventory
 
-## Current Evidence Model
-- The repository keeps execution evidence in repo-local working reports and rerunnable pytest suites.
-- Before release, rerun the relevant `QT`, `UT`, `ST`, `IT`, and `AT` tiers against the intended environment overlays.
-- This document records the current catalogue rather than claiming a release verdict.
+| Tier | Present | Current evidence |
+|------|---------|------------------|
+| `quality` | Yes | `QT1.1_ProjectStructure` |
+| `unit` | Yes | `UT1.1` through `UT1.19` including access control, filters, connectors, jobs, A2A, and Web UI serving |
+| `system` | Yes | `ST1.1` through `ST1.15` including API, Web UI serving, and all 7 connector families |
+| `integration` | Yes | `IT1.1` through `IT1.9` covering access control, discovery, CRUD, relationships, search/indexing, schema change, and connector-specific MCP flows |
+| `application` | Yes | `AT_WEBUI_E2E/test_webui_e2e.py` covering login, dashboard, profile CRUD, data browser, schema browser, users, groups, API keys, RBAC, settings, audit, catalogue, search, relationships, and entity detail |
+| `fixtures` | Yes | Seed and canonical-data helpers |
+| `helpers` | Yes | Runtime and connector helpers for real-environment tests |
 
 ## Standard Commands
+
 ```bash
 python3 -m pytest tests/quality --env tests/env-QT -q
 python3 -m pytest tests/unit --env tests/env-UT -q
@@ -30,6 +27,42 @@ python3 -m pytest tests/system/ST1.14_PostgreSQLConnector --env tests/env-ST --e
 python3 -m pytest tests/system/ST1.15_MariaDBConnector --env tests/env-ST --env tests/env-mariadb -q
 ```
 
+## W28A-871 Requirements Coverage Matrix
+
+This matrix maps every W28A-871 merged requirement (`A1` through `G3`) to current backend and WebUI evidence. `NEEDS TEST` means no existing source-verified test was found that directly covers the requirement.
+
+| Req | Requirement summary | Existing backend test | Existing Playwright test | Status |
+|-----|---------------------|-----------------------|--------------------------|--------|
+| A1 | Profile CRUD across API/MCP/A2A/Web | `IT1.1_AccessControlLifecycle`, `ST1.2_AccessControlApi` | `T3 profile_crud` | Covered |
+| A2 | Seven connector profile templates and validation | `UT1.18_RelationalConnectorDispatch`, `ST1.3`, `ST1.9`, `ST1.10`, `ST1.12`, `ST1.13`, `ST1.14`, `ST1.15` | NEEDS TEST | Backend covered; WebUI gap |
+| A3 | Profile scoping, API keys, allowed permissions, audit | `IT1.1_AccessControlLifecycle`, `UT1.3_AccessControlService` | `T3 profile_crud`, `T8 api_key_crud` | Covered |
+| A4 | Tool-level RBAC coverage aligned with five built-in roles | NEEDS TEST | `T9 rbac_unauthenticated` only | Gap |
+| B1 | Profile-scoped namespace/entity browsing | `IT1.3_FullDiscoveryFlow`, `ST1.4_CatalogApi` | `T13 catalogue_browse` | Covered |
+| B2 | Catalogue navigation to entity detail/data browser with profile context | `IT1.3_FullDiscoveryFlow` | `T13 catalogue_browse`, `T16 entity_detail` | Partial |
+| C1 | Entity detail exposes schema, fields, indexes, relationships, samples | `ST1.6_SchemaApi`, `IT1.5_RelationshipLifecycle` | `T16 entity_detail`, `T5 schema_browser` | Partial |
+| C2 | Entity detail distinguishes source/normalised metadata and provenance | NEEDS TEST | NEEDS TEST | Gap |
+| D1 | Structured filter-builder driven reads/counts/existence | `ST1.5_ContentApi`, `IT1.4_ContentCRUDLifecycle`, `UT1.5_FilterModel` | `T4 data_browser` | Covered |
+| D2 | Data browser pagination, dynamic columns, explicit loading/error/empty states | NEEDS TEST | `T4 data_browser` only | Gap |
+| D3 | Data browser RBAC enforcement and auditability | `ST1.5_ContentApi`, `IT1.4_ContentCRUDLifecycle` | NEEDS TEST | Gap |
+| E1 | Metadata discovery search across entities/fields/relationships | `ST1.7_SearchApi`, `IT1.6_SearchIndexingLifecycle` | `T14 search` | Covered |
+| E2 | Content search plus explain result interpretation | `IT1.6_SearchIndexingLifecycle` | `T14 search` | Partial |
+| E3 | Deterministic explain/debug output and index refresh visibility | `IT1.6_SearchIndexingLifecycle`, `UT1.10_SearchService`, `UT1.9_SearchIndexer` | NEEDS TEST | Gap |
+| F1 | Declared/curated/inferred relationship listing | `IT1.5_RelationshipLifecycle` | `T15 relationships`, `T16 entity_detail` | Covered |
+| F2 | Curated relationship CRUD plus inference/review flow | `IT1.5_RelationshipLifecycle` | `T15 relationships` | Partial |
+| G1 | Seven-connector verification matrix | `ST1.3`, `ST1.9`, `ST1.10`, `ST1.12`, `ST1.13`, `ST1.14`, `ST1.15` | NEEDS TEST | Backend covered; WebUI gap |
+| G2 | Connector-specific overlay inputs for ST/IT/AT | `tests/env-mongodb`, `tests/env-couchdb`, `tests/env-opensearch`, `tests/env-elasticsearch`, `tests/env-cassandra`, `tests/env-postgresql`, `tests/env-mariadb` | NEEDS TEST | Docs/runtime covered; UI gap |
+| G3 | Minimum lifecycle per connector: create profile → discover → query → verify | `IT1.3_FullDiscoveryFlow`, `IT1.4_ContentCRUDLifecycle`, plus connector ST suites | NEEDS TEST | Partial |
+
+## Current Coverage Gaps Identified During W28A-871
+
+- No source-verified backend test directly asserts that the per-tool MCP RBAC map is complete, applied at runtime, and aligned with the built-in role definitions.
+- No Playwright suite currently exercises the developer pages (`/api-docs`, `/mcp-console`, `/a2a-console`) or the Jobs page.
+- No Playwright suite currently performs a seven-connector matrix through the Web UI.
+- The existing `T4 data_browser` Playwright test covers presence and basic interaction, not PS-77 style tabular behaviour such as pagination or dynamic column handling.
+- PostgreSQL and MariaDB runtime overlays exist, but their concrete host/port values are resolved through `cloud_dog_config`/Vault rather than being fully published in this repo.
+
 ## Notes
-- Top-level test directories present: `__pycache__`, `application`, `fixtures`, `helpers`, `integration`, `quality`, `system`, `unit`.
-- Connector-specific real-runtime overlays are published for PostgreSQL (`tests/env-postgresql`) and MariaDB (`tests/env-mariadb`) and rely on `cloud_dog_config`/Vault resolution at runtime.
+
+- Top-level test directories present: `application`, `fixtures`, `helpers`, `integration`, `quality`, `system`, `unit`.
+- Connector-specific real-runtime overlays are published for MongoDB, CouchDB, OpenSearch, Elasticsearch, Cassandra, PostgreSQL, and MariaDB.
+- The current application test module exposes test cases `T1` through `T16`; there is no source-verified Playwright coverage yet for Jobs, API Docs, MCP Console, or A2A Console.

@@ -401,6 +401,7 @@ class SchemaChangeService:
                 params={"profile_id": profile_id, "target": target_id},
                 outcome=outcome,
                 duration_ms=0,
+                target=Target(type="schema", id=target_id or profile_id),
                 **details,
             )
 

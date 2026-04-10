@@ -21,14 +21,14 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from cloud_dog_config import resolve_runtime_env_files
 
+from src.common.storage_paths import find_project_root, normalise_fs_path
 
-def repo_root() -> Path:
+
+def repo_root() -> str:
     """Return the repository root for this service."""
-    return Path(__file__).resolve().parents[2]
+    return find_project_root(__file__)
 
 
 def resolve_env_files(explicit_env_files: list[str] | None = None) -> list[str]:
@@ -38,5 +38,5 @@ def resolve_env_files(explicit_env_files: list[str] | None = None) -> list[str]:
     explicit list instead.
     """
     if explicit_env_files:
-        return [str(Path(path)) for path in explicit_env_files]
+        return [normalise_fs_path(path) for path in explicit_env_files]
     return resolve_runtime_env_files()

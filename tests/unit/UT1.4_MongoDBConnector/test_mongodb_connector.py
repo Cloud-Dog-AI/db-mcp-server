@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import pytest
+from bson.binary import Binary
 
 from src.core.connectors.mongodb.adapter import MongoDBConnector
 
@@ -143,11 +144,14 @@ class FakeAdmin:
 
 
 class FakeMongoClient:
+    list_database_names_calls = 0
+
     def __init__(self, *_args, **_kwargs):
         self.databases = {"testdb": FakeDatabase()}
         self.admin = FakeAdmin()
 
     def list_database_names(self):
+        type(self).list_database_names_calls += 1
         return ["admin", "testdb"]
 
     def __getitem__(self, item):
@@ -160,6 +164,8 @@ class FakeMongoClient:
 @pytest.fixture(autouse=True)
 def fake_mongo(monkeypatch):
     monkeypatch.setattr("src.core.connectors.mongodb.adapter.MongoClient", FakeMongoClient)
+    FakeMongoClient.list_database_names_calls = 0
+    MongoDBConnector._namespace_cache.clear()
 
 
 def test_adapter_capabilities_and_catalogue_calls() -> None:
@@ -168,6 +174,14 @@ def test_adapter_capabilities_and_catalogue_calls() -> None:
     assert connector.validate_profile()["ok"] is True
     assert connector.list_namespaces() == [{"name": "testdb", "type": "database"}]
     assert connector.list_entities("testdb") == [{"name": "widgets", "type": "collection"}]
+
+
+def test_adapter_caches_namespace_listing_per_uri() -> None:
+    connector = MongoDBConnector(uri="mongodb://example")
+
+    assert connector.list_namespaces() == [{"name": "testdb", "type": "database"}]
+    assert connector.list_namespaces() == [{"name": "testdb", "type": "database"}]
+    assert FakeMongoClient.list_database_names_calls == 1
 
 
 def test_adapter_data_and_schema_operations() -> None:
@@ -204,3 +218,13 @@ def test_adapter_plans_and_applies_entity_lifecycle() -> None:
     assert drop_plan["before_state"]["entity_exists"] is True
     dropped = connector.schema_change_apply(drop_plan)
     assert dropped["entity_dropped"] is True
+
+
+def test_adapter_normalises_binary_fields_and_preserves_binary_schema_type() -> None:
+    connector = MongoDBConnector(uri="mongodb://example")
+    inserted = connector.create("testdb", "widgets", {"_id": "bin", "payload": Binary(b"\x00\x01\x02")})
+    assert inserted["document"]["payload"] == "000102"
+
+    fields = connector.describe_fields("testdb", "widgets")
+    payload_field = next(item for item in fields["fields"] if item["name"] == "payload")
+    assert payload_field["types"] == ["binary"]

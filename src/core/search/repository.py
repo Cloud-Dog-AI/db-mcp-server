@@ -23,9 +23,9 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import asdict
-from pathlib import Path
 from typing import Any, Iterable
 
+from src.common.storage_paths import ensure_directory, normalise_fs_path, parent_fs_path
 from src.core.search.models import DiscoveryDocument, EntityIndexStatus, ProfileIndexStatus
 
 
@@ -33,12 +33,12 @@ class DiscoveryIndexRepository:
     """Persist and query discovery documents using SQLite FTS5."""
 
     def __init__(self, database_path: str) -> None:
-        self._path = Path(database_path)
-        self._path.parent.mkdir(parents=True, exist_ok=True)
+        self._path = normalise_fs_path(database_path)
+        ensure_directory(parent_fs_path(self._path))
         self._initialise()
 
     @property
-    def path(self) -> Path:
+    def path(self) -> str:
         """Return the SQLite path backing the discovery index."""
         return self._path
 

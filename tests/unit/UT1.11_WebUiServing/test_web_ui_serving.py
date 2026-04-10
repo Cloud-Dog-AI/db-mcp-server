@@ -23,6 +23,7 @@ from pathlib import Path
 import httpx
 from fastapi.testclient import TestClient
 import pytest
+from cloud_dog_api_kit.middleware import TimeoutMiddleware
 
 from src.servers.web.app import create_web_app
 from tests.helpers.server_runtime import service_base_url
@@ -109,3 +110,13 @@ def test_cookie_authenticated_browser_proxies_inject_api_key(
         assert headers["x-api-key"] == "test-api-key"
         assert headers["authorization"] == "Bearer test-api-key"
         assert "db_web_session=" in headers["cookie"]
+
+
+def test_web_surface_raises_request_timeout_budget() -> None:
+    app = create_web_app([str(PROJECT_ROOT / "tests" / "env-UT")])
+    for middleware in app.user_middleware:
+        if middleware.cls is TimeoutMiddleware:
+            assert middleware.kwargs["timeout_seconds"] == 120.0
+            break
+    else:
+        pytest.fail("TimeoutMiddleware not installed")

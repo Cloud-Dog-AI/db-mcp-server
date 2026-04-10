@@ -24,13 +24,64 @@ This project consumes sibling platform packages from the shared workspace.
 from __future__ import annotations
 
 import sys
-from pathlib import Path
+
+
+def _normalise_path(value: str) -> str:
+    raw = str(value or "").replace("\\", "/")
+    if not raw:
+        return "."
+
+    absolute = raw.startswith("/")
+    parts: list[str] = []
+    for part in raw.split("/"):
+        if part in {"", "."}:
+            continue
+        if part == "..":
+            if parts and parts[-1] != "..":
+                parts.pop()
+            elif not absolute:
+                parts.append(part)
+            continue
+        parts.append(part)
+
+    joined = "/".join(parts)
+    if absolute:
+        return f"/{joined}" if joined else "/"
+    return joined or "."
+
+
+def _join_path(base: str, *segments: str) -> str:
+    current = _normalise_path(base)
+    for segment in segments:
+        piece = str(segment or "").replace("\\", "/")
+        if not piece:
+            continue
+        if current == "/":
+            current = f"/{piece.lstrip('/')}"
+        elif current in {"", "."}:
+            current = piece
+        else:
+            current = f"{current.rstrip('/')}/{piece.lstrip('/')}"
+        current = _normalise_path(current)
+    return current
+
+
+def _parent_path(value: str) -> str:
+    current = _normalise_path(value)
+    if current == "/":
+        return "/"
+    trimmed = current.rstrip("/")
+    if "/" not in trimmed:
+        return "."
+    parent = trimmed[: trimmed.rfind("/")]
+    return parent or "/"
 
 
 def _inject_workspace_package_paths() -> None:
     """Add sibling platform package roots to `sys.path` when running locally."""
-    workspace_root = Path(__file__).resolve().parents[2]
-    package_root = workspace_root / "cloud-dog-ai-platform-standards" / "packages" / "backend"
+    project_root = _parent_path(_parent_path(__file__))
+    workspace_root = _parent_path(project_root)
+    package_root = _join_path(workspace_root, "cloud-dog-ai-platform-standards", "packages", "backend")
     for name in (
         "platform-config",
         "platform-logging",
@@ -38,10 +89,10 @@ def _inject_workspace_package_paths() -> None:
         "platform-idam",
         "platform-jobs",
         "platform-db",
+        "platform-storage",
     ):
-        candidate = package_root / name
-        candidate_str = str(candidate)
-        if candidate.exists() and candidate_str not in sys.path:
+        candidate_str = _join_path(package_root, name)
+        if candidate_str not in sys.path:
             sys.path.insert(0, candidate_str)
 
 

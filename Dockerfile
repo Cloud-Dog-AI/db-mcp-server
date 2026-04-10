@@ -4,13 +4,14 @@ LABEL org.opencontainers.image.vendor="Cloud-Dog, Viewdeck Engineering Limited"
 
 WORKDIR /app
 
-# Install platform packages from Gitea PyPI (zero credentials — anonymous access)
-ARG PYPI_URL=https://gitea.cloud-dog.net/api/packages/Cloud-Dog-External/pypi/simple
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* && \
+# Install platform packages from internal PyPI.
+ARG PYPI_URL=https://pypi.cloud-dog.net/simple
+RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
+    apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* && \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
       --extra-index-url ${PYPI_URL} \
-      --trusted-host gitea.cloud-dog.net \
+      --trusted-host pypi.cloud-dog.net \
       --trusted-host pypi.org \
       --trusted-host files.pythonhosted.org \
       cloud-dog-config \
@@ -21,7 +22,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
       cloud-dog-jobs
 
 COPY . /app
-RUN pip install --no-cache-dir -e ".[dev]"
+RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
+      pip install --no-cache-dir \
+      --extra-index-url ${PYPI_URL} \
+      --trusted-host pypi.cloud-dog.net \
+      --trusted-host pypi.org \
+      --trusted-host files.pythonhosted.org \
+      -e ".[dev]"
 
 EXPOSE 8086 8087 8088 8089
 

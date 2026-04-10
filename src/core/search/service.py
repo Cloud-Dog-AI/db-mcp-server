@@ -27,7 +27,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable
 
 from cloud_dog_api_kit.errors import NotFoundError, ValidationError
+from cloud_dog_jobs import FallbackAction, JobStatus
 from cloud_dog_jobs.domain.models import JobRequest
+from cloud_dog_logging import get_logger  # type: ignore[import-untyped]
+
+_job_logger = get_logger("db_mcp_server.jobs")
 
 from src.core.search.indexer import DiscoveryIndexer, build_fts5_query, normalise_search_terms
 from src.core.search.models import EntityIndexStatus, ProfileIndexStatus
@@ -46,6 +50,7 @@ class DiscoverySearchService:
             str(runtime.config.get("search.discovery_index_path", "./data/discovery-index.db"))
         )
         self._indexer = DiscoveryIndexer(runtime)
+        self._queue_name = str(runtime.config.get("jobs.queue_name") or "indexing").strip() or "indexing"
 
     @property
     def repository(self) -> DiscoveryIndexRepository:
@@ -185,7 +190,7 @@ class DiscoverySearchService:
         """Queue and execute a profile-wide discovery index build."""
         request = JobRequest(
             job_type="discovery.sync_profile",
-            queue_name="indexing",
+            queue_name=self._queue_name,
             payload={"profile_id": profile_id},
             user_id=getattr(principal, "user_id", None),
             request_source="mcp",
@@ -208,7 +213,7 @@ class DiscoverySearchService:
         """Queue and execute a discovery index refresh for one entity."""
         request = JobRequest(
             job_type="discovery.sync_entity",
-            queue_name="indexing",
+            queue_name=self._queue_name,
             payload={"profile_id": profile_id, "namespace": namespace, "entity": entity},
             user_id=getattr(principal, "user_id", None),
             request_source="mcp",
@@ -243,7 +248,7 @@ class DiscoverySearchService:
         requested_profiles = profile_ids or self._resolve_accessible_profiles(principal)
         request = JobRequest(
             job_type="discovery.rebuild",
-            queue_name="indexing",
+            queue_name=self._queue_name,
             payload={"profile_ids": requested_profiles},
             user_id=getattr(principal, "user_id", None),
             request_source="mcp",
@@ -299,14 +304,48 @@ class DiscoverySearchService:
         }
 
     def _execute_job(self, job_id: str, operation: Callable[[], Any]) -> Any:
+        """Execute a job with full PS-75 lifecycle: claim, heartbeat, audit, retry/dead-letter on failure."""
         worker_id = "discovery-indexer"
-        self._runtime.job_backend.claim(job_id, host_id=str(self._runtime.config.get("service_instance", "db-mcp-local")), worker_id=worker_id)
+        host_id = str(self._runtime.config.get("service_instance", "db-mcp-local"))
+        self._runtime.job_backend.claim(job_id, host_id=host_id, worker_id=worker_id)
+        self._runtime.job_backend.heartbeat(job_id)
+
+        # Audit: job claimed (PS-75 JQ15)
+        _job_logger.info(f"job.audit action=job.claim outcome=success job_id={job_id}")
+
         try:
             result = operation()
-        except Exception:
-            self._runtime.job_backend.update_status(job_id, "failed")
+        except Exception as exc:
+            error_msg = str(exc)[:200]
+
+            # Check retry eligibility (PS-75 JQ7)
+            job = self._runtime.job_backend.get(job_id)
+            current_attempt = getattr(job, "attempt", 0) or 0 if job else 0
+            max_att = self._runtime.job_max_attempts
+
+            if current_attempt < max_att - 1:
+                # Transition to retry_wait
+                self._runtime.job_backend.update_status(job_id, JobStatus.RETRY_WAIT.value)
+                _job_logger.info(f"job.audit action=job.transition outcome=retry job_id={job_id} attempt={current_attempt + 1}")
+            elif self._runtime.job_fallback_manager is not None:
+                # Dead-letter (PS-75 JQ7.3)
+                try:
+                    decision = self._runtime.job_fallback_manager.apply(self._runtime.job_backend, job, exc)
+                    if decision.action == FallbackAction.DEAD_LETTER:
+                        self._runtime.job_backend.update_status(job_id, JobStatus.DEAD_LETTERED.value)
+                        _job_logger.info(f"job.audit action=job.transition outcome=dead_lettered job_id={job_id}")
+                        raise
+                except Exception:
+                    pass
+                self._runtime.job_backend.update_status(job_id, "failed")
+                _job_logger.info(f"job.audit action=job.transition outcome=failed job_id={job_id} error={error_msg}")
+            else:
+                self._runtime.job_backend.update_status(job_id, "failed")
+                _job_logger.info(f"job.audit action=job.transition outcome=failed job_id={job_id} error={error_msg}")
             raise
+
         self._runtime.job_backend.update_status(job_id, "succeeded")
+        _job_logger.info(f"job.audit action=job.transition outcome=success job_id={job_id}")
         return result
 
     def _resolve_accessible_profiles(self, principal: Any) -> list[str]:
