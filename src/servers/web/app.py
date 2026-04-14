@@ -30,6 +30,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 
 from cloud_dog_api_kit import create_app
 from cloud_dog_api_kit.middleware import TimeoutMiddleware
+from cloud_dog_api_kit.web.proxy import WebApiProxy
 
 from src.common.runtime import RuntimeFactory, build_health_router, request_timeout_seconds
 from src.servers.web.ui_spa import is_spa_entry_path, serve_runtime_config, serve_spa_asset, serve_spa_index
@@ -64,6 +65,23 @@ _HOP_BY_HOP_HEADERS = {
 }
 
 
+class _ProxyConfigAdapter:
+    """Bridge target-specific values into the WebApiProxy config contract."""
+
+    def __init__(self, *, target_base: str, api_key: str = "") -> None:
+        self._values = {
+            "web_server.api_base_url": target_base,
+            "api_server.base_url": target_base,
+            "api_server.api_key": api_key,
+            "api_server.api_key_header": "X-API-Key",
+            "web_server.verify_tls": False,
+            "web_server.proxy_timeout": 60.0,
+        }
+
+    def get(self, key: str, default: object = None) -> object:
+        return self._values.get(key, default)
+
+
 def create_web_app(explicit_env_files: list[str] | None = None):
     """Create the db-mcp-server web application."""
     runtime = RuntimeFactory.create(explicit_env_files)
@@ -83,6 +101,11 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     _admin_password = str(runtime.config.get("web_login.password", "") or "")
     _service_api_key = str(runtime.config.get("auth.api_key", "") or "").strip()
     _cookie_name = "db_web_session"
+    api_base = _server_base(runtime.config.get("api_server.host"), runtime.config.get("api_server.port"))
+    mcp_base = _server_base(runtime.config.get("mcp_server.host"), runtime.config.get("mcp_server.port"))
+    a2a_base = _server_base(runtime.config.get("a2a_server.host"), runtime.config.get("a2a_server.port"))
+    api_proxy = _build_proxy(api_base)
+    api_session_proxy = _build_proxy(api_base, api_key=_service_api_key)
 
     def _get_session(request: Request) -> dict | None:
         token = request.cookies.get(_cookie_name)
@@ -133,11 +156,10 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     @app.api_route("/api/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     async def proxy_api(request: Request, full_path: str = "") -> Response:
         """Proxy same-origin API requests to the dedicated API server."""
-        return await _proxy_request(
+        return await _proxy_via(
             request,
-            target_base=_server_base(runtime.config.get("api_server.host"), runtime.config.get("api_server.port")),
+            proxy=api_session_proxy if _get_session(request) else api_proxy,
             strip_prefix="",
-            session_api_key=_service_api_key if _get_session(request) else "",
         )
 
     @app.api_route("/webapi", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
@@ -148,34 +170,31 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         Rewrites /webapi/v1/… → /api/v1/… so the API server receives the
         correct route prefix.
         """
-        return await _proxy_request(
+        return await _proxy_via(
             request,
-            target_base=_server_base(runtime.config.get("api_server.host"), runtime.config.get("api_server.port")),
+            proxy=api_session_proxy if _get_session(request) else api_proxy,
             strip_prefix="/webapi",
             rewrite_prefix="/api",
-            session_api_key=_service_api_key if _get_session(request) else "",
         )
 
     @app.api_route("/webapi-docs", methods=["GET"])
     async def proxy_web_api_docs(request: Request) -> Response:
         """Proxy the API Swagger UI without the /api prefix rewrite."""
-        return await _proxy_request(
+        return await _proxy_via(
             request,
-            target_base=_server_base(runtime.config.get("api_server.host"), runtime.config.get("api_server.port")),
+            proxy=api_session_proxy if _get_session(request) else api_proxy,
             strip_prefix="/webapi-docs",
             rewrite_prefix="/docs",
-            session_api_key=_service_api_key if _get_session(request) else "",
         )
 
     @app.api_route("/webapi-openapi.json", methods=["GET"])
     async def proxy_web_api_openapi(request: Request) -> Response:
         """Proxy the API OpenAPI schema without the /api prefix rewrite."""
-        return await _proxy_request(
+        return await _proxy_via(
             request,
-            target_base=_server_base(runtime.config.get("api_server.host"), runtime.config.get("api_server.port")),
+            proxy=api_session_proxy if _get_session(request) else api_proxy,
             strip_prefix="/webapi-openapi.json",
             rewrite_prefix="/openapi.json",
-            session_api_key=_service_api_key if _get_session(request) else "",
         )
 
     @app.api_route("/mcp", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
@@ -184,7 +203,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         """Proxy same-origin MCP requests to the dedicated MCP server."""
         return await _proxy_request(
             request,
-            target_base=_server_base(runtime.config.get("mcp_server.host"), runtime.config.get("mcp_server.port")),
+            target_base=mcp_base,
             strip_prefix="",
             session_api_key=_service_api_key if _get_session(request) else "",
         )
@@ -199,7 +218,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         """
         return await _proxy_request(
             request,
-            target_base=_server_base(runtime.config.get("mcp_server.host"), runtime.config.get("mcp_server.port")),
+            target_base=mcp_base,
             strip_prefix="/webmcp",
             rewrite_prefix="/mcp",
             session_api_key=_service_api_key if _get_session(request) else "",
@@ -211,7 +230,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         """Proxy cookie-authenticated browser A2A requests on a dedicated path."""
         return await _proxy_request(
             request,
-            target_base=_server_base(runtime.config.get("a2a_server.host"), runtime.config.get("a2a_server.port")),
+            target_base=a2a_base,
             strip_prefix="/weba2a",
             session_api_key=_service_api_key if _get_session(request) else "",
         )
@@ -240,6 +259,69 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         return serve_spa_asset(path)
 
     return app
+
+
+def _build_proxy(target_base: str, *, api_key: str = "") -> WebApiProxy:
+    """Build a WebApiProxy with explicit target overrides."""
+    return WebApiProxy.from_config(_ProxyConfigAdapter(target_base=target_base, api_key=api_key))
+
+
+async def _proxy_via(
+    request: Request,
+    *,
+    proxy: WebApiProxy,
+    strip_prefix: str,
+    rewrite_prefix: str = "",
+) -> Response:
+    """Proxy JSON-capable web requests through the platform WebApiProxy."""
+    target_path = request.url.path
+    if strip_prefix and target_path.startswith(strip_prefix):
+        target_path = target_path[len(strip_prefix):] or "/"
+    if rewrite_prefix:
+        target_path = rewrite_prefix + target_path
+
+    headers = {
+        key: value
+        for key, value in request.headers.items()
+        if key.lower() not in _HOP_BY_HOP_HEADERS
+    }
+    body = await request.body()
+    payload = None
+    if body:
+        content_type = str(headers.get("content-type") or "").lower()
+        if "application/json" in content_type:
+            payload = await request.json()
+        else:
+            return await _proxy_request(
+                request,
+                target_base=getattr(proxy, "_base_url", ""),
+                strip_prefix=strip_prefix,
+                rewrite_prefix=rewrite_prefix,
+                session_api_key=str(getattr(proxy, "_api_key", "") or ""),
+            )
+
+    proxied = await proxy.request(
+        request.method,
+        target_path,
+        json=payload,
+        params=dict(request.query_params),
+        headers=headers,
+        cookies=dict(request.cookies),
+    )
+    response_headers = _filtered_response_headers(proxied.headers)
+    if isinstance(proxied.data, (dict, list)):
+        return JSONResponse(
+            content=proxied.data,
+            status_code=proxied.status_code,
+            headers=response_headers,
+        )
+    content = proxied.data if proxied.data is not None else proxied.error or ""
+    return Response(
+        content=content,
+        status_code=proxied.status_code,
+        headers=response_headers,
+        media_type=response_headers.get("content-type"),
+    )
 
 
 async def _proxy_request(
