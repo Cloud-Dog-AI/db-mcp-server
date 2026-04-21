@@ -32,6 +32,7 @@ from cloud_dog_api_kit import create_app
 from cloud_dog_api_kit.middleware import TimeoutMiddleware
 from cloud_dog_api_kit.web.proxy import WebApiProxy
 
+from src.common.base_paths import configured_base_path, first_path_segment, join_route
 from src.common.runtime import RuntimeFactory, build_health_router, request_timeout_seconds
 from src.servers.web.ui_spa import is_spa_entry_path, serve_runtime_config, serve_spa_asset, serve_spa_index
 from cloud_dog_idam.rbac import RBACEngine as _RBACEngine  # PS-70 RBAC enforcement
@@ -85,15 +86,23 @@ class _ProxyConfigAdapter:
 def create_web_app(explicit_env_files: list[str] | None = None):
     """Create the db-mcp-server web application."""
     runtime = RuntimeFactory.create(explicit_env_files)
+    web_base_path = configured_base_path(runtime.config, "web")
+    api_base_path = configured_base_path(runtime.config, "api")
+    mcp_base_path = configured_base_path(runtime.config, "mcp")
+    a2a_base_path = configured_base_path(runtime.config, "a2a")
+    api_alias_rewrite_prefix = first_path_segment(api_base_path)
     timeout_seconds = request_timeout_seconds(runtime.config, scope="web_server")
     app = create_app(
         title="db-mcp-server Web",
         version=str(runtime.config.get("app.version", "0.1.0")),
+        api_prefix=web_base_path or "",
         enable_health=False,
     )
     _apply_request_timeout(app, timeout_seconds)
     app.state.runtime = runtime
     app.include_router(build_health_router(runtime, "db-mcp-server-web"))
+    if web_base_path:
+        app.include_router(build_health_router(runtime, "db-mcp-server-web"), prefix=web_base_path)
 
     # In-memory token session store (no itsdangerous dependency).
     _sessions: dict[str, dict] = {}
@@ -106,6 +115,14 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     a2a_base = _server_base(runtime.config.get("a2a_server.host"), runtime.config.get("a2a_server.port"))
     api_proxy = _build_proxy(api_base)
     api_session_proxy = _build_proxy(api_base, api_key=_service_api_key)
+    cookie_path = web_base_path or "/"
+    api_proxy_prefix = join_route(web_base_path, "/api")
+    webapi_prefix = join_route(web_base_path, "/webapi")
+    webapi_docs_prefix = join_route(web_base_path, "/webapi-docs")
+    webapi_openapi_prefix = join_route(web_base_path, "/webapi-openapi.json")
+    mcp_proxy_prefix = join_route(web_base_path, mcp_base_path)
+    webmcp_prefix = join_route(web_base_path, "/webmcp")
+    weba2a_prefix = join_route(web_base_path, "/weba2a")
 
     def _get_session(request: Request) -> dict | None:
         token = request.cookies.get(_cookie_name)
@@ -116,7 +133,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
             del _sessions[token]
         return None
 
-    @app.post("/auth/login")
+    @app.post(join_route(web_base_path, "/auth/login"))
     async def auth_login(request: Request) -> JSONResponse:
         body = await request.json()
         username = str(body.get("username", "")).strip()
@@ -128,42 +145,42 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         token = secrets.token_urlsafe(32)
         _sessions[token] = {"user": username, "user_id": "1", "role": "admin", "_created": time.time()}
         resp = JSONResponse({"user": {"id": "1", "displayName": username, "email": None, "roles": ["admin"], "permissions": ["*"]}})
-        resp.set_cookie(_cookie_name, token, httponly=True, samesite="lax", max_age=3600, path="/")
+        resp.set_cookie(_cookie_name, token, httponly=True, samesite="lax", max_age=3600, path=cookie_path)
         return resp
 
-    @app.get("/auth/me")
+    @app.get(join_route(web_base_path, "/auth/me"))
     async def auth_me(request: Request) -> JSONResponse:
         sess = _get_session(request)
         if not sess:
             raise HTTPException(status_code=401, detail="Not authenticated")
         return JSONResponse({"user": {"id": sess["user_id"], "displayName": sess["user"], "email": None, "roles": [sess["role"]], "permissions": ["*"]}})
 
-    @app.post("/auth/logout")
+    @app.post(join_route(web_base_path, "/auth/logout"))
     async def auth_logout(request: Request) -> JSONResponse:
         token = request.cookies.get(_cookie_name)
         if token:
             _sessions.pop(token, None)
         resp = JSONResponse({"ok": True})
-        resp.delete_cookie(_cookie_name, path="/")
+        resp.delete_cookie(_cookie_name, path=cookie_path)
         return resp
 
-    @app.get("/runtime-config.js", response_class=Response)
+    @app.get(join_route(web_base_path, "/runtime-config.js"), response_class=Response)
     async def runtime_config(request: Request) -> Response:
         """Return runtime configuration for the SPA bootstrap contract."""
         return serve_runtime_config(runtime, request)
 
-    @app.api_route("/api", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
-    @app.api_route("/api/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route(api_proxy_prefix, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route(f"{api_proxy_prefix}/{{full_path:path}}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     async def proxy_api(request: Request, full_path: str = "") -> Response:
         """Proxy same-origin API requests to the dedicated API server."""
         return await _proxy_via(
             request,
             proxy=api_session_proxy if _get_session(request) else api_proxy,
-            strip_prefix="",
+            strip_prefix=web_base_path,
         )
 
-    @app.api_route("/webapi", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
-    @app.api_route("/webapi/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route(webapi_prefix, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route(f"{webapi_prefix}/{{full_path:path}}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     async def proxy_web_api(request: Request, full_path: str = "") -> Response:
         """Proxy cookie-authenticated browser API requests on a dedicated path.
 
@@ -173,43 +190,43 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         return await _proxy_via(
             request,
             proxy=api_session_proxy if _get_session(request) else api_proxy,
-            strip_prefix="/webapi",
-            rewrite_prefix="/api",
+            strip_prefix=webapi_prefix,
+            rewrite_prefix=api_alias_rewrite_prefix,
         )
 
-    @app.api_route("/webapi-docs", methods=["GET"])
+    @app.api_route(webapi_docs_prefix, methods=["GET"])
     async def proxy_web_api_docs(request: Request) -> Response:
         """Proxy the API Swagger UI without the /api prefix rewrite."""
         return await _proxy_via(
             request,
             proxy=api_session_proxy if _get_session(request) else api_proxy,
-            strip_prefix="/webapi-docs",
+            strip_prefix=webapi_docs_prefix,
             rewrite_prefix="/docs",
         )
 
-    @app.api_route("/webapi-openapi.json", methods=["GET"])
+    @app.api_route(webapi_openapi_prefix, methods=["GET"])
     async def proxy_web_api_openapi(request: Request) -> Response:
         """Proxy the API OpenAPI schema without the /api prefix rewrite."""
         return await _proxy_via(
             request,
             proxy=api_session_proxy if _get_session(request) else api_proxy,
-            strip_prefix="/webapi-openapi.json",
+            strip_prefix=webapi_openapi_prefix,
             rewrite_prefix="/openapi.json",
         )
 
-    @app.api_route("/mcp", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
-    @app.api_route("/mcp/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route(mcp_proxy_prefix, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route(f"{mcp_proxy_prefix}/{{full_path:path}}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     async def proxy_mcp(request: Request, full_path: str = "") -> Response:
         """Proxy same-origin MCP requests to the dedicated MCP server."""
         return await _proxy_request(
             request,
             target_base=mcp_base,
-            strip_prefix="",
+            strip_prefix=web_base_path,
             session_api_key=_service_api_key if _get_session(request) else "",
         )
 
-    @app.api_route("/webmcp", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
-    @app.api_route("/webmcp/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route(webmcp_prefix, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route(f"{webmcp_prefix}/{{full_path:path}}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     async def proxy_web_mcp(request: Request, full_path: str = "") -> Response:
         """Proxy cookie-authenticated browser MCP requests on a dedicated path.
 
@@ -219,38 +236,39 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         return await _proxy_request(
             request,
             target_base=mcp_base,
-            strip_prefix="/webmcp",
-            rewrite_prefix="/mcp",
+            strip_prefix=webmcp_prefix,
+            rewrite_prefix=mcp_base_path,
             session_api_key=_service_api_key if _get_session(request) else "",
         )
 
-    @app.api_route("/weba2a", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
-    @app.api_route("/weba2a/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route(weba2a_prefix, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+    @app.api_route(f"{weba2a_prefix}/{{full_path:path}}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     async def proxy_web_a2a(request: Request, full_path: str = "") -> Response:
         """Proxy cookie-authenticated browser A2A requests on a dedicated path."""
         return await _proxy_request(
             request,
             target_base=a2a_base,
-            strip_prefix="/weba2a",
+            strip_prefix=weba2a_prefix,
+            rewrite_prefix=a2a_base_path,
             session_api_key=_service_api_key if _get_session(request) else "",
         )
 
-    @app.get("/")
+    @app.get(join_route(web_base_path, "/"))
     async def root() -> Response:
         """Serve the SPA entrypoint for the application root."""
         return serve_spa_index()
 
-    @app.get("/robots.txt")
+    @app.get(join_route(web_base_path, "/robots.txt"))
     async def robots() -> Response:
         """Disable indexing for local admin surfaces."""
         return PlainTextResponse("User-agent: *\nDisallow: /\n")
 
-    @app.get("/api-docs")
+    @app.get(join_route(web_base_path, "/api-docs"))
     async def api_docs_spa() -> Response:
         """Serve the SPA shell for the /api-docs route."""
         return serve_spa_index()
 
-    @app.get("/{path:path}")
+    @app.get(join_route(web_base_path, "/{path:path}"))
     async def spa(path: str, request: Request) -> Response:
         """Serve static SPA assets and browser-history routes from ui/dist."""
         cleaned = "/" + path.lstrip("/")

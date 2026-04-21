@@ -30,6 +30,7 @@ from fastapi import APIRouter
 from cloud_dog_api_kit import create_app, success_envelope
 from cloud_dog_logging.middleware.audit import AuditMiddleware
 
+from src.common.base_paths import configured_base_path, exempt_paths_for_surface
 from src.common.http import APIKeyAuthMiddleware
 from src.common.runtime import RuntimeFactory, build_health_router
 from src.common.storage_paths import read_text_file, storage_exists, storage_for_path
@@ -139,30 +140,42 @@ def _read_log_entries(surface: str, limit: int) -> list[dict[str, object]]:
     return list(reversed(entries[-max(1, min(limit, 500)):]))
 
 
+def _mask_runtime_config(value, parent_key: str = ""):
+    """Redact secret-like values before returning config to the Web UI."""
+    if isinstance(value, dict):
+        masked = {}
+        for key, item in value.items():
+            lowered = str(key).lower()
+            if any(fragment in lowered for fragment in ("password", "secret", "token", "api_key", "apikey", "credential", "private_key", "key_hash")):
+                masked[key] = item if item in (None, "", [], {}) else "****"
+                continue
+            masked[key] = _mask_runtime_config(item, lowered)
+        return masked
+    if isinstance(value, list):
+        return [_mask_runtime_config(item, parent_key) for item in value]
+    return value
+
+
 def create_api_app(explicit_env_files: list[str] | None = None):
     """Create the db-mcp-server API application."""
     runtime = RuntimeFactory.create(explicit_env_files)
+    api_base_path = configured_base_path(runtime.config, "api")
     app = create_app(
         title="db-mcp-server API",
         version=str(runtime.config.get("app.version", "0.1.0")),
+        api_prefix=api_base_path or "",
         enable_health=False,
         cors_origins=list(runtime.config.get("api_server.cors_origins", [])),
         enable_audit_logging=False,
     )
     app.state.runtime = runtime
     app.include_router(build_health_router(runtime, "db-mcp-server-api"))
+    if api_base_path:
+        app.include_router(build_health_router(runtime, "db-mcp-server-api"), prefix=api_base_path)
     app.add_middleware(
         APIKeyAuthMiddleware,
         verify_api_key=runtime.auth.verify_api_key,
-        exempt_paths={
-            "/health",
-            "/ready",
-            "/live",
-            "/status",
-            "/docs",
-            "/redoc",
-            "/openapi.json",
-        },
+        exempt_paths=exempt_paths_for_surface(api_base_path),
     )
     # W28A-529: Outermost audit middleware — captures auth failures (401/403)
     # that are returned by APIKeyAuthMiddleware before reaching create_app()'s
@@ -170,7 +183,7 @@ def create_api_app(explicit_env_files: list[str] | None = None):
     # audited here (duplicate suppression is handled by the ASGI ordering).
     app.add_middleware(AuditMiddleware)
 
-    router = APIRouter(prefix="/api/v1", tags=["api"])
+    router = APIRouter(prefix=api_base_path, tags=["api"])
 
     @router.get("/ping")
     async def ping() -> dict:
@@ -198,6 +211,11 @@ def create_api_app(explicit_env_files: list[str] | None = None):
     async def metrics() -> dict:
         """Return structured resource metrics for the db-mcp dashboard."""
         return success_envelope(_resource_metrics(runtime))
+
+    @router.get("/config")
+    async def config_dump() -> dict:
+        """Return the effective runtime configuration with secrets masked."""
+        return success_envelope(_mask_runtime_config(runtime.config.data))
 
     @router.get("/logs")
     async def logs(surface: str = "api", limit: int = 200) -> dict:
@@ -230,5 +248,5 @@ def create_api_app(explicit_env_files: list[str] | None = None):
         return success_envelope({"cancelled": runtime.job_queue.cancel(job_id), "job_id": job_id})
 
     app.include_router(router)
-    app.include_router(create_access_control_router(runtime))
+    app.include_router(create_access_control_router(runtime, api_base_path))
     return app

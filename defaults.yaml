@@ -64,12 +64,15 @@ api_server:
   enabled: true
   host: "0.0.0.0"
   port: 8086
+  base_path: "/api/v1"
   cors_origins: []
 
 web_server:
   enabled: true
   host: "0.0.0.0"
   port: 8087
+  # base_path = server route prefix (PS-92). api_base_url = full client URL (existing, unchanged).
+  base_path: ""
   api_base_url: "http://127.0.0.1:8086"
 
 web_login:
@@ -80,6 +83,7 @@ mcp_server:
   enabled: true
   host: "0.0.0.0"
   port: 8088
+  base_path: "/mcp"
   transport_modes:
     - "streamable_http"
     - "http_jsonrpc"
@@ -89,6 +93,7 @@ a2a_server:
   enabled: true
   host: "0.0.0.0"
   port: 8089
+  base_path: "/a2a"
   websocket_path: "/a2a/ws"
 
 metadata_store:

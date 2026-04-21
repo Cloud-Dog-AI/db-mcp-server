@@ -18,12 +18,15 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 import pytest
 
 from src.servers.api.app import create_api_app
 
 pytestmark = pytest.mark.unit
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 @pytest.fixture()
@@ -50,3 +53,15 @@ def test_protected_route_accepts_valid_api_key(api_client: TestClient) -> None:
     response = api_client.get("/api/v1/ping", headers={"X-API-Key": "test-api-key"})
     assert response.status_code == 200
     assert response.json()["ok"] is True
+
+
+def test_api_base_path_override_exposes_prefixed_health_and_ping(monkeypatch: pytest.MonkeyPatch) -> None:
+    """API routes should move when api_server.base_path is overridden."""
+    monkeypatch.setenv("CLOUD_DOG__API_SERVER__BASE_PATH", "/api/v2")
+    client = TestClient(create_api_app([str(PROJECT_ROOT / "tests" / "env-UT")]))
+
+    health = client.get("/api/v2/health")
+    ping = client.get("/api/v2/ping", headers={"X-API-Key": "test-api-key"})
+
+    assert health.status_code == 200
+    assert ping.status_code == 200

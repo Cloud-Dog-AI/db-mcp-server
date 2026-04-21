@@ -28,6 +28,8 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from src.common.base_paths import normalise_base_path
+
 
 class APIKeyAuthMiddleware(BaseHTTPMiddleware):
     """Protect non-exempt HTTP routes with API-key authentication."""
@@ -45,15 +47,20 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
         verify_api_key: Callable[[str], Awaitable[dict[str, Any] | None]],
         exempt_paths: set[str] | None = None,
         api_key_header: str = "X-API-Key",
+        public_mcp_paths: set[str] | None = None,
     ) -> None:
         super().__init__(app)
         self._verify_api_key = verify_api_key
         self._exempt_paths = exempt_paths or set()
         self._api_key_header = api_key_header
+        self._public_mcp_paths = frozenset(
+            normalise_base_path(path) or "/"
+            for path in (public_mcp_paths or set(self._MCP_PATHS))
+        )
 
     async def _is_public_mcp_request(self, request: Request) -> bool:
         """Return True when the request is an unauthenticated-safe MCP method."""
-        if request.method != "POST" or request.url.path not in self._MCP_PATHS:
+        if request.method != "POST" or request.url.path not in self._public_mcp_paths:
             return False
         try:
             body = await request.body()

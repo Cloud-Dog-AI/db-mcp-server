@@ -34,10 +34,10 @@ from src.core.access_control.schemas import (
 )
 
 
-def create_access_control_router(runtime) -> APIRouter:
+def create_access_control_router(runtime, base_path: str) -> APIRouter:
     """Create the access-control CRUD router."""
     access = runtime.access_control
-    router = APIRouter(prefix="/api/v1", tags=["access-control"])
+    router = APIRouter(prefix=base_path, tags=["access-control"])
 
     @router.get("/profiles")
     async def list_profiles(request: Request) -> dict:

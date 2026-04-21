@@ -23,11 +23,13 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
 
 from cloud_dog_api_kit import create_app
-from cloud_dog_api_kit.a2a.card import create_a2a_card_router, A2ASkill
+from cloud_dog_api_kit.a2a.card import A2ASkill
 
+from src.common.base_paths import configured_base_path, exempt_paths_for_surface, join_route
 from src.common.http import APIKeyAuthMiddleware
 from src.common.runtime import RuntimeFactory, build_health_router
 from src.servers.mcp.catalog_tools import build_catalog_tool_registry
@@ -55,34 +57,37 @@ async def _verify_websocket_api_key(websocket: WebSocket, runtime) -> bool:
 def create_a2a_app(explicit_env_files: list[str] | None = None):
     """Create the db-mcp-server A2A application."""
     runtime = RuntimeFactory.create(explicit_env_files)
+    a2a_base_path = configured_base_path(runtime.config, "a2a")
+    websocket_path = join_route(a2a_base_path, "/ws")
     app = create_app(
         title="db-mcp-server A2A",
         version=str(runtime.config.get("app.version", "0.1.0")),
+        api_prefix=a2a_base_path or "",
         enable_health=False,
     )
     app.include_router(build_health_router(runtime, "db-mcp-server-a2a"))
+    if a2a_base_path:
+        app.include_router(build_health_router(runtime, "db-mcp-server-a2a"), prefix=a2a_base_path)
+    exempt_paths = exempt_paths_for_surface(a2a_base_path)
+    exempt_paths.update(
+        {
+            "/.well-known/agent.json",
+            "/tasks",
+            join_route(a2a_base_path, "/.well-known/agent.json"),
+            join_route(a2a_base_path, "/tasks"),
+        }
+    )
     app.add_middleware(
         APIKeyAuthMiddleware,
         verify_api_key=runtime.auth.verify_api_key,
-        exempt_paths={
-            "/health",
-            "/ready",
-            "/live",
-            "/status",
-            "/docs",
-            "/redoc",
-            "/openapi.json",
-            "/.well-known/agent.json",
-            "/tasks",
-            "/a2a/tasks",
-            "/a2a/health",
-        },
+        exempt_paths=exempt_paths,
     )
 
     @app.get("/")
+    @app.get(a2a_base_path or "/")
     async def root() -> dict[str, object]:
         """Return basic A2A server metadata."""
-        return {"status": "ok", "surface": "a2a", "websocket_path": runtime.config.get("a2a_server.websocket_path")}
+        return {"status": "ok", "surface": "a2a", "websocket_path": websocket_path}
 
     async def _serve_a2a_socket(websocket: WebSocket) -> None:
         """Serve a minimal A2A websocket with a health topic."""
@@ -109,7 +114,7 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
         except WebSocketDisconnect:
             return
 
-    @app.websocket("/a2a/ws")
+    @app.websocket(websocket_path)
     async def a2a_socket(websocket: WebSocket) -> None:
         """Serve the canonical A2A websocket path."""
         await _serve_a2a_socket(websocket)
@@ -172,7 +177,7 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
         scope = {
             "type": "http",
             "method": "POST",
-            "path": "/a2a/tasks",
+            "path": join_route(a2a_base_path, "/tasks"),
             "headers": [],
             "query_string": b"",
             "state": {"principal": principal},
@@ -245,11 +250,71 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
         A2ASkill(id="data_update", name="Data Update", description="Update existing records in the database", handler=_handle_data_update),
         A2ASkill(id="schema_list", name="Schema List", description="List database schemas and table structures", handler=_handle_schema_list),
     ]
-    _a2a_card_router = create_a2a_card_router(
-        name="db-mcp",
-        description="Database MCP A2A server for data operations and schema management",
-        skills=_a2a_skills,
-    )
-    app.include_router(_a2a_card_router)
+    _skill_map: dict[str, A2ASkill] = {skill.id: skill for skill in _a2a_skills}
+    _card = {
+        "name": "db-mcp",
+        "description": "Database MCP A2A server for data operations and schema management",
+        "url": "",
+        "version": "1.0.0",
+        "capabilities": {"streaming": False, "pushNotifications": False},
+        "skills": [
+            {"id": skill.id, "name": skill.name, "description": skill.description}
+            for skill in _a2a_skills
+        ],
+    }
+
+    @app.get("/.well-known/agent.json")
+    @app.get(join_route(a2a_base_path, "/.well-known/agent.json"))
+    async def agent_card() -> JSONResponse:
+        """Return the A2A agent card as JSON."""
+        return JSONResponse(_card)
+
+    @app.post(join_route(a2a_base_path, "/tasks"))
+    @app.post("/tasks")
+    async def submit_task(request: Request) -> JSONResponse:
+        """Accept an A2A task submission and dispatch to the matching skill."""
+        body = await request.json()
+        task_id = body.get("id", "")
+        skill_id = body.get("skill_id", "")
+        input_data = body.get("input", {})
+        input_text = input_data.get("text", "") if isinstance(input_data, dict) else str(input_data)
+
+        skill = _skill_map.get(skill_id)
+        if skill is None:
+            if skill_id == "health":
+                return JSONResponse({
+                    "id": task_id,
+                    "status": "completed",
+                    "output": {"type": "text", "text": "db-mcp is healthy"},
+                })
+            return JSONResponse(
+                {
+                    "id": task_id,
+                    "status": "failed",
+                    "error": f"Unknown skill: {skill_id}. Available: {list(_skill_map.keys())}",
+                },
+                status_code=404,
+            )
+
+        try:
+            if skill.handler is not None:
+                result = skill.handler(input_text)
+                if hasattr(result, "__await__"):
+                    result = await result
+                result_text = str(result)
+            else:
+                result_text = f"Skill '{skill_id}' acknowledged (no handler configured)"
+        except Exception as exc:
+            return JSONResponse({
+                "id": task_id,
+                "status": "failed",
+                "error": str(exc),
+            })
+
+        return JSONResponse({
+            "id": task_id,
+            "status": "completed",
+            "output": {"type": "text", "text": result_text},
+        })
 
     return app

@@ -103,7 +103,7 @@ def test_cookie_authenticated_browser_proxies_inject_api_key(
     assert [item["method"] for item in captured] == ["GET", "GET"]
     assert [item["url"] for item in captured] == [
         f"{service_base_url('mcp', PROJECT_ROOT / 'tests' / 'env-UT', default_tier='UT')}/mcp/tools",
-        f"{service_base_url('a2a', PROJECT_ROOT / 'tests' / 'env-UT', default_tier='UT')}/health",
+        f"{service_base_url('a2a', PROJECT_ROOT / 'tests' / 'env-UT', default_tier='UT')}/a2a/health",
     ]
     for item in captured:
         headers = item["headers"]
