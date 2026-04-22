@@ -53,12 +53,24 @@ def _wait(url: str) -> None:
     pytest.fail(f"Timed out waiting for {url}")
 
 
+def _resolve_mongodb_uri(env_file: Path) -> str:
+    """Read the MongoDB URI from the env file that the server will use."""
+    import re
+    content = env_file.read_text(encoding="utf-8", errors="ignore")
+    for line in content.splitlines():
+        m = re.match(r"CLOUD_DOG__CONNECTORS__MONGODB__DEFAULT_URI=(.+)", line.strip())
+        if m:
+            return m.group(1).strip()
+    # Fallback to local test container
+    return ensure_real_mongodb()
+
+
 def test_mongodb_mcp_tools_crud_lifecycle() -> None:
     """MongoDB MCP tools should perform real CRUD against a real local MongoDB runtime."""
-    uri = ensure_real_mongodb()
     db_name = f"dbmcp_it_{int(time.time())}"
     root = Path(__file__).resolve().parents[3]
     env_file = root / "tests" / "env-IT"
+    uri = _resolve_mongodb_uri(env_file)
 
     client = MongoClient(uri, serverSelectionTimeoutMS=3000)
     client[db_name]["widgets"].insert_many(

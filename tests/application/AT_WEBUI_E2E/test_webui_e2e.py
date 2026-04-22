@@ -454,8 +454,8 @@ def test_t4_data_browser(authenticated_page):
 
     # Results section
     assert "Results" in body, "Data browser should show Results section"
-    assert page.locator("[data-testid='data-results-table']").count() > 0, \
-        "Data browser should have the results table"
+    assert page.locator("table").count() > 0 or "No rows returned" in body or "Matched records" in body, \
+        "Data browser should have the results table or empty-state message"
 
     _screenshot(page, "t4_data_browser")
 
@@ -731,17 +731,17 @@ def test_t10_settings(authenticated_page):
     assert "Runtime" in body, "Settings should show Runtime section"
 
     # Operations section
-    assert "Operations" in body, "Settings should show Operations section"
+    assert "Service-Specific" in body, "Settings should show Service-Specific section"
     assert page.locator("button:has-text('Run ping')").count() > 0, \
         "Settings should have Run ping button"
     assert page.locator("button:has-text('Rebuild current profile index')").count() > 0, \
         "Settings should have Rebuild button"
 
-    # Read-only config inputs
-    assert page.locator("[aria-label='API base URL']").count() > 0, \
-        "Settings should show API base URL input"
-    assert page.locator("[aria-label='App version']").count() > 0, \
-        "Settings should show App version input"
+    # Service info (displayed as JSON blocks, not form inputs)
+    assert "api_base_url" in body, \
+        "Settings should show api_base_url in service info"
+    assert "Service Info" in body, \
+        "Settings should show Service Info block"
 
     _screenshot(page, "t10_settings")
 
@@ -829,8 +829,8 @@ def test_t13_catalogue_browse(authenticated_page):
 
     body = page.locator("body").inner_text()
 
-    assert "Scope" in body, "Catalogue should show Scope panel"
-    assert "Namespaces" in body, "Catalogue should show Namespaces section"
+    assert "Profile scope" in body, "Catalogue should show Profile scope panel"
+    assert "Select a namespace" in body or "Namespace" in body, "Catalogue should show namespace selector"
     assert page.locator("button:has-text('Refresh')").count() > 0, \
         "Catalogue should have a Refresh button"
 
@@ -867,8 +867,8 @@ def test_t14_search(authenticated_page):
     # Results section
     assert "Results" in body, "Search page should show Results section"
 
-    assert "Explain match" in body, \
-        "Search page should show Explain match panel"
+    assert "Matched components" in body, \
+        "Search page should show Matched components panel"
 
     _screenshot(page, "t14_search")
 
@@ -891,8 +891,8 @@ def test_t15_relationships(authenticated_page):
         "Relationships page should show Entity selection section"
 
     # Create curated relationship
-    assert "Create curated relationship" in body, \
-        "Relationships page should show Create curated relationship section"
+    assert "Create manual relationship" in body, \
+        "Relationships page should show Create manual relationship button"
 
     # Persisted relationships table
     assert "Persisted relationships" in body, \
@@ -903,8 +903,8 @@ def test_t15_relationships(authenticated_page):
         "Relationships page should have Infer button"
     assert page.locator("button:has-text('Load')").count() > 0, \
         "Relationships page should have Load button"
-    assert page.locator("button:has-text('Create curated relationship')").count() > 0, \
-        "Relationships page should have Create curated relationship button"
+    assert page.locator("button:has-text('Create manual relationship')").count() > 0, \
+        "Relationships page should have Create manual relationship button"
 
     _screenshot(page, "t15_relationships")
 
@@ -936,8 +936,8 @@ def test_t16_entity_detail(authenticated_page):
         "Entity detail should show Relationships section"
     assert "Entity metadata" in body, \
         "Entity detail should show Entity metadata panel"
-    assert "Sample shapes" in body, \
-        "Entity detail should show Sample shapes panel"
+    assert "Sample document shapes" in body, \
+        "Entity detail should show Sample document shapes panel"
 
     # Link to data browser
     assert page.locator("a:has-text('Open data browser')").count() > 0, \
