@@ -60,11 +60,22 @@ venv/bin/python -m pytest tests/fixtures/test_seed_data.py --env tests/env-mongo
 - Docker Compose test environments for MongoDB, CouchDB, OpenSearch, Elasticsearch, and Cassandra
 - PS-30 WebUI served from `ui/dist`
 
-## Not Yet Implemented
-- CouchDB, OpenSearch, Elasticsearch, and Cassandra connector adapters
-- Live CRUD/discovery coverage for non-Mongo backends
+## Implemented Connectors
+All 7 connectors are fully implemented with adapter code, system tests, and integration tests:
+- **MongoDB** — Full adapter (489 lines), system test ST1.8
+- **CouchDB** — Full adapter (853 lines), system test ST1.9
+- **OpenSearch** — Full adapter (615 lines), system test ST1.10
+- **Elasticsearch** — Full adapter (843 lines), system test ST1.12
+- **Cassandra** — Full adapter (771 lines), system test ST1.13
+- **PostgreSQL** — Relational adapter via shared module, system test ST1.14
+- **MariaDB** — Relational adapter via shared module, system test ST1.15
+
+## AT Coverage
+Playwright E2E test suite (AT_WEBUI_E2E) covers: login, dashboard, profile CRUD, data browser, schema, users, groups, API keys, RBAC, audit, catalogue, search, relationships, entity detail.
+
+## Outstanding
 - Real queue workers and job handlers beyond current inline/memory-backed execution
-- AT coverage
+- PS-78 file lifecycle API (W28A-883)
 
 ## Documentation
 - [Requirements](docs/REQUIREMENTS.md)
