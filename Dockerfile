@@ -5,13 +5,13 @@ LABEL org.opencontainers.image.vendor="Cloud-Dog, Viewdeck Engineering Limited"
 WORKDIR /app
 
 # Install platform packages from internal PyPI.
-ARG PYPI_URL=https://<internal-pypi>/simple
+ARG PYPI_URL=https://pypi.cloud-dog.net/simple
 RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
     apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* && \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
       --extra-index-url ${PYPI_URL} \
-      --trusted-host <internal-pypi> \
+      --trusted-host pypi.cloud-dog.net \
       --trusted-host pypi.org \
       --trusted-host files.pythonhosted.org \
       cloud-dog-config \
@@ -25,7 +25,7 @@ COPY . /app
 RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
       pip install --no-cache-dir \
       --extra-index-url ${PYPI_URL} \
-      --trusted-host <internal-pypi> \
+      --trusted-host pypi.cloud-dog.net \
       --trusted-host pypi.org \
       --trusted-host files.pythonhosted.org \
       -e ".[dev]"
