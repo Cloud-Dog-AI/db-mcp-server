@@ -2,7 +2,7 @@ app:
   name: "db-mcp-server"
   version: "0.1.0"
   environment: "${CLOUD_DOG_ENVIRONMENT || 'dev'}"
-  url: "https://dbmcp.cloud-dog.net"
+  url: "https://dbmcp.example.com"
 
 service_name: "db-mcp-server"
 service_instance: "${HOSTNAME || 'db-mcp-local'}"

@@ -56,7 +56,7 @@ def test_resolve_mongodb_uri_builds_uri_from_structured_defaults() -> None:
     config = DummyConfig(
         {
             "connectors.mongodb.default_uri": "",
-            "connectors.mongodb.default_host": "mongo1.app.vpc1.cloud-dog.net",
+            "connectors.mongodb.default_host": "mongo1.db.example.com",
             "connectors.mongodb.default_port": "27017",
             "connectors.mongodb.default_username": "root@example.com",
             "connectors.mongodb.default_password": "p@ss word",
@@ -67,7 +67,7 @@ def test_resolve_mongodb_uri_builds_uri_from_structured_defaults() -> None:
     profile = {"source_connection": "default"}
     assert (
         resolve_mongodb_uri(config, profile)
-        == "mongodb://root%40example.com:p%40ss+word@mongo1.app.vpc1.cloud-dog.net:27017/admin?ssl=false"
+        == "mongodb://root%40example.com:p%40ss+word@mongo1.db.example.com:27017/admin?ssl=false"
     )
 
 

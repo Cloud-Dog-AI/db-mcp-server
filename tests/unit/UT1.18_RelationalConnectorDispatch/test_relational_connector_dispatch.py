@@ -52,7 +52,7 @@ def test_connector_manager_supports_postgresql_source_type(monkeypatch: pytest.M
         lambda self: {"ok": True},
     )
     runtime = DummyRuntime(
-        DummyConfig({"connectors.postgresql.default_uri": "postgresql://db-user:db-pass@db2.app.vpc0.cloud-dog.net:5432/dbmcp_test"}),
+        DummyConfig({"connectors.postgresql.default_uri": "postgresql://db-user:db-pass@db2.db.example.com:5432/dbmcp_test"}),
         {"source_type": "postgresql", "source_connection": "default"},
     )
     manager = ConnectorManager(runtime)
@@ -60,7 +60,7 @@ def test_connector_manager_supports_postgresql_source_type(monkeypatch: pytest.M
     session = manager.for_profile("profile-1")
 
     assert session.profile["source_type"] == "postgresql"
-    assert session.connector.uri.startswith("postgresql+psycopg://db-user:db-pass@db2.app.vpc0.cloud-dog.net:5432/")
+    assert session.connector.uri.startswith("postgresql+psycopg://db-user:db-pass@db2.db.example.com:5432/")
 
 
 def test_connector_manager_supports_mariadb_source_type(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -69,7 +69,7 @@ def test_connector_manager_supports_mariadb_source_type(monkeypatch: pytest.Monk
         lambda self: {"ok": True},
     )
     runtime = DummyRuntime(
-        DummyConfig({"connectors.mariadb.default_uri": "mariadb://db-user:db-pass@db1.app.vpc0.cloud-dog.net:3306/dbmcp_test"}),
+        DummyConfig({"connectors.mariadb.default_uri": "mariadb://db-user:db-pass@db1.db.example.com:3306/dbmcp_test"}),
         {"source_type": "mariadb", "source_connection": "default"},
     )
     manager = ConnectorManager(runtime)
@@ -77,4 +77,4 @@ def test_connector_manager_supports_mariadb_source_type(monkeypatch: pytest.Monk
     session = manager.for_profile("profile-1")
 
     assert session.profile["source_type"] == "mariadb"
-    assert session.connector.uri.startswith("mysql+pymysql://db-user:db-pass@db1.app.vpc0.cloud-dog.net:3306/")
+    assert session.connector.uri.startswith("mysql+pymysql://db-user:db-pass@db1.db.example.com:3306/")
