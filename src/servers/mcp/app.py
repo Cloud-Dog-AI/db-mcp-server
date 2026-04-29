@@ -86,6 +86,8 @@ def create_mcp_app(explicit_env_files: list[str] | None = None):
         transport_modes=list(runtime.config.get("mcp_server.transport_modes", [])),
         transport_base_path=mcp_base_path,
         transport_messages_path=mcp_messages_path,
+        session_termination_mode="204_idempotent",
+        error_response_mode="jsonrpc_200",
     )
 
     @app.get("/tools", tags=["mcp"])
