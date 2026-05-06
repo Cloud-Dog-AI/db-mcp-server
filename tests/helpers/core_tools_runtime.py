@@ -92,7 +92,7 @@ def create_profile(
 ) -> str:
     """Create a profile for live MCP tool tests."""
     response = httpx.post(
-        f"{base_url}/api/v1/profiles",
+        f"{base_url}/v1/profiles",
         headers=TEST_HEADERS,
         json={
             "name": profile_name,

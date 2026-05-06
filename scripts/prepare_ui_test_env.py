@@ -217,10 +217,10 @@ def main() -> None:
     wait_for(f"{API_BASE_URL}/health")
     wait_for(f"{MCP_BASE_URL}/health")
 
-    profiles = call("GET", f"{API_BASE_URL}/api/v1/profiles")
+    profiles = call("GET", f"{API_BASE_URL}/v1/profiles")
     for item in profiles:
         if item.get("name") == PROFILE_NAME:
-            call("DELETE", f"{API_BASE_URL}/api/v1/profiles/{item['profile_id']}")
+            call("DELETE", f"{API_BASE_URL}/v1/profiles/{item['profile_id']}")
 
     payload = {
         "name": PROFILE_NAME,
@@ -252,7 +252,7 @@ def main() -> None:
             "max_documents_per_entity": 10,
         },
     }
-    created = call("POST", f"{API_BASE_URL}/api/v1/profiles", json=payload)
+    created = call("POST", f"{API_BASE_URL}/v1/profiles", json=payload)
     sync_result = call("POST", f"{MCP_BASE_URL}/mcp/tools/index.sync_profile", json={"profile_id": created["profile_id"]})
 
     output = {

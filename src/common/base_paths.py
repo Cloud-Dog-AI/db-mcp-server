@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 SURFACE_BASE_PATH_DEFAULTS: dict[str, str] = {
-    "api": "/api/v1",
+    "api": "/v1",
     "web": "",
     "mcp": "/mcp",
     "a2a": "/a2a",

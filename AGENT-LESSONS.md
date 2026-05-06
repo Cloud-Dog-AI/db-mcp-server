@@ -36,10 +36,12 @@ The README previously claimed CouchDB, OpenSearch, Elasticsearch, and Cassandra 
 
 **Never trust README "Not Yet Implemented" claims — grep the source.**
 
-### 1.4 API Prefix & PS-92 Base Path
-db-mcp uses the `create_app()` default `api_prefix="/api/v1"` — no override needed. The web server has a catch-all proxy route `@app.api_route("/api/{full_path:path}")` that forwards to the API server. This is different from sql-agent which had per-route proxy definitions.
+### 1.4 API Prefix & PS-92 Base Path (updated 2026-05-06, basepath fix)
+db-mcp uses `api_server.base_path: "/v1"` in `defaults.yaml`. The Python fallback in `src/common/base_paths.py` also defaults to `"/v1"`. Traefik strips `/api` from incoming requests before forwarding to the API server on port 8086, so the API server registers routes at `/v1/...` (e.g. `/v1/users`, `/v1/profiles`). The external-facing path is `/api/v1/users` (Traefik strips `/api`, API receives `/v1/users`).
 
-**PS-92 status:** db-mcp does NOT yet have `base_path` entries in defaults.yaml (W28A-969 audit confirmed). The API prefix is hardcoded via `create_app(api_prefix="/api/v1")`. PS-92 implementation is pending via W28A-970.
+The web server's `/api` proxy mirrors Traefik's strip: `strip_prefix="/api"` so that local-dev and system-test paths (`/api/v1/ping`) also work correctly. The `/webapi` proxy path does NOT add a rewrite prefix -- after stripping `/webapi`, the path is already `/v1/...` which matches the API routes directly.
+
+**PS-92 status:** Implemented. All four surfaces have `base_path` in `defaults.yaml`: API=`/v1`, Web=`""`, MCP=`/mcp`, A2A=`/a2a`.
 
 ### 1.5 Platform Package Usage — Zero Bespoke
 All 6 platform packages are used correctly:
@@ -218,11 +220,34 @@ W28A-883 addendum requires file upload/download/browser surfaces, MCP file tools
 ### 6.3 Couchbase Connector
 The Vault has a `couchbase` provider entry but no adapter exists in `src/core/connectors/`. The instruction scope mentions 8 connectors but the code has 7 (MongoDB, CouchDB, OpenSearch, Elasticsearch, Cassandra, PostgreSQL, MariaDB). Couchbase is listed in the instruction's "8 connectors" but is not implemented.
 
-### 6.4 PS-92 Base Path Not Yet Implemented
-db-mcp does not have `base_path` entries in `defaults.yaml`. The API prefix is hardcoded via `create_app(api_prefix="/api/v1")`. Pending W28A-970.
+### 6.4 PS-92 Base Path -- IMPLEMENTED (2026-05-06)
+All four surfaces now have `base_path` in `defaults.yaml`: API=`/v1`, Web=`""`, MCP=`/mcp`, A2A=`/a2a`. Python fallbacks in `src/common/base_paths.py` match. Traefik strips `/api` before forwarding to the API server, so `base_path` must NOT include `/api`. See section 1.4 for full details.
 
 ### 6.5 Traceability Matrix — 9 Items Accepted
 5 GAP + 4 PARTIAL items from W28A-871 were triaged in W28A-1001 as ACCEPTED. All are UI-level E2E assertions deferred to W28A-943. Backend functionality is fully tested. See TESTS.md for per-item rationale.
 
+### 6.7 Preprod PW testing requires E2E_WEB_PASSWORD=OrangeRiverTable (2026-05-06)
+
+**Origin:** PW rerun wave 2026-05-06. Without `E2E_WEB_PASSWORD=OrangeRiverTable`, all auth-gated tests fail at login. The fixture reads this env var for preprod credential injection. Also set `E2E_BASE_URL=https://dbmcpserver0.cloud-dog.net` and `E2E_USE_LOCAL_SERVER=0`. Full env block:
+```bash
+E2E_BASE_URL=https://dbmcpserver0.cloud-dog.net E2E_USE_LOCAL_SERVER=0 E2E_WEB_PASSWORD=OrangeRiverTable
+```
+
+### 6.8 OpenSearch shard limit — A142 cleanup resolved (2026-05-06)
+
+OpenSearch at `opensearch0.app.vpc0.cloud-dog.net:1201` was at 999/1000 shards, blocking new index creation (HTTP 400). A142 cleaned test-detritus indices, reducing to 22 shards. Shard limit raised to 2000 as safety net. Post-cleanup, db-mcp PW score improved from ~91% to **100%** (11/11).
+
 ### 6.6 API-REFERENCE.md Thin Spots
 While uplifted from 31→243 lines (W28A-997), the doc could benefit from more detailed request/response schema examples for the 45 MCP tools. Current coverage is tabular (method, path, auth, reqs) without full JSON schema definitions.
+
+### 6.9 Traefik stripprefix / base_path alignment fix (2026-05-06)
+
+**Root cause:** Traefik has `stripprefix.prefixes=/api` on the `dbmcpserver0_api_path` router (priority 200). It strips `/api` from incoming requests before forwarding to the API server on port 8086. The old `api_server.base_path="/api/v1"` meant routes were registered at `/api/v1/users`. After Traefik stripped `/api`, the API server received `/v1/users` but had no route there -- 404. Only the doubled path `/api/api/v1/users` worked.
+
+**Fix:** Changed `api_server.base_path` from `/api/v1` to `/v1` in `defaults.yaml` and the Python fallback in `src/common/base_paths.py`. Also fixed the web server's `/api` proxy to strip `/api` (matching Traefik) and removed the webapi rewrite prefix (no longer needed since the base_path IS the post-strip path).
+
+**Files changed:** `defaults.yaml`, `src/common/base_paths.py`, `src/servers/web/app.py`, `scripts/prepare_ui_test_env.py`, and 7 test files (UT1.2, ST1.2, IT1.1, IT1.2, IT1.8, IT1.9, AT_WEBUI_E2E, helpers/core_tools_runtime.py).
+
+**Key rule:** When Traefik strips `/api`, the API server's `base_path` must NOT include `/api`. Use `/v1`, not `/api/v1`. This applies to every service where Traefik has a `stripprefix.prefixes=/api` middleware.
+
+**Diagnostic:** If `curl /api/api/v1/endpoint` returns 200 but `curl /api/v1/endpoint` returns 404, the base_path includes the Traefik-stripped prefix.

@@ -44,13 +44,13 @@ def test_health_route_is_public(api_client: TestClient) -> None:
 
 def test_protected_route_rejects_missing_api_key(api_client: TestClient) -> None:
     """Protected routes must reject unauthenticated callers."""
-    response = api_client.get("/api/v1/ping")
+    response = api_client.get("/v1/ping")
     assert response.status_code == 401
 
 
 def test_protected_route_accepts_valid_api_key(api_client: TestClient) -> None:
     """Protected routes must accept the configured API key."""
-    response = api_client.get("/api/v1/ping", headers={"X-API-Key": "test-api-key"})
+    response = api_client.get("/v1/ping", headers={"X-API-Key": "test-api-key"})
     assert response.status_code == 200
     assert response.json()["ok"] is True
 

@@ -101,7 +101,7 @@ def test_opensearch_mcp_tools_crud_lifecycle() -> None:
         cluster_name = requests.get(base_url, timeout=10).json()["cluster_name"]
 
         profile_response = api.post(
-            "/api/v1/profiles",
+            "/v1/profiles",
             headers=headers,
             json={
                 "name": "opensearch-it-profile",

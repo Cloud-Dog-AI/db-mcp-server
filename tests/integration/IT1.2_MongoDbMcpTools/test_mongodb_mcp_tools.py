@@ -90,7 +90,7 @@ def test_mongodb_mcp_tools_crud_lifecycle() -> None:
         headers = {"X-API-Key": resolved_api_key(env_file, default_tier="IT")}
 
         profile_response = api.post(
-            "/api/v1/profiles",
+            "/v1/profiles",
             headers=headers,
             json={
                 "name": "mongo-it-profile",

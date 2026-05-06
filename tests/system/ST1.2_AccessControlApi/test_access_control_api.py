@@ -67,12 +67,12 @@ def test_access_control_api_crud_and_audit() -> None:
         _wait_for_api()
         client = httpx.Client(base_url=service_base_url("api", env_file), timeout=10.0)
 
-        unauth = client.get("/api/v1/profiles")
+        unauth = client.get("/v1/profiles")
         assert unauth.status_code == 401
 
         headers = {"X-API-Key": resolved_api_key(env_file)}
         created_profile = client.post(
-            "/api/v1/profiles",
+            "/v1/profiles",
             headers=headers,
             json={
                 "name": "st-profile",
@@ -87,7 +87,7 @@ def test_access_control_api_crud_and_audit() -> None:
         profile_id = created_profile.json()["data"]["profile_id"]
 
         created_user = client.post(
-            "/api/v1/users",
+            "/v1/users",
             headers=headers,
             json={
                 "username": "st-analyst",
@@ -99,7 +99,7 @@ def test_access_control_api_crud_and_audit() -> None:
         user_id = created_user.json()["data"]["user_id"]
 
         created_group = client.post(
-            "/api/v1/groups",
+            "/v1/groups",
             headers=headers,
             json={
                 "name": "st-auditors",
@@ -110,7 +110,7 @@ def test_access_control_api_crud_and_audit() -> None:
         assert created_group.status_code == 200, created_group.text
 
         created_key = client.post(
-            "/api/v1/api-keys",
+            "/v1/api-keys",
             headers=headers,
             json={
                 "owner_user_id": user_id,
@@ -123,14 +123,14 @@ def test_access_control_api_crud_and_audit() -> None:
         analyst_key = created_key.json()["data"]["raw_key"]
 
         denied = client.post(
-            "/api/v1/users",
+            "/v1/users",
             headers={"X-API-Key": analyst_key},
             json={"username": "blocked-user", "roles": ["analyst"]},
         )
         assert denied.status_code == 403, denied.text
 
         mask_preview = client.post(
-            f"/api/v1/profiles/{profile_id}/mask-preview",
+            f"/v1/profiles/{profile_id}/mask-preview",
             headers={"X-API-Key": analyst_key},
             json={"record": {"salary": 10, "ssn": "123", "name": "ok"}},
         )

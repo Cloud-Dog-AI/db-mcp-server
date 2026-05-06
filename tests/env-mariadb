@@ -1,6 +1,2 @@
-TEST_ENV_TIER=ST
-CLOUD_DOG__API_SERVER__PORT=8086
-CLOUD_DOG__WEB_SERVER__PORT=8087
-CLOUD_DOG__MCP_SERVER__PORT=8088
-CLOUD_DOG__A2A_SERVER__PORT=8089
-CLOUD_DOG__CONNECTORS__MARIADB__DEFAULT_URI=mariadb+pymysql://root:PadnigUdter8@db1.app.vpc0.cloud-dog.net:3306/information_schema
+DB_MCP_TEST_MARIADB_URI=mysql://root:PadnigUdter8@db1.app.vpc0.cloud-dog.net:3306/dbmcp_ecommerce
+DB_MCP_TEST_MARIADB_DATABASE=dbmcp_ecommerce

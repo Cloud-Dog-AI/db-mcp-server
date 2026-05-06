@@ -32,7 +32,7 @@ from cloud_dog_api_kit import create_app
 from cloud_dog_api_kit.middleware import TimeoutMiddleware
 from cloud_dog_api_kit.web.proxy import WebApiProxy
 
-from src.common.base_paths import configured_base_path, first_path_segment, join_route
+from src.common.base_paths import configured_base_path, join_route
 from src.common.runtime import RuntimeFactory, build_health_router, request_timeout_seconds
 from src.servers.web.ui_spa import is_spa_entry_path, serve_runtime_config, serve_spa_asset, serve_spa_index
 from cloud_dog_idam.rbac import RBACEngine as _RBACEngine  # PS-70 RBAC enforcement
@@ -90,7 +90,11 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     api_base_path = configured_base_path(runtime.config, "api")
     mcp_base_path = configured_base_path(runtime.config, "mcp")
     a2a_base_path = configured_base_path(runtime.config, "a2a")
-    api_alias_rewrite_prefix = first_path_segment(api_base_path)
+    # Traefik strips /api before forwarding to the API server, so
+    # api_base_path is already the post-strip prefix (e.g. "/v1").
+    # The webapi proxy strips /webapi, leaving e.g. /v1/users which
+    # matches the API server directly — no rewrite needed.
+    api_alias_rewrite_prefix = ""
     timeout_seconds = request_timeout_seconds(runtime.config, scope="web_server")
     app = create_app(
         title="db-mcp-server Web",
@@ -172,11 +176,15 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     @app.api_route(api_proxy_prefix, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     @app.api_route(f"{api_proxy_prefix}/{{full_path:path}}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     async def proxy_api(request: Request, full_path: str = "") -> Response:
-        """Proxy same-origin API requests to the dedicated API server."""
+        """Proxy same-origin API requests to the dedicated API server.
+
+        Strips the /api prefix so the API server receives /v1/…
+        (mirroring the Traefik stripprefix on the api_path router).
+        """
         return await _proxy_via(
             request,
             proxy=api_session_proxy if _get_session(request) else api_proxy,
-            strip_prefix=web_base_path,
+            strip_prefix=api_proxy_prefix,
         )
 
     @app.api_route(webapi_prefix, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
@@ -184,8 +192,8 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     async def proxy_web_api(request: Request, full_path: str = "") -> Response:
         """Proxy cookie-authenticated browser API requests on a dedicated path.
 
-        Rewrites /webapi/v1/… → /api/v1/… so the API server receives the
-        correct route prefix.
+        Strips /webapi → /v1/… so the API server receives the
+        correct route prefix (matching api_server.base_path).
         """
         return await _proxy_via(
             request,

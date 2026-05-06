@@ -67,7 +67,7 @@ def _api(method: str, path: str, **kwargs) -> httpx.Response:
 
     Args:
         method: HTTP method.
-        path: API path (relative to API_URL/api/v1).
+        path: API path (relative to API_URL/v1).
         **kwargs: Extra httpx request kwargs.
 
     Returns:
@@ -76,7 +76,7 @@ def _api(method: str, path: str, **kwargs) -> httpx.Response:
     headers = kwargs.pop("headers", {})
     headers["X-API-Key"] = API_KEY
     return httpx.request(
-        method, f"{API_URL}/api/v1{path}",
+        method, f"{API_URL}/v1{path}",
         headers=headers, timeout=15, **kwargs,
     )
 
@@ -705,7 +705,7 @@ def test_t8_api_key_crud(authenticated_page, tracker):
 def test_t9_rbac_unauthenticated(page):
     """T9: Unauthenticated API calls should be rejected with 401/403."""
     for endpoint in ["/profiles", "/users", "/groups", "/api-keys"]:
-        r = httpx.get(f"{API_URL}/api/v1{endpoint}", timeout=10)
+        r = httpx.get(f"{API_URL}/v1{endpoint}", timeout=10)
         assert r.status_code in (401, 403), (
             f"Unauthenticated {endpoint} should return 401/403, "
             f"got {r.status_code}"

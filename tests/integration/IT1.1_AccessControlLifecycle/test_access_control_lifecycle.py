@@ -67,7 +67,7 @@ def test_profile_user_group_api_key_lifecycle_and_mcp_admin_parity() -> None:
         admin_headers = {"X-API-Key": resolved_api_key(env_file, default_tier="IT")}
 
         profile_response = api.post(
-            "/api/v1/profiles",
+            "/v1/profiles",
             headers=admin_headers,
             json={
                 "name": "it-profile",
@@ -81,7 +81,7 @@ def test_profile_user_group_api_key_lifecycle_and_mcp_admin_parity() -> None:
         profile_id = profile_response.json()["data"]["profile_id"]
 
         user_response = api.post(
-            "/api/v1/users",
+            "/v1/users",
             headers=admin_headers,
             json={
                 "username": "it-auditor",
@@ -93,7 +93,7 @@ def test_profile_user_group_api_key_lifecycle_and_mcp_admin_parity() -> None:
         user_id = user_response.json()["data"]["user_id"]
 
         group_response = api.post(
-            "/api/v1/groups",
+            "/v1/groups",
             headers=admin_headers,
             json={
                 "name": "it-analysts",
@@ -104,7 +104,7 @@ def test_profile_user_group_api_key_lifecycle_and_mcp_admin_parity() -> None:
         assert group_response.status_code == 200, group_response.text
 
         key_response = api.post(
-            "/api/v1/api-keys",
+            "/v1/api-keys",
             headers=admin_headers,
             json={
                 "owner_user_id": user_id,
@@ -117,7 +117,7 @@ def test_profile_user_group_api_key_lifecycle_and_mcp_admin_parity() -> None:
         limited_key = key_response.json()["data"]["raw_key"]
 
         allow_response = api.get(
-            f"/api/v1/profiles/{profile_id}/authorise/data.read",
+            f"/v1/profiles/{profile_id}/authorise/data.read",
             headers={"X-API-Key": limited_key},
         )
         assert allow_response.status_code == 200, allow_response.text
@@ -126,7 +126,7 @@ def test_profile_user_group_api_key_lifecycle_and_mcp_admin_parity() -> None:
         assert allow_payload["principal"]["user_id"] == user_id
 
         deny_response = api.get(
-            f"/api/v1/profiles/{profile_id}/authorise/profile.manage",
+            f"/v1/profiles/{profile_id}/authorise/profile.manage",
             headers={"X-API-Key": limited_key},
         )
         assert deny_response.status_code == 403, deny_response.text

@@ -64,7 +64,7 @@ api_server:
   enabled: true
   host: "0.0.0.0"
   port: 8086
-  base_path: "/api/v1"
+  base_path: "/v1"
   cors_origins: []
 
 web_server:
