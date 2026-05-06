@@ -190,10 +190,10 @@ connectors:
   opensearch:
     enabled: true
     default_uri: ""
-    default_host: ""
-    default_port: "0"
-    default_username: ""
-    default_password: ""
+    default_host: "${vault.dev.databases.providers.opensearch.host || ''}"
+    default_port: "${vault.dev.databases.providers.opensearch.port || '0'}"
+    default_username: "${vault.dev.databases.providers.opensearch.username || ''}"
+    default_password: "${vault.dev.databases.providers.opensearch.password || ''}"
     timeout_seconds: 30
   elasticsearch:
     enabled: true
