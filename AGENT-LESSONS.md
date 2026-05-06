@@ -242,6 +242,8 @@ While uplifted from 31→243 lines (W28A-997), the doc could benefit from more d
 
 ### 6.9 Traefik stripprefix / base_path alignment fix (2026-05-06)
 
+> See platform AGENT-LESSONS.md §6.37 for the cross-service rule.
+
 **Root cause:** Traefik has `stripprefix.prefixes=/api` on the `dbmcpserver0_api_path` router (priority 200). It strips `/api` from incoming requests before forwarding to the API server on port 8086. The old `api_server.base_path="/api/v1"` meant routes were registered at `/api/v1/users`. After Traefik stripped `/api`, the API server received `/v1/users` but had no route there -- 404. Only the doubled path `/api/api/v1/users` worked.
 
 **Fix:** Changed `api_server.base_path` from `/api/v1` to `/v1` in `defaults.yaml` and the Python fallback in `src/common/base_paths.py`. Also fixed the web server's `/api` proxy to strip `/api` (matching Traefik) and removed the webapi rewrite prefix (no longer needed since the base_path IS the post-strip path).
