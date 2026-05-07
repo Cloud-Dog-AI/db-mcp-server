@@ -1,2 +1,4 @@
 DB_MCP_TEST_MARIADB_URI=mysql://root:PadnigUdter8@db1.app.vpc0.cloud-dog.net:3306/dbmcp_ecommerce
 DB_MCP_TEST_MARIADB_DATABASE=dbmcp_ecommerce
+CLOUD_DOG__CONNECTORS__MARIADB__DEFAULT_URI=mysql://root:PadnigUdter8@db1.app.vpc0.cloud-dog.net:3306/dbmcp_ecommerce
+CLOUD_DOG__CONNECTORS__MARIADB__DATABASE=dbmcp_ecommerce

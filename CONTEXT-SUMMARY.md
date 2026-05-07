@@ -1,112 +1,125 @@
 # db-mcp-server — Context Summary
 
-## Current baseline
+## Current state
 
 - Repo: `/opt/iac/Development/cloud-dog-ai/db-mcp-server`
-- Workspace HEAD used for the latest completed work: `dcdbff637ebee7751b15b93f6ec9fc8228445540`
-- Latest completed instruction: `W28A-512`
-- Latest W28A-512 report: `/opt/iac/Development/cloud-dog-ai/db-mcp-server/working/W28A-512-FIX-E2E-GAPS-REPORT.md`
+- Current date context for this summary: `2026-05-07`
+- Latest completed historical instruction still referenced in this repo: `W28A-512`
+- Latest attempted backend sweep: `W28A-88d`
+- Latest W28A-88d report: `/opt/iac/Development/cloud-dog-ai/db-mcp-server/working/W28A-88d-REPORT.md`
+- Current repo state is **not** at a fresh green backend-test baseline
 
-## What W28A-512 changed
+## What is historically true vs currently true
 
-- Added requirement documentation in `/opt/iac/Development/cloud-dog-ai/db-mcp-server/docs/REQUIREMENTS.md`:
-  - `CO-05` for the 16 documented filter operators plus `and`/`or`/`not`
-  - `CO-06` for MongoDB binary/blob handling
-  - `AC-04` for the 5 built-in RBAC roles
-  - `AC-05` and `AC-06` for admin-only user/group/API-key CRUD
-- Added real ST coverage in `/opt/iac/Development/cloud-dog-ai/db-mcp-server/tests/system/ST1.5_ContentApi/test_content_api.py`:
-  - `test_content_tools_support_all_documented_filter_operators`
-  - `test_content_tools_round_trip_binary_fields`
-- Fixed a real binary-path defect that was discovered during W28A-512 verification:
-  - `/opt/iac/Development/cloud-dog-ai/db-mcp-server/src/servers/mcp/content_tools.py`
-  - `/opt/iac/Development/cloud-dog-ai/db-mcp-server/src/core/connectors/mongodb/adapter.py`
-  - Binary envelopes now coerce on create/update, binary fields normalise safely on read, and schema describe reports `binary`
-- Updated stale Playwright expectations in `/opt/iac/Development/cloud-dog-ai/db-mcp-server/tests/application/AT_WEBUI_E2E/test_webui_e2e.py` to match the current SPA
+- `W28A-512` was a real previously completed green baseline covering content/binary fixes and a full regression at that time.
+- That historical result should **not** be treated as the current backend status after the later `W28A-88d` sweep.
+- The current trustworthy status is the `W28A-88d` evidence in `working/`, which is incomplete and not green.
 
-## Latest verified results
+## Latest trustworthy backend-test status
 
-- Targeted ST:
-  - `tests/system/ST1.5_ContentApi/test_content_api.py`
-  - Result: `3 passed in 261.64s`
-- Targeted AT:
-  - `tests/application/AT_WEBUI_E2E/test_webui_e2e.py`
-  - Result: `17 passed in 223.58s`
-- Full regression:
-  - Command: `venv/bin/python -m pytest tests/ -v --env tests/env-AT --tb=short`
-  - Result: `87 passed in 1736.66s (0:28:56)`
+From `W28A-88d`:
 
-## Latest deploy state
+- UT:
+  - `working/test-ut.log`
+  - Exact summary: `============================= 54 passed in 12.93s ==============================`
+- ST:
+  - `working/test-st.log`
+  - Exact summary: `=================== 5 failed, 11 passed in 495.99s (0:08:15) ===================`
+- Targeted API/MCP ST rerun after further harness changes:
+  - `working/test-st-targeted-api-mcp.log`
+  - Exact summary: `=================== 6 failed, 1 passed in 132.85s (0:02:12) ====================`
+- IT:
+  - No fresh trustworthy `W28A-88d` IT completion was produced
+- AT:
+  - Historical `working/w28a-per-project-at.log` exists, but AT was not fully rerun and revalidated after the `W28A-88d` code changes
 
-- Docker build completed via `bash docker-build.sh`
-- Local image ID:
-  - `sha256:c0cad54fbec5da75a425737f015bf2c67d95f2597cd4de51cc177ac9509fce1b`
-- Pushed registry image:
-  - `registry.cloud-dog.net:443/cloud-dog/db-mcp-server:latest`
-- Latest pushed digest:
-  - `sha256:9783fc2dc65c018167fed8fc1d5540817263da8e0aeab4305cf9460256cd9f01`
-- Terraform working dir:
-  - `/opt/iac/cloud-dog-repo/terraform/server0.viewdeck.com/27 MLAgents`
-- Latest deploy used scoped Terraform only:
-  - `terraform plan -target=docker_image.dbmcpserver -target=docker_container.dbmcpserver0 -out=w28a-512.tfplan`
-  - `terraform apply -auto-approve w28a-512.tfplan`
-- Apply result:
-  - `Apply complete! Resources: 2 added, 0 changed, 2 destroyed.`
+## Current main blocker
 
-## Current preprod state
+- The dominant local blocker is still restart-heavy local process orchestration during backend system tests.
+- Foreground API startup is stable.
+- Detached local startup via `server_control.sh` has been intermittently unstable in repeated test restart sequences.
+- Some failures were caused by stale listeners / port reuse, and some by detached child startup instability.
+- The latest launcher work improved cleanup and narrowed some failures, but did **not** produce a clean full ST pass.
 
-- Health endpoint:
-  - `https://dbmcpserver0.cloud-dog.net/health`
-  - Last result: `200`
-- W28A-512 preprod verification passed against the deployed service:
-  - temporary profile on live default Mongo connector
-  - `catalog.list_namespaces`
-  - `catalog.list_entities`
-  - all 16 documented filter operators
-  - binary 50 KiB create/read
-  - binary 500 KiB update/read
-  - `schema.describe_fields` => `payload.types == ["binary"]`
-  - `index.sync_profile` + `search.metadata`
-  - cleanup verified; no leftover `w28a-512-preprod-*` profiles
+## Latest failure shape worth knowing
 
-## Important route quirks on preprod
+From the latest full `working/test-st.log`:
 
-- Public API routing is not uniform:
-  - `https://dbmcpserver0.cloud-dog.net/api/v1/...` returned `404` in the latest verification
-  - `https://dbmcpserver0.cloud-dog.net/webapi/v1/...` worked for authenticated CRUD/list calls
-  - `https://dbmcpserver0.cloud-dog.net/v1/ping` and `https://dbmcpserver0.cloud-dog.net/api/api/v1/ping` also returned `200`
-- MCP verification was run against:
-  - `https://dbmcpserver0.cloud-dog.net/mcp/tools/...`
-- A2A health previously worked at:
-  - `https://dbmcpserver0.cloud-dog.net/weba2a/health`
+- `tests/system/ST1.2_AccessControlApi/test_access_control_api.py::test_access_control_api_crud_and_audit`
+- `tests/system/ST1.4_CatalogApi/test_catalog_api.py::test_catalogue_tools_against_real_mongodb`
+- `tests/system/ST1.5_ContentApi/test_content_api.py::test_content_tools_support_all_documented_filter_operators`
+- `tests/system/ST1.5_ContentApi/test_content_api.py::test_content_tools_round_trip_binary_fields`
+- `tests/system/ST1.7_SearchApi/test_search_api.py::test_v1_7_search_metadata_finds_customer_email_field`
 
-If another agent needs to do live verification, reuse the exact working public paths above instead of assuming `/api/v1` works externally.
+Observed recurring signatures:
 
-## Files currently modified by the latest completed instruction
+- `api failed to start`
+- `web failed to start`
+- `a2a failed to start`
+- `httpx.ConnectError: [Errno 111] Connection refused`
+- `Timed out waiting for http://127.0.0.1:8086/health`
 
-- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/docs/REQUIREMENTS.md`
-- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/src/servers/mcp/content_tools.py`
-- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/src/core/connectors/mongodb/adapter.py`
-- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/tests/system/ST1.5_ContentApi/test_content_api.py`
-- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/tests/application/AT_WEBUI_E2E/test_webui_e2e.py`
-- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/working/W28A-512-FIX-E2E-GAPS-REPORT.md`
+## Latest local fixes attempted during W28A-88d
 
-## Important constraints to preserve
+- `tests/conftest.py`
+  - Later `--env` files now override earlier env-file values while preserving the original shell environment.
+- `tests/env-postgresql`
+  - Added real `CLOUD_DOG__CONNECTORS__POSTGRESQL__DEFAULT_URI` and database values actually consumed by `ConnectorManager`.
+- `tests/env-mariadb`
+  - Added real `CLOUD_DOG__CONNECTORS__MARIADB__DEFAULT_URI` and database values actually consumed by `ConnectorManager`.
+- `server_control.sh`
+  - Added `/health`-based readiness waiting
+  - Added port-based cleanup in `stop`
+  - Reworked detached launch handling more than once during the sweep
+- `tests/helpers/core_tools_runtime.py`
+  - Narrowed restart-heavy MCP/API helper startup to API+MCP instead of always starting all four surfaces
+- `tests/system/ST1.2_AccessControlApi/test_access_control_api.py`
+  - Narrowed startup to API-only for that test
+
+These changes improved diagnosis and removed some false-negative startup noise, but they did not finish the suite.
+
+## Current modified files from the unfinished W28A-88d work
+
+- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/server_control.sh`
+- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/tests/conftest.py`
+- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/tests/env-postgresql`
+- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/tests/env-mariadb`
+- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/tests/helpers/core_tools_runtime.py`
+- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/tests/system/ST1.2_AccessControlApi/test_access_control_api.py`
+- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/AGENT-LESSONS.md`
+- `/opt/iac/Development/cloud-dog-ai/db-mcp-server/working/W28A-88d-REPORT.md`
+
+These changes were not committed or pushed in the last sweep.
+
+## Historical baseline still relevant
+
+The following from `W28A-512` remains useful background, but it is historical:
+
+- content/binary fixes in:
+  - `src/servers/mcp/content_tools.py`
+  - `src/core/connectors/mongodb/adapter.py`
+- requirements additions in:
+  - `docs/REQUIREMENTS.md`
+- historical green AT and full-regression evidence at that time in:
+  - `working/W28A-512-FIX-E2E-GAPS-REPORT.md`
+
+Use that baseline for feature history only, not as the current backend pass/fail claim.
+
+## Important operational constraints
 
 - Do not use SSH
 - Do not touch firewall, iptables, Shorewall, Docker networking, or firewall Terraform
-- Use `server_control.sh` for local server lifecycle
 - Use `--env tests/env-<TIER>` for tests
 - Do not bypass `cloud_dog_config`
-- For deploys, use Docker build/push plus scoped Terraform only unless the user explicitly broadens scope
+- Treat `server_control.sh` as the intended local lifecycle entrypoint, but do not assume it is currently fully reliable under restart-heavy ST patterns
 
 ## Recommended next-agent starting point
 
-1. Read `/opt/iac/Development/cloud-dog-ai/db-mcp-server/working/W28A-512-FIX-E2E-GAPS-REPORT.md`
-2. Read the modified files listed above
-3. If live verification is needed, reuse:
-   - API: `https://dbmcpserver0.cloud-dog.net/webapi/v1/...`
-   - MCP: `https://dbmcpserver0.cloud-dog.net/mcp/tools/...`
-4. If local confidence is needed, rerun:
-   - `venv/bin/python -m pytest tests/system/ST1.5_ContentApi/test_content_api.py -v --env tests/env-ST --tb=short`
-   - `venv/bin/python -m pytest tests/application/AT_WEBUI_E2E/test_webui_e2e.py -v --env tests/env-AT --tb=short`
-   - `venv/bin/python -m pytest tests/ -v --env tests/env-AT --tb=short`
+1. Read `/opt/iac/Development/cloud-dog-ai/db-mcp-server/working/W28A-88d-REPORT.md`
+2. Read `/opt/iac/Development/cloud-dog-ai/db-mcp-server/AGENT-LESSONS.md` section `2.6` and `2.7`
+3. Read current diffs for:
+   - `server_control.sh`
+   - `tests/conftest.py`
+   - `tests/helpers/core_tools_runtime.py`
+   - `tests/system/ST1.2_AccessControlApi/test_access_control_api.py`
+4. Do not start from the assumption that the product logic is broken first; re-establish deterministic local process lifecycle before trusting later ST failures

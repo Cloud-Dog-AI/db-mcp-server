@@ -48,15 +48,20 @@ def _read_env_map(env_file: Path) -> dict[str, str]:
     return values
 
 
-def start_servers(root: Path, env_file: Path) -> None:
-    """Start all four server surfaces using the approved process manager."""
+def start_servers(root: Path, env_file: Path, surfaces: tuple[str, ...] = ("api", "mcp")) -> None:
+    """Start only the server surfaces required by the MCP/API system tests."""
     env_values = _read_env_map(env_file)
     index_path = env_values.get("CLOUD_DOG__SEARCH__DISCOVERY_INDEX_PATH")
     if index_path:
         resolved = (root / index_path).resolve() if not Path(index_path).is_absolute() else Path(index_path)
         resolved.unlink(missing_ok=True)
     subprocess.run(["bash", str(root / "server_control.sh"), "--env", str(env_file), "stop", "all"], check=False, cwd=root)
-    subprocess.run(["bash", str(root / "server_control.sh"), "--env", str(env_file), "start", "all"], check=True, cwd=root)
+    for surface in surfaces:
+        subprocess.run(
+            ["bash", str(root / "server_control.sh"), "--env", str(env_file), "start", surface],
+            check=True,
+            cwd=root,
+        )
 
 
 def stop_servers(root: Path, env_file: Path) -> None:

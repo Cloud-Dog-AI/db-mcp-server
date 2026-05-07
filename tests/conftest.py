@@ -29,6 +29,7 @@ import httpx
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+INITIAL_ENV_KEYS = set(os.environ.keys())
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -60,7 +61,7 @@ def _normalise_env_args(raw: list[str] | None) -> list[Path]:
 
 
 def _load_env_file(path: Path) -> None:
-    """Load a simple KEY=VALUE env file without overriding OS env."""
+    """Load a simple KEY=VALUE env file, allowing later env overlays to win."""
     for raw_line in path.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#"):
@@ -69,7 +70,12 @@ def _load_env_file(path: Path) -> None:
         if "=" not in line:
             continue
         key, value = line.split("=", 1)
-        os.environ.setdefault(key, value)
+        key = key.strip()
+        if not key:
+            continue
+        if key in INITIAL_ENV_KEYS:
+            continue
+        os.environ[key] = value
 
 
 @pytest.hookimpl(tryfirst=True)

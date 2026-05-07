@@ -130,6 +130,33 @@ PY
   return 1
 }
 
+wait_for_health() {
+  local port="$1"
+  local pid="$2"
+  local attempts="${SERVER_START_ATTEMPTS:-90}"
+  while [ "$attempts" -gt 0 ]; do
+    if ! is_running "$pid"; then
+      return 2
+    fi
+    if "$PYTHON_BIN" - <<PY >/dev/null 2>&1
+import sys
+import urllib.request
+
+try:
+    with urllib.request.urlopen("http://127.0.0.1:${port}/health", timeout=2.0) as response:
+        raise SystemExit(0 if response.status == 200 else 1)
+except Exception:
+    raise SystemExit(1)
+PY
+    then
+      return 0
+    fi
+    attempts=$((attempts-1))
+    sleep 1
+  done
+  return 1
+}
+
 start_one() {
   local name="$1"
   local script
@@ -146,11 +173,27 @@ start_one() {
     return 0
   fi
 
-  nohup "$PYTHON_BIN" "$script" > "$log_file" 2>&1 &
-  local pid=$!
+  local pid
+  pid="$("$PYTHON_BIN" - <<PY
+import os
+import subprocess
+
+with open("${log_file}", "ab", buffering=0) as log_handle:
+    process = subprocess.Popen(
+        ["${PYTHON_BIN}", "${script}"],
+        stdin=subprocess.DEVNULL,
+        stdout=log_handle,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+        env={**os.environ, "PYTHONUNBUFFERED": "1"},
+        cwd="${SCRIPT_DIR}",
+    )
+    print(process.pid)
+PY
+)"
   echo "$pid" > "$pid_file"
 
-  if wait_for_port "$port"; then
+  if wait_for_health "$port" "$pid"; then
     echo "$name started (pid $pid, port $port)"
     return 0
   fi
@@ -164,25 +207,37 @@ stop_one() {
   local name="$1"
   local pid_file
   pid_file="$(pid_file_for "$name")"
-  if [ ! -f "$pid_file" ]; then
-    echo "$name stopped"
-    return 0
+  local port
+  port="$(port_for "$name")"
+  if [ -f "$pid_file" ]; then
+    local pid
+    pid="$(cat "$pid_file")"
+    if is_running "$pid"; then
+      kill "$pid" 2>/dev/null || true
+      for _ in $(seq 1 15); do
+        if ! is_running "$pid"; then
+          break
+        fi
+        sleep 1
+      done
+      if is_running "$pid"; then
+        kill -9 "$pid" 2>/dev/null || true
+      fi
+    fi
+    rm -f "$pid_file"
   fi
-  local pid
-  pid="$(cat "$pid_file")"
-  if is_running "$pid"; then
-    kill "$pid" 2>/dev/null || true
+  if command -v fuser >/dev/null 2>&1 && [ -n "$port" ] && fuser -n tcp "$port" >/dev/null 2>&1; then
+    fuser -k -TERM -n tcp "$port" >/dev/null 2>&1 || true
     for _ in $(seq 1 15); do
-      if ! is_running "$pid"; then
+      if ! fuser -n tcp "$port" >/dev/null 2>&1; then
         break
       fi
       sleep 1
     done
-    if is_running "$pid"; then
-      kill -9 "$pid" 2>/dev/null || true
+    if fuser -n tcp "$port" >/dev/null 2>&1; then
+      fuser -k -KILL -n tcp "$port" >/dev/null 2>&1 || true
     fi
   fi
-  rm -f "$pid_file"
   echo "$name stopped"
 }
 
@@ -211,14 +266,26 @@ for_each_target() {
 
 case "$ACTION" in
   start)
-    for_each_target start_one
+    if [ "$TARGET" = "all" ]; then
+      for item in api web mcp a2a; do
+        bash "$SCRIPT_DIR/server_control.sh" --env "$ENV_FILE" start "$item"
+      done
+    else
+      start_one "$TARGET"
+    fi
     ;;
   stop)
     for_each_target stop_one
     ;;
   restart)
     for_each_target stop_one
-    for_each_target start_one
+    if [ "$TARGET" = "all" ]; then
+      for item in api web mcp a2a; do
+        bash "$SCRIPT_DIR/server_control.sh" --env "$ENV_FILE" start "$item"
+      done
+    else
+      start_one "$TARGET"
+    fi
     ;;
   status)
     for_each_target status_one

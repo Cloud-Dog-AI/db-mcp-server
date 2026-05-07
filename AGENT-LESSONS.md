@@ -1,6 +1,6 @@
 # Agent Lessons Learned — db-mcp-server
 
-**Version:** 3.0 — 2026-04-22
+**Version:** 3.1 — 2026-05-07
 **Purpose:** Lessons from agent work on this service. Read BEFORE making changes.
 
 ---
@@ -104,6 +104,19 @@ The connector env files need real credentials from Vault, not placeholders:
 
 ### 2.5 Intermittent ST Failures
 ST1.5 (binary fields), ST1.7 (search metadata), ST1.8 (web UI serving) can fail intermittently on first run due to server startup timing, MongoDB connection warmup, or search index build delays. Re-run before investigating — most pass on second attempt.
+
+### 2.6 `server_control.sh` restart hygiene matters (2026-05-06)
+- `stop all` cannot rely only on pidfiles. When a prior local run leaves a listener behind, the next `start` can fail with `ERROR: [Errno 98] ... address already in use` even though the pidfile path is clean.
+- The practical fix is port-based cleanup on shutdown as well as pid-based cleanup. `fuser -n tcp <port>` is available on this host and is reliable enough for db-mcp's fixed local ports 8086-8089.
+- Detached server launch via shell job-control (`nohup ... &` / `setsid ... &`) was materially less stable than foreground startup in this environment. A Python `subprocess.Popen(..., start_new_session=True)` launcher is more predictable for local test orchestration because it avoids shell job reaping edge cases.
+- The restart-heavy ST cases are sensitive to over-starting surfaces they do not use. API/MCP tests should not treat web/a2a startup failures as product regressions when the test only exercises `/v1/*` and `/mcp/*`.
+
+### 2.7 W28A-88d current blocker shape (2026-05-07)
+- The W28A-88d sweep did NOT finish green. Treat any older "full regression green" claim in this repo as historical, not current.
+- Current local blocker is still repeated detached local surface startup under system-test orchestration, not a cleanly isolated application assertion failure.
+- `start_api_server.py` is stable in the foreground, but detached API/MCP startup through `server_control.sh` has been intermittently failing during restart-heavy test sequences.
+- `ST1.1` and connector-specific STs can pass while later restart-heavy API/MCP system tests still fail. Do not assume a green early ST segment means the process manager problem is gone.
+- Latest honest status and evidence for this sweep is in `working/W28A-88d-REPORT.md`.
 
 ---
 

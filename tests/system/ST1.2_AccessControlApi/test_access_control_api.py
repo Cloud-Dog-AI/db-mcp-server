@@ -34,7 +34,7 @@ pytestmark = [pytest.mark.system, pytest.mark.timeout(180)]
 
 def _start_servers(root: Path, env_file: Path) -> None:
     subprocess.run(["bash", str(root / "server_control.sh"), "--env", str(env_file), "stop", "all"], check=False, cwd=root)
-    subprocess.run(["bash", str(root / "server_control.sh"), "--env", str(env_file), "start", "all"], check=True, cwd=root)
+    subprocess.run(["bash", str(root / "server_control.sh"), "--env", str(env_file), "start", "api"], check=True, cwd=root)
 
 
 def _stop_servers(root: Path, env_file: Path) -> None:
