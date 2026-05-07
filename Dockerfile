@@ -12,7 +12,6 @@ RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
     pip install --no-cache-dir \
       --extra-index-url ${PYPI_URL} \
       --trusted-host pypi.cloud-dog.net \
-      --trusted-host pypi.org \
       --trusted-host files.pythonhosted.org \
       cloud-dog-config \
       cloud-dog-logging \
@@ -26,7 +25,6 @@ RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
       pip install --no-cache-dir \
       --extra-index-url ${PYPI_URL} \
       --trusted-host pypi.cloud-dog.net \
-      --trusted-host pypi.org \
       --trusted-host files.pythonhosted.org \
       -e ".[dev]"
 
