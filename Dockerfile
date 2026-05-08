@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.12-slim
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.vendor="Cloud-Dog, Viewdeck Engineering Limited"
 
