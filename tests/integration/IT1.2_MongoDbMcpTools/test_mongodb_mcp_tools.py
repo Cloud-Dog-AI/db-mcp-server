@@ -27,12 +27,13 @@ import pytest
 from pymongo import MongoClient
 
 from tests.helpers.mongo_runtime import cleanup_database, ensure_real_mongodb
-from tests.helpers.server_runtime import resolved_api_key, service_base_url
+from tests.helpers.server_runtime import active_env_file, resolved_api_key, service_base_url
 
 pytestmark = [pytest.mark.integration, pytest.mark.timeout(240)]
 
 
 def _start_servers(root: Path, env_file: Path) -> None:
+    subprocess.run(["bash", str(root / "server_control.sh"), "--env", str(env_file), "stop", "all"], check=False, cwd=root)
     subprocess.run(["bash", str(root / "server_control.sh"), "--env", str(env_file), "start", "all"], check=True, cwd=root)
 
 
@@ -69,7 +70,7 @@ def test_mongodb_mcp_tools_crud_lifecycle() -> None:
     """MongoDB MCP tools should perform real CRUD against a real local MongoDB runtime."""
     db_name = f"dbmcp_it_{int(time.time())}"
     root = Path(__file__).resolve().parents[3]
-    env_file = root / "tests" / "env-IT"
+    env_file = active_env_file(default_tier="IT")
     uri = _resolve_mongodb_uri(env_file)
 
     client = MongoClient(uri, serverSelectionTimeoutMS=3000)

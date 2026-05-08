@@ -21,18 +21,20 @@ from __future__ import annotations
 import subprocess
 import time
 from pathlib import Path
+from urllib.parse import urlparse, urlunparse
 
 import httpx
 import pytest
 import requests
 
 from tests.helpers.couchdb_runtime import cleanup_database, ensure_real_couchdb
-from tests.helpers.server_runtime import resolved_api_key, service_base_url
+from tests.helpers.server_runtime import active_env_file, resolved_api_key, service_base_url
 
 pytestmark = [pytest.mark.integration, pytest.mark.timeout(240)]
 
 
 def _start_servers(root: Path, env_file: Path) -> None:
+    subprocess.run(["bash", str(root / "server_control.sh"), "--env", str(env_file), "stop", "all"], check=False, cwd=root)
     subprocess.run(["bash", str(root / "server_control.sh"), "--env", str(env_file), "start", "all"], check=True, cwd=root)
 
 
@@ -53,22 +55,32 @@ def _wait(url: str) -> None:
     pytest.fail(f"Timed out waiting for {url}")
 
 
-def _session() -> requests.Session:
+def _session(uri: str) -> requests.Session:
     session = requests.Session()
-    session.auth = ("admin", "cloud-dog-test")
+    parsed = urlparse(uri)
+    if parsed.username:
+        session.auth = (parsed.username, parsed.password or "")
     session.headers.update({"Content-Type": "application/json"})
     return session
+
+
+def _public_url(uri: str) -> str:
+    parsed = urlparse(uri)
+    netloc = parsed.hostname or ""
+    if parsed.port:
+        netloc = f"{netloc}:{parsed.port}"
+    return urlunparse((parsed.scheme, netloc, parsed.path, "", "", "")).rstrip("/")
 
 
 def test_couchdb_mcp_tools_crud_lifecycle() -> None:
     """CouchDB MCP tools should perform real CRUD against a real local CouchDB runtime."""
     uri = ensure_real_couchdb()
-    base_url = uri.replace("admin:cloud-dog-test@", "")
+    base_url = _public_url(uri)
     db_name = f"dbmcp_it_{int(time.time())}"
     root = Path(__file__).resolve().parents[3]
-    env_file = root / "tests" / "env-IT"
+    env_file = active_env_file(default_tier="IT")
 
-    session = _session()
+    session = _session(uri)
     response = session.put(f"{base_url}/{db_name}", timeout=10)
     response.raise_for_status()
     bulk = {

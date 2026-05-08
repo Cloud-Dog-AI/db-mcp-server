@@ -23,13 +23,14 @@ from pathlib import Path
 import pytest
 
 from tests.helpers.core_tools_runtime import API_BASE_URL, MCP_BASE_URL, call_tool, create_profile, seed_via_mcp, start_servers, stop_servers, unique_db_name, wait_for
+from tests.helpers.server_runtime import active_env_file
 
 pytestmark = [pytest.mark.integration, pytest.mark.db, pytest.mark.mcp, pytest.mark.timeout(300)]
 
 
 def test_full_discovery_flow_via_api_and_mcp() -> None:
     root = Path(__file__).resolve().parents[3]
-    env_file = root / "tests" / "env-IT"
+    env_file = active_env_file(default_tier="IT")
     db_name = unique_db_name("dbmcp_it_discovery")
 
     start_servers(root, env_file)

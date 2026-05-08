@@ -30,11 +30,12 @@ from tests.helpers.core_tools_runtime import (
     unique_db_name,
     wait_for,
 )
+from tests.helpers.server_runtime import active_env_file
 
 
 def test_v1_6_full_search_indexing_pipeline() -> None:
     root = Path(__file__).resolve().parents[3]
-    env_file = root / "tests/env-IT"
+    env_file = active_env_file(default_tier="IT")
     start_servers(root, env_file)
     try:
         wait_for(f"{API_BASE_URL}/health")

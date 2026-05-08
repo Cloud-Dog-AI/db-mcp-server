@@ -23,71 +23,37 @@
 from __future__ import annotations
 
 import os
-import socket
-import subprocess
-import time
 from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
 import requests
 
-ELASTICSEARCH_TEST_CONTAINER = "db-mcp-server-test-elasticsearch8"
-ELASTICSEARCH_COMPOSE_CONTAINER = "db-mcp-elasticsearch"
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-ELASTICSEARCH_COMPOSE_FILE = PROJECT_ROOT / "docker" / "docker-compose.elasticsearch.yml"
-ELASTICSEARCH_DEFAULT_URL = os.getenv(
-    "DB_MCP_TEST_ELASTICSEARCH_URL", "http://127.0.0.1:9201"
-)
+ELASTICSEARCH_DEFAULT_URL = os.getenv("DB_MCP_TEST_ELASTICSEARCH_URL", "")
 
 
-def _port_open(host: str, port: int) -> bool:
-    """Check whether a TCP port is accepting connections.
-
-    Args:
-        host: Hostname or IP address.
-        port: TCP port number.
-
-    Returns:
-        True if the port responded within 1 second.
-    """
-    sock = socket.socket()
-    sock.settimeout(1.0)
-    try:
-        sock.connect((host, port))
-        return True
-    except OSError:
-        return False
-    finally:
-        sock.close()
-
-
-def _container_health(container_name: str) -> str:
-    result = subprocess.run(
-        [
-            "docker",
-            "inspect",
-            "--format",
-            "{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}",
-            container_name,
-        ],
-        check=False,
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        return ""
-    return result.stdout.strip()
+def _configured_url() -> str:
+    if ELASTICSEARCH_DEFAULT_URL:
+        return ELASTICSEARCH_DEFAULT_URL
+    for env_file in (PROJECT_ROOT / "tests" / "env-all", PROJECT_ROOT / "tests" / "env-elasticsearch"):
+        if not env_file.exists():
+            continue
+        for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            if key.strip() == "DB_MCP_TEST_ELASTICSEARCH_URL" and value.strip():
+                return value.strip()
+    pytest.fail("DB_MCP_TEST_ELASTICSEARCH_URL is not configured in the active repo env files.")
 
 
 def ensure_real_elasticsearch() -> str:
     """Ensure a real Elasticsearch 8 test instance is reachable.
 
-    The function first checks ``DB_MCP_TEST_ELASTICSEARCH_URL`` (which may
-    point to a remote shared instance with credentials in the URL).  If
-    that is not reachable it falls back to starting a local Docker
-    container on port 9201.
+    The function checks ``DB_MCP_TEST_ELASTICSEARCH_URL`` from the active
+    environment or repo env files. It never starts local Docker backends.
 
     Returns:
         The base URL (with embedded credentials when applicable).
@@ -95,61 +61,19 @@ def ensure_real_elasticsearch() -> str:
     Raises:
         pytest.fail: When no Elasticsearch instance can be reached.
     """
-    base_url = ELASTICSEARCH_DEFAULT_URL
+    base_url = _configured_url()
     parsed = urlparse(base_url)
-    host = parsed.hostname or "127.0.0.1"
-    port = parsed.port or 9201
-
-    if _port_open(host, port):
-        try:
-            kwargs: dict = {"timeout": 5}
-            if parsed.username:
-                kwargs["auth"] = (parsed.username, parsed.password or "")
-            check_url = f"{parsed.scheme}://{host}:{port}/_cluster/health"
-            response = requests.get(check_url, **kwargs)
-            if response.status_code in (200, 401):
-                return base_url
-        except requests.RequestException:
-            pass
-
-    # Fall back to the local Docker Compose runtime
-    subprocess.run(
-        ["docker", "rm", "-f", ELASTICSEARCH_TEST_CONTAINER],
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    subprocess.run(
-        [
-            "docker",
-            "compose",
-            "-f",
-            str(ELASTICSEARCH_COMPOSE_FILE),
-            "up",
-            "-d",
-            "elasticsearch",
-        ],
-        check=True,
-        cwd=PROJECT_ROOT,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-    local_url = "http://127.0.0.1:9201"
-    deadline = time.time() + 300
-    while time.time() < deadline:
-        if _container_health(ELASTICSEARCH_COMPOSE_CONTAINER) != "healthy":
-            time.sleep(2)
-            continue
-        try:
-            response = requests.get(f"{local_url}/_cluster/health", timeout=5)
-            if response.status_code == 200:
-                return local_url
-        except requests.RequestException:
-            time.sleep(2)
-            continue
-        time.sleep(2)
-    pytest.fail("Elasticsearch test instance did not become ready")
+    kwargs: dict = {"timeout": 10}
+    if parsed.username:
+        kwargs["auth"] = (parsed.username, parsed.password or "")
+    check_url = f"{parsed.scheme}://{parsed.hostname}:{parsed.port}/_cluster/health"
+    try:
+        response = requests.get(check_url, **kwargs)
+    except requests.RequestException as exc:
+        pytest.fail(f"Elasticsearch shared runtime is not reachable at {base_url!r}: {exc}")
+    if response.status_code not in (200, 401):
+        pytest.fail(f"Elasticsearch shared runtime returned HTTP {response.status_code}: {response.text[:200]!r}")
+    return base_url
 
 
 def cleanup_index(name: str, base_url: str | None = None) -> None:
@@ -159,7 +83,7 @@ def cleanup_index(name: str, base_url: str | None = None) -> None:
         name: Index name.
         base_url: Override base URL (defaults to the env var).
     """
-    url = base_url or ELASTICSEARCH_DEFAULT_URL
+    url = base_url or _configured_url()
     parsed = urlparse(url)
     kwargs: dict = {"timeout": 10}
     if parsed.username:
@@ -175,7 +99,7 @@ def cleanup_template(name: str, base_url: str | None = None) -> None:
         name: Template name.
         base_url: Override base URL (defaults to the env var).
     """
-    url = base_url or ELASTICSEARCH_DEFAULT_URL
+    url = base_url or _configured_url()
     parsed = urlparse(url)
     kwargs: dict = {"timeout": 10}
     if parsed.username:

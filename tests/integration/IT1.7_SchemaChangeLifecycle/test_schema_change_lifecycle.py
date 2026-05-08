@@ -26,13 +26,14 @@ import pytest
 from tests.fixtures.seed_data import seed_mongodb
 from tests.helpers.core_tools_runtime import API_BASE_URL, call_tool, create_profile, start_servers, stop_servers, unique_db_name, wait_for
 from tests.helpers.mongo_runtime import cleanup_database, ensure_real_mongodb
+from tests.helpers.server_runtime import active_env_file
 
 pytestmark = [pytest.mark.integration, pytest.mark.timeout(240)]
 
 
 def test_v1_7_schema_change_plan_approve_apply_audit_and_refresh() -> None:
     root = Path(__file__).resolve().parents[3]
-    env_file = root / "tests" / "env-IT"
+    env_file = active_env_file(default_tier="IT")
     audit_log = root / "logs" / "audit.log.jsonl"
     audit_log.unlink(missing_ok=True)
 

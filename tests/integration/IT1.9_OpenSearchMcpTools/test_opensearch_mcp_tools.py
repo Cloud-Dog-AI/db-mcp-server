@@ -27,12 +27,13 @@ import pytest
 import requests
 
 from tests.helpers.opensearch_runtime import cleanup_index, cleanup_template, ensure_real_opensearch
-from tests.helpers.server_runtime import resolved_api_key, service_base_url
+from tests.helpers.server_runtime import active_env_file, resolved_api_key, service_base_url
 
 pytestmark = [pytest.mark.integration, pytest.mark.timeout(300)]
 
 
 def _start_servers(root: Path, env_file: Path) -> None:
+    subprocess.run(["bash", str(root / "server_control.sh"), "--env", str(env_file), "stop", "all"], check=False, cwd=root)
     subprocess.run(["bash", str(root / "server_control.sh"), "--env", str(env_file), "start", "all"], check=True, cwd=root)
 
 
@@ -88,7 +89,7 @@ def test_opensearch_mcp_tools_crud_lifecycle() -> None:
     requests.post(f"{base_url}/_refresh", timeout=10).raise_for_status()
 
     root = Path(__file__).resolve().parents[3]
-    env_file = root / "tests" / "env-IT"
+    env_file = active_env_file(default_tier="IT")
     _start_servers(root, env_file)
     try:
         api_base_url = service_base_url("api", env_file, default_tier="IT")

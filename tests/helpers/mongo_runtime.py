@@ -20,78 +20,58 @@
 
 from __future__ import annotations
 
-import socket
-import subprocess
-import time
+import os
+from pathlib import Path
 
+import pytest
 from pymongo import MongoClient
 
-MONGO_TEST_CONTAINER = "db-mcp-server-test-mongo6"
-MONGO_TEST_URI = "mongodb://127.0.0.1:27018"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
-def _port_open(host: str, port: int) -> bool:
-    sock = socket.socket()
-    sock.settimeout(1.0)
-    try:
-        sock.connect((host, port))
-        return True
-    except OSError:
-        return False
-    finally:
-        sock.close()
+def _env_value(*keys: str) -> str:
+    for key in keys:
+        value = os.environ.get(key)
+        if value:
+            return value
+    for env_file in (PROJECT_ROOT / "tests" / "env-all", PROJECT_ROOT / "tests" / "env-mongodb"):
+        if not env_file.exists():
+            continue
+        for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            if key.strip() in keys and value.strip():
+                return value.strip()
+    return ""
 
 
 def ensure_real_mongodb() -> str:
-    """Ensure a real MongoDB 6 test container is running locally."""
-    if _port_open("127.0.0.1", 27018):
-        client = MongoClient(MONGO_TEST_URI, serverSelectionTimeoutMS=3000)
-        try:
-            client.admin.command("ping")
-            return MONGO_TEST_URI
-        finally:
-            client.close()
+    """Ensure the configured shared MongoDB runtime is reachable."""
+    uri = _env_value("DB_MCP_TEST_MONGODB_URI", "CLOUD_DOG__CONNECTORS__MONGODB__DEFAULT_URI")
+    if not uri:
+        pytest.fail(
+            "MongoDB test URI is not configured. Provide DB_MCP_TEST_MONGODB_URI "
+            "or CLOUD_DOG__CONNECTORS__MONGODB__DEFAULT_URI via a repo env file."
+        )
 
-    subprocess.run(
-        ["docker", "rm", "-f", MONGO_TEST_CONTAINER],
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    subprocess.run(
-        [
-            "docker",
-            "run",
-            "-d",
-            "--name",
-            MONGO_TEST_CONTAINER,
-            "--network",
-            "host",
-            "mongo:6.0",
-            "--bind_ip",
-            "127.0.0.1",
-            "--port",
-            "27018",
-        ],
-        check=True,
-        stdout=subprocess.DEVNULL,
-    )
-
-    deadline = time.time() + 45
-    while time.time() < deadline:
-        try:
-            client = MongoClient(MONGO_TEST_URI, serverSelectionTimeoutMS=2000)
-            client.admin.command("ping")
-            client.close()
-            return MONGO_TEST_URI
-        except Exception:
-            time.sleep(1)
-    raise RuntimeError("MongoDB test container did not become ready")
+    client = MongoClient(uri, serverSelectionTimeoutMS=3000)
+    try:
+        client.admin.command("ping")
+        return uri
+    except Exception as exc:
+        pytest.fail(f"MongoDB shared runtime is not reachable: {exc}")
+    finally:
+        client.close()
 
 
 def cleanup_database(name: str) -> None:
-    """Drop a test database from the local MongoDB runtime."""
-    client = MongoClient(MONGO_TEST_URI, serverSelectionTimeoutMS=3000)
+    """Drop a test database from the configured MongoDB runtime."""
+    uri = _env_value("DB_MCP_TEST_MONGODB_URI", "CLOUD_DOG__CONNECTORS__MONGODB__DEFAULT_URI")
+    if not uri:
+        return
+    client = MongoClient(uri, serverSelectionTimeoutMS=3000)
     try:
         client.drop_database(name)
     finally:

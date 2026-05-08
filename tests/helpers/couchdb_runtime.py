@@ -20,106 +20,95 @@
 
 from __future__ import annotations
 
-import socket
-import subprocess
-import time
+import os
+from pathlib import Path
+from urllib.parse import urlparse, urlunparse
 
+import pytest
 import requests
 
-COUCHDB_TEST_CONTAINER = "db-mcp-server-test-couchdb3"
-COUCHDB_TEST_URL = "http://127.0.0.1:5984"
-COUCHDB_USERNAME = "admin"
-COUCHDB_PASSWORD = "cloud-dog-test"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
-def _port_open(host: str, port: int) -> bool:
-    sock = socket.socket()
-    sock.settimeout(1.0)
-    try:
-        sock.connect((host, port))
-        return True
-    except OSError:
-        return False
-    finally:
-        sock.close()
+def _env_map() -> dict[str, str]:
+    values: dict[str, str] = {}
+    for key, value in os.environ.items():
+        if key.startswith("DB_MCP_TEST_COUCHDB_"):
+            values[key] = value
+    for env_file in (PROJECT_ROOT / "tests" / "env-all", PROJECT_ROOT / "tests" / "env-couchdb"):
+        if not env_file.exists():
+            continue
+        for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            if key.startswith("DB_MCP_TEST_COUCHDB_") and key not in values:
+                values[key] = value.strip()
+    return values
+
+
+def _configured_url() -> str:
+    values = _env_map()
+    base_url = values.get("DB_MCP_TEST_COUCHDB_URL", "").rstrip("/")
+    if not base_url:
+        pytest.fail("DB_MCP_TEST_COUCHDB_URL is not configured in the active repo env files.")
+    username = values.get("DB_MCP_TEST_COUCHDB_USERNAME", "")
+    password = values.get("DB_MCP_TEST_COUCHDB_PASSWORD", "")
+    parsed = urlparse(base_url)
+    if username and "@" not in parsed.netloc:
+        netloc = f"{username}:{password}@{parsed.hostname}"
+        if parsed.port:
+            netloc = f"{netloc}:{parsed.port}"
+        return urlunparse((parsed.scheme, netloc, parsed.path, "", "", ""))
+    return base_url
 
 
 def _session() -> requests.Session:
     session = requests.Session()
-    session.auth = (COUCHDB_USERNAME, COUCHDB_PASSWORD)
+    values = _env_map()
+    username = values.get("DB_MCP_TEST_COUCHDB_USERNAME")
+    password = values.get("DB_MCP_TEST_COUCHDB_PASSWORD")
+    if username:
+        session.auth = (username, password or "")
     session.headers.update({"Accept": "application/json"})
     return session
 
 
-def _ensure_system_databases(session: requests.Session) -> None:
+def _ensure_system_databases(session: requests.Session, base_url: str) -> None:
     """Create the mandatory CouchDB system databases used by auth/cache services."""
     for name in ("_users", "_replicator"):
-        response = session.put(f"{COUCHDB_TEST_URL}/{name}", timeout=10)
+        response = session.put(f"{base_url}/{name}", timeout=10)
         if response.status_code not in {201, 202, 412}:
             response.raise_for_status()
 
 
 def ensure_real_couchdb() -> str:
-    """Ensure a real CouchDB 3 test container is running locally."""
-    if _port_open("127.0.0.1", 5984):
-        session = _session()
-        try:
-            response = session.get(f"{COUCHDB_TEST_URL}/_up", timeout=3)
-            if response.status_code == 200:
-                _ensure_system_databases(session)
-                return f"http://{COUCHDB_USERNAME}:{COUCHDB_PASSWORD}@127.0.0.1:5984"
-        except requests.RequestException:
-            pass
-        finally:
-            session.close()
-
-    subprocess.run(
-        ["docker", "rm", "-f", COUCHDB_TEST_CONTAINER],
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    subprocess.run(
-        [
-            "docker",
-            "run",
-            "-d",
-            "--name",
-            COUCHDB_TEST_CONTAINER,
-            "--network",
-            "host",
-            "-e",
-            f"COUCHDB_USER={COUCHDB_USERNAME}",
-            "-e",
-            f"COUCHDB_PASSWORD={COUCHDB_PASSWORD}",
-            "couchdb:3",
-        ],
-        check=True,
-        stdout=subprocess.DEVNULL,
-    )
-
-    deadline = time.time() + 120
+    """Ensure the configured shared CouchDB runtime is reachable."""
+    uri = _configured_url()
+    parsed = urlparse(uri)
+    base_url = urlunparse((parsed.scheme, f"{parsed.hostname}:{parsed.port}" if parsed.port else parsed.hostname or "", parsed.path, "", "", "")).rstrip("/")
     session = _session()
     try:
-        while time.time() < deadline:
-            try:
-                response = session.get(f"{COUCHDB_TEST_URL}/_up", timeout=3)
-                if response.status_code == 200:
-                    _ensure_system_databases(session)
-                    return f"http://{COUCHDB_USERNAME}:{COUCHDB_PASSWORD}@127.0.0.1:5984"
-            except Exception:
-                time.sleep(1)
-                continue
-            time.sleep(1)
+        response = session.get(f"{base_url}/_up", timeout=10)
+        if response.status_code == 200:
+            _ensure_system_databases(session, base_url)
+            return uri
+        pytest.fail(f"CouchDB shared runtime returned HTTP {response.status_code}: {response.text[:200]!r}")
+    except requests.RequestException as exc:
+        pytest.fail(f"CouchDB shared runtime is not reachable at {base_url!r}: {exc}")
     finally:
         session.close()
-    raise RuntimeError("CouchDB test container did not become ready")
 
 
 def cleanup_database(name: str) -> None:
-    """Drop a test database from the local CouchDB runtime."""
+    """Drop a test database from the configured CouchDB runtime."""
+    uri = _configured_url()
+    parsed = urlparse(uri)
+    base_url = urlunparse((parsed.scheme, f"{parsed.hostname}:{parsed.port}" if parsed.port else parsed.hostname or "", parsed.path, "", "", "")).rstrip("/")
     session = _session()
     try:
-        session.delete(f"{COUCHDB_TEST_URL}/{name}", timeout=10)
+        session.delete(f"{base_url}/{name}", timeout=10)
     finally:
         session.close()

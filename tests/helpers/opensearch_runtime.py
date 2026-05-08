@@ -43,10 +43,13 @@ the deployed instance is unreachable the helper fails loudly via
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
 import requests
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _opensearch_url() -> str:
@@ -61,15 +64,23 @@ def _opensearch_url() -> str:
             URL from the env-file rather than assume a default.
     """
     url = os.environ.get("DB_MCP_TEST_OPENSEARCH_URL")
-    if not url:
-        pytest.fail(
-            "DB_MCP_TEST_OPENSEARCH_URL is not set. Source tests/env-all or "
-            "tests/env-opensearch (canonical value: "
-            "http://opensearch0.app.vpc0.cloud-dog.net:1201) before "
-            "running OpenSearch ST/IT tests. Local Docker spin-up is "
-            "forbidden by RULES.md §3.2.3 / §5.6."
-        )
-    return url
+    if url:
+        return url
+    for env_file in (PROJECT_ROOT / "tests" / "env-all", PROJECT_ROOT / "tests" / "env-opensearch"):
+        if not env_file.exists():
+            continue
+        for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            if key.strip() == "DB_MCP_TEST_OPENSEARCH_URL" and value.strip():
+                return value.strip()
+    pytest.fail(
+        "DB_MCP_TEST_OPENSEARCH_URL is not set. Source tests/env-all or "
+        "tests/env-opensearch before running OpenSearch ST/IT tests. "
+        "Local Docker spin-up is forbidden by RULES.md §3.2.3 / §5.6."
+    )
 
 
 def _request_kwargs(url: str) -> dict:

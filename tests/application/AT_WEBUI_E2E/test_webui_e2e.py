@@ -39,6 +39,7 @@ from uuid import uuid4
 import httpx
 import pytest
 
+from tests.helpers.mongo_runtime import ensure_real_mongodb
 from tests.helpers.server_runtime import load_test_runtime_config, service_base_url
 
 pytestmark = [pytest.mark.application, pytest.mark.timeout(300)]
@@ -379,7 +380,7 @@ def test_t3_profile_crud(authenticated_page, tracker):
     r = _api("POST", "/profiles", json={
         "name": profile_name,
         "source_type": "mongodb",
-        "source_connection": "mongodb://localhost:27017/e2e_test",
+        "source_connection": ensure_real_mongodb(),
         "description": f"E2E Profile {suffix}",
         "enabled_tools": ["catalog.list_namespaces"],
     })

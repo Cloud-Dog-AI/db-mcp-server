@@ -21,76 +21,49 @@
 from __future__ import annotations
 
 import os
-import socket
-import subprocess
-import time
 from pathlib import Path
 
 import pytest
 
 from src.core.connectors.cassandra.adapter import CassandraConnector
-from tests.fixtures.cassandra_seed import seed_cassandra
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CASSANDRA_COMPOSE_FILE = PROJECT_ROOT / "docker" / "docker-compose.cassandra.yml"
-CASSANDRA_CONTAINER = "db-mcp-cassandra"
 CASSANDRA_HOST = os.getenv("DB_MCP_TEST_CASSANDRA_HOST", "127.0.0.1")
 CASSANDRA_PORT = int(os.getenv("DB_MCP_TEST_CASSANDRA_PORT", "9042"))
 CASSANDRA_KEYSPACE = os.getenv("DB_MCP_TEST_CASSANDRA_KEYSPACE", "dbmcp_ecommerce")
 
 
-def _port_open(host: str, port: int) -> bool:
-    sock = socket.socket()
-    sock.settimeout(1.0)
-    try:
-        sock.connect((host, port))
-        return True
-    except OSError:
-        return False
-    finally:
-        sock.close()
-
-
-def _compose_up() -> None:
-    subprocess.run(
-        ["docker", "compose", "-f", str(CASSANDRA_COMPOSE_FILE), "up", "-d", "cassandra"],
-        check=True,
-        cwd=PROJECT_ROOT,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-
-def _container_health(container_name: str) -> str:
-    result = subprocess.run(
-        [
-            "docker",
-            "inspect",
-            "--format",
-            "{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}",
-            container_name,
-        ],
-        check=False,
-        cwd=PROJECT_ROOT,
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        return ""
-    return result.stdout.strip()
+def _env_value(key: str, default: str = "") -> str:
+    value = os.environ.get(key)
+    if value:
+        return value
+    for env_file in (PROJECT_ROOT / "tests" / "env-all", PROJECT_ROOT / "tests" / "env-cassandra"):
+        if not env_file.exists():
+            continue
+        for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            found_key, found_value = line.split("=", 1)
+            if found_key.strip() == key and found_value.strip():
+                return found_value.strip()
+    return default
 
 
 def _seeded_runtime_ready() -> bool:
+    host = _env_value("DB_MCP_TEST_CASSANDRA_HOST", CASSANDRA_HOST)
+    port = int(_env_value("DB_MCP_TEST_CASSANDRA_PORT", str(CASSANDRA_PORT)))
+    keyspace = _env_value("DB_MCP_TEST_CASSANDRA_KEYSPACE", CASSANDRA_KEYSPACE)
     connector: CassandraConnector | None = None
     try:
         connector = CassandraConnector(
-            host=CASSANDRA_HOST,
-            port=CASSANDRA_PORT,
+            host=host,
+            port=port,
             timeout_seconds=15,
         )
         connector.validate_profile()
         namespaces = {item["name"] for item in connector.list_namespaces()}
-        return CASSANDRA_KEYSPACE in namespaces
+        return keyspace in namespaces
     except Exception:
         return False
     finally:
@@ -100,31 +73,13 @@ def _seeded_runtime_ready() -> bool:
 
 def ensure_real_cassandra() -> tuple[str, int, str]:
     """Ensure a real Cassandra runtime is reachable and seeded."""
+    host = _env_value("DB_MCP_TEST_CASSANDRA_HOST", CASSANDRA_HOST)
+    port = int(_env_value("DB_MCP_TEST_CASSANDRA_PORT", str(CASSANDRA_PORT)))
+    keyspace = _env_value("DB_MCP_TEST_CASSANDRA_KEYSPACE", CASSANDRA_KEYSPACE)
     if _seeded_runtime_ready():
-        return CASSANDRA_HOST, CASSANDRA_PORT, CASSANDRA_KEYSPACE
-
-    if CASSANDRA_HOST not in {"127.0.0.1", "localhost"}:
-        pytest.fail(
-            f"Cassandra runtime is not ready at {CASSANDRA_HOST}:{CASSANDRA_PORT}"
-        )
-
-    _compose_up()
-
-    deadline = time.time() + 300
-    last_error: Exception | None = None
-    while time.time() < deadline:
-        if _container_health(CASSANDRA_CONTAINER) != "healthy":
-            time.sleep(2)
-            continue
-        try:
-            seed_cassandra(keyspace=CASSANDRA_KEYSPACE)
-            return CASSANDRA_HOST, CASSANDRA_PORT, CASSANDRA_KEYSPACE
-        except Exception as exc:
-            last_error = exc
-            time.sleep(5)
+        return host, port, keyspace
 
     pytest.fail(
-        "Cassandra test instance did not become ready"
-        if last_error is None
-        else f"Cassandra test instance did not become ready: {last_error}"
+        f"Cassandra shared runtime is not ready at {host}:{port}/{keyspace}. "
+        "Local Docker fallback is forbidden for this preprod validation."
     )
