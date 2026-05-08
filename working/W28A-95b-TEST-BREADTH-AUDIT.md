@@ -2,54 +2,55 @@
 
 Date: 2026-05-08
 Repo: `/opt/iac/Development/cloud-dog-ai/db-mcp-server`
-Branch/head at startup: `main` / `ca5ab65 chore: W28A-90e baseline db-mcp fixes`
+Return commit base: `0124152 test(db-mcp): validate preprod connector breadth W28A-95b`
 
 ## Execution Notes
 
 - The repo provides `venv/` and does not provide `.venv/`; runs used `venv/bin/python`.
-- The startup gate was clean before this work (`git status -sb` returned `## main`).
-- No database containers were created. Test runtime helpers were changed to use repo/preprod env contracts and fail loudly instead of launching Docker fallbacks.
-- Connector-only env files are not standalone app envs. The test harness now builds `working/w28a-95b-composite-env-*` files from `tests/env-IT` plus the selected connector env so the required single-`--env` matrix can start the app and still load connector-specific variables.
+- No database containers were created. Runtime helpers use repo/preprod env contracts and fail loudly instead of launching Docker fallbacks.
+- CouchDB fallback resolution now prefers `tests/env-couchdb` over `tests/env-all`, fixing the previous `tests/env-IT` HTTP 401 failure.
+- `tests/integration/IT1.10_BackendConnectorMatrix/test_backend_connector_matrix.py` adds real backend-specific connector integration coverage. `tests/env-IT` collects all seven backend cases; each connector env collects only its matching backend case, so matrix logs are backend-specific without skips.
 
 ## Required Run Summaries
 
 | Run | Log | Result |
 | --- | --- | --- |
-| IT preprod full | `working/it-95b-preprod-full.log` | `1 failed, 8 passed in 492.96s (0:08:12)` |
-| AT preprod full | `working/at-95b-preprod-full.log` | `17 passed in 160.46s (0:02:40)` |
+| IT preprod full | `working/it-95b-preprod-full.log` | `16 passed in 581.60s (0:09:41)` |
+| AT preprod full | `working/at-95b-preprod-full.log` | `17 passed in 159.25s (0:02:39)` |
 | QT full | `working/qt-95b-full.log` | `1 passed in 0.06s` |
-| Matrix `tests/env-mongodb` | `working/w28a-95b-env-mongodb-it.log` | `1 failed, 8 passed in 519.86s (0:08:39)` |
-| Matrix `tests/env-couchdb` | `working/w28a-95b-env-couchdb-it.log` | `9 passed in 575.05s (0:09:35)` |
-| Matrix `tests/env-opensearch` | `working/w28a-95b-env-opensearch-it.log` | `1 failed, 8 passed in 492.95s (0:08:12)` |
-| Matrix `tests/env-elasticsearch` | `working/w28a-95b-env-elasticsearch-it.log` | `1 failed, 8 passed in 488.02s (0:08:08)` |
-| Matrix `tests/env-postgresql` | `working/w28a-95b-env-postgresql-it.log` | `1 failed, 8 passed in 488.78s (0:08:08)` |
-| Matrix `tests/env-mariadb` | `working/w28a-95b-env-mariadb-it.log` | `1 failed, 8 passed in 490.36s (0:08:10)` |
-| Matrix `tests/env-cassandra` | `working/w28a-95b-env-cassandra-it.log` | `1 failed, 8 passed in 491.12s (0:08:11)` |
+| Matrix `tests/env-mongodb` | `working/w28a-95b-env-mongodb-it.log` | `10 passed in 579.24s (0:09:39)` |
+| Matrix `tests/env-couchdb` | `working/w28a-95b-env-couchdb-it.log` | `10 passed in 581.42s (0:09:41)` |
+| Matrix `tests/env-opensearch` | `working/w28a-95b-env-opensearch-it.log` | `10 passed in 581.52s (0:09:41)` |
+| Matrix `tests/env-elasticsearch` | `working/w28a-95b-env-elasticsearch-it.log` | `10 passed in 578.51s (0:09:38)` |
+| Matrix `tests/env-postgresql` | `working/w28a-95b-env-postgresql-it.log` | `10 passed in 579.18s (0:09:39)` |
+| Matrix `tests/env-mariadb` | `working/w28a-95b-env-mariadb-it.log` | `10 passed in 580.21s (0:09:40)` |
+| Matrix `tests/env-cassandra` | `working/w28a-95b-env-cassandra-it.log` | `10 passed in 591.99s (0:09:51)` |
 
 ## Failure Disposition
 
-- Remaining IT failure: `tests/integration/IT1.8_CouchDbMcpTools/test_couchdb_mcp_tools.py::test_couchdb_mcp_tools_crud_lifecycle`.
-- Full IT and all non-CouchDB matrix envs fail because CouchDB credentials resolved through `tests/env-IT` plus fallback `tests/env-all` receive HTTP 401 from the shared CouchDB backend.
-- `tests/env-couchdb` passes all integration tests, which proves the CouchDB backend itself is reachable and usable when the CouchDB-specific env contract is selected.
-- OpenSearch initially failed because `tests/env-IT` omitted `DB_MCP_TEST_OPENSEARCH_URL`; the helper now resolves repo env contracts and OpenSearch passes in full IT and matrix runs.
+- No IT, AT, QT, or backend-matrix failures remain.
+- No skips or xfails were used.
+- Log scan found no credential-bearing URLs or known checked-in backend passwords in the W28A-95b evidence logs.
 
 ## Coverage Answer
 
-- MongoDB: covered by real IT CRUD (`IT1.2`) and the generic discovery/content/relationship/schema/index IT flows. AT creates WebUI profiles using the shared MongoDB URI.
-- CouchDB: covered by real IT CRUD (`IT1.8`). It passes when `tests/env-couchdb` is active; it fails under `tests/env-IT` because fallback CouchDB credentials are invalid.
-- OpenSearch: covered by real IT CRUD (`IT1.9`) and passes after repo-env URL resolution.
-- Elasticsearch: only lightly covered by access-control profile metadata creation (`source_type: elasticsearch`). There is no real Elasticsearch CRUD/discovery IT in `tests/integration`.
-- PostgreSQL: no real PostgreSQL integration coverage in `tests/integration`; connector env exists, but the matrix still executes the MongoDB/CouchDB/OpenSearch integration suite.
-- MariaDB: no real MariaDB integration coverage in `tests/integration`; connector env exists, but the matrix still executes the MongoDB/CouchDB/OpenSearch integration suite.
-- Cassandra: no real Cassandra integration coverage in `tests/integration`; connector env exists, but the matrix still executes the MongoDB/CouchDB/OpenSearch integration suite.
+| Backend | Real operations tested | Proving logs |
+| --- | --- | --- |
+| MongoDB | `validate_profile`, namespace/entity discovery, field schema, sample shapes, create/read/update/count/delete, index create/list, relationship inference | `working/it-95b-preprod-full.log`, `working/w28a-95b-env-mongodb-it.log` |
+| CouchDB | `validate_profile`, namespace/entity discovery including view entity, field schema, sample shapes, create/read/update/count/delete, Mango index create/list, relationship inference | `working/it-95b-preprod-full.log`, `working/w28a-95b-env-couchdb-it.log` |
+| OpenSearch | `validate_profile`, cluster/index discovery, field schema, sample shapes, create/read/update/count/delete using term queries, index-template create/list, relationship inference | `working/it-95b-preprod-full.log`, `working/w28a-95b-env-opensearch-it.log` |
+| Elasticsearch | `validate_profile`, cluster/index discovery, field schema, sample shapes, create/read/update/count/delete using term queries, index-template create/list, relationship inference | `working/it-95b-preprod-full.log`, `working/w28a-95b-env-elasticsearch-it.log` |
+| PostgreSQL | `validate_profile`, schema/table discovery, field schema, sample shapes, create/read/update/count/delete, index create/list, relationship API call | `working/it-95b-preprod-full.log`, `working/w28a-95b-env-postgresql-it.log` |
+| MariaDB | `validate_profile`, database/table discovery, field schema, sample shapes, create/read/update/count/delete, index create/list, relationship API call | `working/it-95b-preprod-full.log`, `working/w28a-95b-env-mariadb-it.log` |
+| Cassandra | `validate_profile`, keyspace/table discovery, field schema, sample shapes, create/read/update/count/delete, secondary index create/list/drop, relationship inference | `working/it-95b-preprod-full.log`, `working/w28a-95b-env-cassandra-it.log` |
 
-Conclusion: W28A-95b does not validate all provided backends at integration depth. It validates MongoDB, CouchDB, and OpenSearch with real CRUD paths. Elasticsearch, PostgreSQL, MariaDB, and Cassandra need dedicated integration tests or a parameterized connector matrix that invokes their real connector CRUD/list/schema paths.
+Conclusion: W28A-95b now validates all provided backends at integration depth. The full IT suite proves all seven backends in one preprod run; each backend-specific matrix env also proves its corresponding backend via one real connector case plus the existing IT suite.
 
 ## Hardcoding, Skips, And Duplication
 
 - Skips/xfails: none found in `tests/integration`, `tests/application`, or `tests/quality`.
 - Docker/container hardcoding: removed from MongoDB, CouchDB, Elasticsearch, and Cassandra runtime helpers for this preprod path. Helpers now use env contracts and fail loudly.
-- Server env hardcoding: integration tests no longer hard-code `tests/env-IT` for server startup; they resolve the active pytest `--env`.
-- Stale server handling: direct IT server starters now stop existing app surfaces before start, matching the safer shared helper behavior.
-- Credential leakage: CouchDB failed request URLs are sanitized by separating the public base URL from session auth.
-- Remaining duplication: each direct connector IT still has local `_start_servers`, `_stop_servers`, and `_wait` helper copies. This is not a behavioral failure, but it should be consolidated into `tests.helpers.core_tools_runtime` or `tests.helpers.server_runtime`.
+- Server env hardcoding: integration tests resolve the active pytest `--env`.
+- Stale server handling: direct IT server starters stop existing app surfaces before start, matching the safer shared helper behavior.
+- Credential leakage: CouchDB and Elasticsearch request setup separates public request URLs from session/auth credentials where direct HTTP setup is required.
+- Remaining duplication: direct connector IT files still have local `_start_servers`, `_stop_servers`, and `_wait` helper copies. This should be consolidated later, but it is not substituting for backend coverage.

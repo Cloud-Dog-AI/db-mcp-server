@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Real MongoDB test runtime helper using a local Docker Mongo 6 container.
+# Description: Real MongoDB test runtime helper using shared preprod MongoDB.
 # Related requirements: CN-01
 # Related tests: ST1.3, IT1.2
 
@@ -34,7 +34,7 @@ def _env_value(*keys: str) -> str:
         value = os.environ.get(key)
         if value:
             return value
-    for env_file in (PROJECT_ROOT / "tests" / "env-all", PROJECT_ROOT / "tests" / "env-mongodb"):
+    for env_file in (PROJECT_ROOT / "tests" / "env-mongodb", PROJECT_ROOT / "tests" / "env-all"):
         if not env_file.exists():
             continue
         for raw_line in env_file.read_text(encoding="utf-8").splitlines():

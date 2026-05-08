@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Real Elasticsearch test runtime helper.
+# Description: Real Elasticsearch test runtime helper using shared preprod Elasticsearch.
 # Related requirements: CN-01
 # Related tests: ST1.12, IT1.11
 # Recent changes:
@@ -36,7 +36,7 @@ ELASTICSEARCH_DEFAULT_URL = os.getenv("DB_MCP_TEST_ELASTICSEARCH_URL", "")
 def _configured_url() -> str:
     if ELASTICSEARCH_DEFAULT_URL:
         return ELASTICSEARCH_DEFAULT_URL
-    for env_file in (PROJECT_ROOT / "tests" / "env-all", PROJECT_ROOT / "tests" / "env-elasticsearch"):
+    for env_file in (PROJECT_ROOT / "tests" / "env-elasticsearch", PROJECT_ROOT / "tests" / "env-all"):
         if not env_file.exists():
             continue
         for raw_line in env_file.read_text(encoding="utf-8").splitlines():

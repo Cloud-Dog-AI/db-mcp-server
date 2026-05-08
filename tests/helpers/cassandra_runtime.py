@@ -37,7 +37,7 @@ def _env_value(key: str, default: str = "") -> str:
     value = os.environ.get(key)
     if value:
         return value
-    for env_file in (PROJECT_ROOT / "tests" / "env-all", PROJECT_ROOT / "tests" / "env-cassandra"):
+    for env_file in (PROJECT_ROOT / "tests" / "env-cassandra", PROJECT_ROOT / "tests" / "env-all"):
         if not env_file.exists():
             continue
         for raw_line in env_file.read_text(encoding="utf-8").splitlines():
@@ -54,11 +54,15 @@ def _seeded_runtime_ready() -> bool:
     host = _env_value("DB_MCP_TEST_CASSANDRA_HOST", CASSANDRA_HOST)
     port = int(_env_value("DB_MCP_TEST_CASSANDRA_PORT", str(CASSANDRA_PORT)))
     keyspace = _env_value("DB_MCP_TEST_CASSANDRA_KEYSPACE", CASSANDRA_KEYSPACE)
+    username = _env_value("DB_MCP_TEST_CASSANDRA_USERNAME", "")
+    password = _env_value("DB_MCP_TEST_CASSANDRA_PASSWORD", "")
     connector: CassandraConnector | None = None
     try:
         connector = CassandraConnector(
             host=host,
             port=port,
+            username=username or None,
+            password=password or None,
             timeout_seconds=15,
         )
         connector.validate_profile()

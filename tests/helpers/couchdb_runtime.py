@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Real CouchDB test runtime helper using a local Docker CouchDB 3 container.
+# Description: Real CouchDB test runtime helper using shared preprod CouchDB.
 # Related requirements: CN-01
 # Related tests: ST1.9, IT1.8
 
@@ -35,7 +35,7 @@ def _env_map() -> dict[str, str]:
     for key, value in os.environ.items():
         if key.startswith("DB_MCP_TEST_COUCHDB_"):
             values[key] = value
-    for env_file in (PROJECT_ROOT / "tests" / "env-all", PROJECT_ROOT / "tests" / "env-couchdb"):
+    for env_file in (PROJECT_ROOT / "tests" / "env-couchdb", PROJECT_ROOT / "tests" / "env-all"):
         if not env_file.exists():
             continue
         for raw_line in env_file.read_text(encoding="utf-8").splitlines():
