@@ -26,7 +26,7 @@ services:
       start_period: 60s
 
   cassandra-seed:
-    image: python:3.10-slim
+    image: python:3.12-slim
     container_name: db-mcp-cassandra-seed
     restart: "no"
     network_mode: host

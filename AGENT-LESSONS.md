@@ -152,7 +152,7 @@ All credentials from Vault at `dev.databases.providers.*`. **Never spin up local
 ### 3.5 Docker Build
 - Build script: `bash docker-build.sh`
 - Registry: `registry.cloud-dog.net:443/cloud-dog/db-mcp-server:latest`
-- Image uses `python:3.10-slim`, needs Vault CA cert at build time
+- Image uses `python:3.12-slim`, needs Vault CA cert at build time
 - Terraform target: `docker_image.dbmcpserver` + `docker_container.dbmcpserver0`
 
 ### 3.6 Multi-Agent Conflicts

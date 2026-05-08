@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import time
+from urllib.parse import urlparse, urlunparse
 
 import pytest
 import requests
@@ -29,19 +30,29 @@ from tests.helpers.couchdb_runtime import cleanup_database, ensure_real_couchdb
 pytestmark = [pytest.mark.system, pytest.mark.timeout(180)]
 
 
-def _session() -> requests.Session:
+def _session(uri: str) -> requests.Session:
     session = requests.Session()
-    session.auth = ("admin", "cloud-dog-test")
+    parsed = urlparse(uri)
+    if parsed.username:
+        session.auth = (parsed.username, parsed.password or "")
     session.headers.update({"Content-Type": "application/json"})
     return session
+
+
+def _public_url(uri: str) -> str:
+    parsed = urlparse(uri)
+    netloc = parsed.hostname or ""
+    if parsed.port:
+        netloc = f"{netloc}:{parsed.port}"
+    return urlunparse((parsed.scheme, netloc, parsed.path, "", "", "")).rstrip("/")
 
 
 def test_couchdb_adapter_against_real_local_couchdb() -> None:
     """CouchDB adapter methods should work against a real local CouchDB runtime."""
     uri = ensure_real_couchdb()
-    base_url = uri.replace("admin:cloud-dog-test@", "")
+    base_url = _public_url(uri)
     db_name = f"dbmcp_st_{int(time.time())}"
-    session = _session()
+    session = _session(uri)
     try:
         response = session.put(f"{base_url}/{db_name}", timeout=10)
         response.raise_for_status()

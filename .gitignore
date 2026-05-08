@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+venv.ps100-backup-*/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -21,4 +22,5 @@ node_modules
 .terraform
 *.tfstate
 *.egg-info/
+dist/
 .pip.conf.build

@@ -4,7 +4,7 @@
 `db-mcp-server` - database access and catalog service with API, Web, MCP, and A2A servers.
 
 ## Prerequisites
-- Python 3.10+
+- Python 3.12+
 - Node.js 20+ and npm 10+ for the UI bundle
 - Docker
 

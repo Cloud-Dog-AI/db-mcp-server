@@ -95,7 +95,7 @@ services:
       start_period: 60s
 
   mongodb-seed:
-    image: python:3.10-slim
+    image: python:3.12-slim
     container_name: db-mcp-mongodb-seed
     restart: "no"
     network_mode: host
@@ -113,7 +113,7 @@ services:
       python -m tests.fixtures.mongodb_seed"
 
   couchdb-seed:
-    image: python:3.10-slim
+    image: python:3.12-slim
     container_name: db-mcp-couchdb-seed
     restart: "no"
     depends_on:
@@ -132,7 +132,7 @@ services:
       python -m tests.fixtures.couchdb_seed"
 
   opensearch-seed:
-    image: python:3.10-slim
+    image: python:3.12-slim
     container_name: db-mcp-opensearch-seed
     restart: "no"
     depends_on:
@@ -149,7 +149,7 @@ services:
       python -m tests.fixtures.opensearch_seed"
 
   elasticsearch-seed:
-    image: python:3.10-slim
+    image: python:3.12-slim
     container_name: db-mcp-elasticsearch-seed
     restart: "no"
     depends_on:
@@ -166,7 +166,7 @@ services:
       python -m tests.fixtures.elasticsearch_seed"
 
   cassandra-seed:
-    image: python:3.10-slim
+    image: python:3.12-slim
     container_name: db-mcp-cassandra-seed
     restart: "no"
     depends_on:

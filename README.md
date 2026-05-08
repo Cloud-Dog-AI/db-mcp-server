@@ -5,7 +5,7 @@
 ## Quick Start
 
 ### Prerequisites
-- Python 3.10+
+- Python 3.12+
 - Access to `/opt/iac/Development/cloud-dog-ai/env-vault` for Vault-backed settings when needed
 
 ### Install
