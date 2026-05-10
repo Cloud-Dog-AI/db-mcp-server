@@ -18,6 +18,7 @@
 - Identity, users, groups, API keys, RBAC: `cloud_dog_idam`
 - Jobs and workers: `cloud_dog_jobs`
 - Metadata/audit persistence: `cloud_dog_db`
+- Static asset and local path access: `cloud_dog_storage`
 - Design principle: structured filters replace LLM-generated database queries for executable operations
 
 ## CR — Core Requirements
@@ -34,7 +35,7 @@ Acceptance criteria:
 - authenticated status endpoints are documented for queue, connector, and profile state
 
 ### CR-03 (P1)
-The system shall use `cloud_dog_config`, `cloud_dog_logging`, `cloud_dog_api_kit`, `cloud_dog_idam`, `cloud_dog_jobs`, and `cloud_dog_db`.
+The system shall use `cloud_dog_config`, `cloud_dog_logging`, `cloud_dog_api_kit`, `cloud_dog_idam`, `cloud_dog_jobs`, `cloud_dog_db`, and `cloud_dog_storage`.
 Acceptance criteria:
 - platform package usage is documented in README and architecture
 - no bespoke alternatives are planned for those concerns

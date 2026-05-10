@@ -61,6 +61,26 @@ This matrix maps every W28A-871 merged requirement (`A1` through `G3`) to curren
 - The existing `T4 data_browser` Playwright test covers presence and basic interaction, not PS-77 style tabular behaviour such as pagination or dynamic column handling.
 - PostgreSQL and MariaDB runtime overlays exist, but their concrete host/port values are resolved through `cloud_dog_config`/Vault rather than being fully published in this repo.
 
+## W28A-118C Package, UI, And Requirement Traceability
+
+This non-LLM traceability layer maps the audited package posture and DB MCP WebUI surfaces to source-backed tests. It does not cover generated query answers, RAG, embeddings, or summarisation flows.
+
+| Area | Requirement anchor | Package abstraction | UI surface | Test evidence |
+|------|--------------------|---------------------|------------|---------------|
+| Configuration and connector overlays | CR-01, CR-03, CFG-01, CFG-02, CFG-03 | `cloud_dog_config` | Settings | `UT1.1_ConfigLoading`, `QT1.1_ProjectStructure::test_required_platform_package_declarations_are_present` |
+| Structured runtime and Web/API proxying | CR-01, CR-02 | `cloud_dog_api_kit` | Dashboard, API Docs, MCP Console, A2A Console | `UT1.11_WebUiServing`, `UT1.20_McpServer`, `AT_WEBUI_E2E` |
+| Authentication and profile-scoped RBAC | A3, A4, AC-01..AC-06 | `cloud_dog_idam`, `cloud_dog_logging` | Users, Groups, API Keys, RBAC | `UT1.3_AccessControlService`, `IT1.1_AccessControlLifecycle`, `ST1.2_AccessControlApi`, `AT_WEBUI_E2E` |
+| Metadata, audit, and discovery persistence | CD-01..CD-04, AC-02 | `cloud_dog_db`, `cloud_dog_logging` | Catalogue, Entity Detail, Audit | `IT1.3_FullDiscoveryFlow`, `ST1.4_CatalogApi`, `AT_WEBUI_E2E` |
+| Structured query/search/result display | D1, D2, E1, E2, E3 | `cloud_dog_api_kit`, `cloud_dog_db`, `cloud_dog_jobs` | Data Browser, Search, Jobs | `ST1.5_ContentApi`, `ST1.7_SearchApi`, `IT1.6_SearchIndexingLifecycle`, `UT1.19_JobLifecycle`, `AT_WEBUI_E2E` |
+| Schema and relationship governance | C1, C2, F1, F2 | `cloud_dog_api_kit`, `cloud_dog_logging` | Schema Planner, Relationships, Entity Detail | `ST1.6_SchemaApi`, `IT1.5_RelationshipLifecycle`, `UT1.12_SchemaChangeService`, `AT_WEBUI_E2E` |
+| Web static assets and path safety | CR-01, W28A-883 current-state note | `cloud_dog_storage` | Web shell and routed pages | `UT1.11_WebUiServing`, `ST1.8_WebUiServing`, `QT1.1_ProjectStructure::test_w28a_118c_docs_map_packages_to_ui_and_tests` |
+
+Current package classification:
+
+- `cloud_dog_config`, `cloud_dog_logging`, `cloud_dog_api_kit`, `cloud_dog_idam`, `cloud_dog_jobs`, `cloud_dog_db`, and `cloud_dog_storage` are declared and source-adopted.
+- `cloud_dog_cache`, `cloud_dog_llm`, and vector/RAG packages are not required for the current DB MCP non-LLM surface.
+- End-user file lifecycle remains a separate PS-78 backlog item; current `cloud_dog_storage` use is limited to SPA/static serving and local path helpers.
+
 ## Notes
 
 - Top-level test directories present: `application`, `fixtures`, `helpers`, `integration`, `quality`, `system`, `unit`.

@@ -201,6 +201,7 @@ graph LR
 - Background worker in same deployment unit for Phase 1 simplicity
 - Metadata/audit store via `cloud_dog_db`
 - Connector credentials resolved by `cloud_dog_config` from env/Vault
+- Web static assets and local path resolution use `cloud_dog_storage`
 - Preprod overlay documented in `docs/PREPROD.md`
 
 ## 12. Dependencies
@@ -211,6 +212,7 @@ graph LR
 - `cloud_dog_idam`
 - `cloud_dog_jobs`
 - `cloud_dog_db`
+- `cloud_dog_storage`
 
 ### External sources
 - MongoDB
