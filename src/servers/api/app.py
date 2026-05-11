@@ -23,7 +23,9 @@ from __future__ import annotations
 import json
 import os
 import resource
+from collections.abc import Mapping
 from datetime import datetime, timezone
+from types import MappingProxyType
 
 from fastapi import APIRouter
 
@@ -142,7 +144,9 @@ def _read_log_entries(surface: str, limit: int) -> list[dict[str, object]]:
 
 def _mask_runtime_config(value, parent_key: str = ""):
     """Redact secret-like values before returning config to the Web UI."""
-    if isinstance(value, dict):
+    if isinstance(value, MappingProxyType):
+        value = dict(value)
+    if isinstance(value, Mapping):
         masked = {}
         for key, item in value.items():
             lowered = str(key).lower()
@@ -153,7 +157,15 @@ def _mask_runtime_config(value, parent_key: str = ""):
         return masked
     if isinstance(value, list):
         return [_mask_runtime_config(item, parent_key) for item in value]
-    return value
+    if isinstance(value, tuple):
+        return [_mask_runtime_config(item, parent_key) for item in value]
+    if isinstance(value, set):
+        return sorted(_mask_runtime_config(item, parent_key) for item in value)
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if hasattr(value, "model_dump"):
+        return _mask_runtime_config(value.model_dump(mode="json"), parent_key)
+    return str(value)
 
 
 def create_api_app(explicit_env_files: list[str] | None = None):
@@ -206,6 +218,11 @@ def create_api_app(explicit_env_files: list[str] | None = None):
                 "queue_status": runtime.job_backend.get_queue_status(),
             }
         )
+
+    @router.get("/jobs/queue/status")
+    async def jobs_queue_status() -> dict:
+        """Return queue status counters for the Web UI jobs dashboard."""
+        return success_envelope(runtime.job_backend.get_queue_status())
 
     @router.get("/metrics")
     async def metrics() -> dict:
