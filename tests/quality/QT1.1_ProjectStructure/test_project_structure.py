@@ -18,10 +18,14 @@
 
 from __future__ import annotations
 
-import tomllib
 from pathlib import Path
 
 import pytest
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 compatibility
+    import tomli as tomllib
 
 pytestmark = pytest.mark.quality
 
@@ -68,6 +72,26 @@ def test_required_platform_package_declarations_are_present() -> None:
     }
 
     assert expected <= dependency_names
+
+
+def test_active_source_uses_platform_logging_only() -> None:
+    """Reject raw stdlib logging in active source; use cloud_dog_logging instead."""
+    root = Path(__file__).resolve().parents[3]
+    forbidden = [
+        "import logging",
+        "from logging import",
+        "logging.getLogger",
+        "logging.basicConfig",
+    ]
+    findings: list[str] = []
+
+    for path in (root / "src").rglob("*.py"):
+        text = path.read_text(encoding="utf-8")
+        for pattern in forbidden:
+            if pattern in text:
+                findings.append(f"{path.relative_to(root)} contains {pattern}")
+
+    assert not findings, "Raw stdlib logging bypasses cloud_dog_logging: " + "; ".join(findings)
 
 
 def test_w28a_118c_docs_map_packages_to_ui_and_tests() -> None:

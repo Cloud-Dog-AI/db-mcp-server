@@ -345,3 +345,11 @@ This section merges the W28A-871 sections `a` through `g` into the published req
 - A2A: transfer file-bearing database artifacts between agents.
 - WebUI: upload control, browser/inventory, download, delete.
 - Connector flow: verify a connector-generated artifact can be stored, listed, downloaded, and deleted through the standard file lifecycle.
+
+## PS-40 / W28A-619 Logging and Audit Requirements
+
+The service MUST use `cloud_dog_logging` as the only application and audit logging implementation. Raw stdlib logging setup, direct `logging.getLogger()` calls, bespoke audit emitters, and print-based operational logging are not compliant except inside the platform logging package itself.
+
+Every auditable event MUST emit a PS-40/NIST AU-3 audit record with: `event_type`, `action`, `timestamp`, `service`, `component`, `service_instance`, `environment`, `source_host`, `source_process`, `source_application`, `source_address` where available, `destination_address` where available, `outcome`, actor identity including user/service/system plus account/process/device identifiers where available, `target`, `process_id`, `affected_files` where relevant, `correlation_id`, `trace_id`, and `request_id`.
+
+Auditable events MUST include authentication and authorisation decisions, user/group/API-key/RBAC changes, profile/connection/entity/data-browser operations, MCP/A2A/API calls, job lifecycle changes, configuration changes, data access and mutation, denials, failures, and privileged operations. Secrets MUST be redacted before persistence. Tests MUST cover schema fields, event coverage, redaction, append-only audit persistence, retention/integrity, and WebUI observability rendering/filtering.
