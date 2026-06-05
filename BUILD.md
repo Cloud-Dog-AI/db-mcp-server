@@ -18,7 +18,7 @@ pip install -e ".[dev]"
 
 If platform dependencies are served from a package index rather than editable local source:
 ```bash
-PYPI_URL=https://packages.example.com/simple/
+PYPI_URL=https://gitea.cloud-dog.net/api/packages/Cloud-Dog-External/pypi/simple
 pip install -e ".[dev]" --extra-index-url "$PYPI_URL"
 ```
 
@@ -56,21 +56,13 @@ python -m pip install build
 python -m build
 ```
 
-### Build and Stage the UI Bundle
-```bash
-cd ../cloud-dog-ai-ui-monorepo
-npm install
-npm run build --workspace=apps/db-mcp
-cd ../db-mcp-server
-mkdir -p ./ui
-rm -rf ./ui/dist
-cp -r ../cloud-dog-ai-ui-monorepo/apps/db-mcp/dist ./ui/dist
-```
+### UI Bundle
+The exported tree includes the UI files used by the Docker build. Rebuild the UI only if you maintain a separate UI source tree.
 
 ### Docker Container
 The provided script builds from the parent workspace as the Docker context:
 ```bash
-./docker-build.sh latest
+PUBLICATION_TAG_SUFFIX=gitea-test ./docker-build.sh latest
 ```
 
 Equivalent direct Docker invocation:
@@ -87,10 +79,5 @@ docker push registry.example.com/team/db-mcp-server:latest
 ## Configuration
 Runtime configuration comes from the env file passed to `server_control.sh`, then any higher-priority shell variables, then `defaults.yaml`.
 
-## Vault Integration
-```bash
-export VAULT_ADDR=https://vault.example.com
-export VAULT_TOKEN=your-token
-export VAULT_MOUNT_POINT=your-mount
-export VAULT_CONFIG_PATH=your-path
-```
+## Local Secrets
+Put local-only values in the env file passed to `server_control.sh` or mounted into Docker. Do not commit real credentials.
