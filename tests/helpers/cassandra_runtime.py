@@ -85,5 +85,5 @@ def ensure_real_cassandra() -> tuple[str, int, str]:
 
     pytest.fail(
         f"Cassandra shared runtime is not ready at {host}:{port}/{keyspace}. "
-        "Local Docker fallback is forbidden for this preprod validation."
+        "Local Docker fallback is forbidden for this shared-backend validation."
     )

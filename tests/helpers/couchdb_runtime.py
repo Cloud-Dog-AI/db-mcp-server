@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Real CouchDB test runtime helper using shared preprod CouchDB.
+# Description: Real CouchDB test runtime helper using a shared test CouchDB.
 # Related requirements: CN-01
 # Related tests: ST1.9, IT1.8
 

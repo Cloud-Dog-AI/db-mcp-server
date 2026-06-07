@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Real Elasticsearch test runtime helper using shared preprod Elasticsearch.
+# Description: Real Elasticsearch test runtime helper using a shared test Elasticsearch.
 # Related requirements: CN-01
 # Related tests: ST1.12, IT1.11
 # Recent changes:

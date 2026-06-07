@@ -29,12 +29,12 @@ couchdb, elasticsearch, opensearch).
 
 Per RULES §5b (Infrastructure Reuse — separate namespaces per test) the
 database is created brand-new and never overlaps with any existing
-``cloud_dog_db_test`` / ``alembic_version`` / platform-service database on
-db1/db2. Existing databases on the shared server are NEVER modified.
+``cloud_dog_db_test`` / ``alembic_version`` / platform-service database on the
+configured server. Existing databases on the shared server are NEVER modified.
 
 Usage::
 
-    cd /opt/iac/Development/cloud-dog-ai/db-mcp-server
+    cd <repo-root>
     set -a && source tests/env-postgresql && set +a
     python -m tests.fixtures.postgresql_seed
 """

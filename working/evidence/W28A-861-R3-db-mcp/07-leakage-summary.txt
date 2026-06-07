@@ -1,0 +1,6 @@
+W28A-861-R3 db-mcp leakage scrub
+BEFORE (publishable tree) = 37 hits
+AFTER  (publishable tree) = 0 hits
+
+Dev-variant Dockerfile (internal staging index) reclassified as explicitly
+non-published via .publish-exclude (PS-97 §1.1.3 / W28A-861-R3 §5 carve-out).

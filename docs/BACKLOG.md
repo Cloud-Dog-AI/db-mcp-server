@@ -15,4 +15,4 @@
 | 274-K | Relationship management | Declare, infer, curate relationships | 274-H |
 | 274-L | Schema change tools | Plan/apply/audit workflow | 274-H |
 | 274-M | WebUI admin | Profile, user, search, schema management pages | 274-B |
-| 274-N | Docker & preprod | All-in-one Docker, preprod deployment | All above |
+| 274-N | Docker & deployment | All-in-one Docker, staging deployment | All above |

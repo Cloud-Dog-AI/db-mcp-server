@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Integration matrix for real preprod connector CRUD/discovery/schema coverage.
+# Description: Integration matrix for real shared-backend connector CRUD/discovery/schema coverage.
 # Related requirements: CN-01, CD-02, SC-01, CO-01, CO-02
 # Related tests: IT1.10
 

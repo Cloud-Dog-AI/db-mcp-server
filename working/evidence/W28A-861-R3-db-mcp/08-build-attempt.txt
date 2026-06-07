@@ -1,0 +1,30 @@
+=== honest public build attempt on server2 (expected: platform pkgs not on pypi.org) ===
+ > [builder 6/6] RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf     pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir       cloud-dog-config cloud-dog-logging "cloud-dog-api-kit==0.12.4"       cloud-dog-idam "cloud-dog-jobs>=0.3.0" "cloud-dog-db[nosql,sql]>=0.3.0"       cloud-dog-storage &&     pip install --no-cache-dir .:
+
+2.522 Installing collected packages: pip
+2.522   Attempting uninstall: pip
+2.527     Found existing installation: pip 25.0.1
+2.616     Uninstalling pip-25.0.1:
+2.871       Successfully uninstalled pip-25.0.1
+4.137 Successfully installed pip-26.1.2
+4.138 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+5.049 ERROR: Could not find a version that satisfies the requirement cloud-dog-config (from versions: none)
+5.050 ERROR: No matching distribution found for cloud-dog-config
+------
+Dockerfile.public:49
+--------------------
+  48 |     # cloud_dog_db[nosql,sql] — never listed directly here).
+  49 | >>> RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
+  50 | >>>     pip install --no-cache-dir --upgrade pip && \
+  51 | >>>     pip install --no-cache-dir \
+  52 | >>>       cloud-dog-config cloud-dog-logging "cloud-dog-api-kit==0.12.4" \
+  53 | >>>       cloud-dog-idam "cloud-dog-jobs>=0.3.0" "cloud-dog-db[nosql,sql]>=0.3.0" \
+  54 | >>>       cloud-dog-storage && \
+  55 | >>>     pip install --no-cache-dir .
+  56 |     
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir       cloud-dog-config cloud-dog-logging \"cloud-dog-api-kit==0.12.4\"       cloud-dog-idam \"cloud-dog-jobs>=0.3.0\" \"cloud-dog-db[nosql,sql]>=0.3.0\"       cloud-dog-storage &&     pip install --no-cache-dir ." did not complete successfully: exit code: 1
+=== exit: 0 ===
+
+=== single-index proof (docker-build.log) ===
+extra-index-url count: 0

@@ -47,7 +47,7 @@ This reference is generated from `defaults.yaml` and the standard Cloud-Dog envi
 
 | Variable | Default | Required | Example | Description |
 |----------|---------|----------|---------|-------------|
-| `CLOUD_DOG__AUDIT_STORE__URI` | `${vault.dev.databases.dbmcp_audit_postgresql.uri || 'sqlite:/...` | Deployment dependent | `https://service.example.com` | Endpoint or connection URL for audit store. |
+| `CLOUD_DOG__AUDIT_STORE__URI` | `""` | Deployment dependent | `sqlite:///./data/dbmcp_audit.db` | Endpoint or connection URL for audit store. |
 
 ## `auth`
 
@@ -63,19 +63,19 @@ This reference is generated from `defaults.yaml` and the standard Cloud-Dog envi
 | Variable | Default | Required | Example | Description |
 |----------|---------|----------|---------|-------------|
 | `CLOUD_DOG__CONNECTORS__MONGODB__ENABLED` | `true` | Optional | `true` | Toggle for connectors mongodb. |
-| `CLOUD_DOG__CONNECTORS__MONGODB__DEFAULT_URI` | `${vault.dev.databases.mongodb.uri}` | Deployment dependent | `${vault.dev.databases.mongodb.uri}` | Endpoint or connection URL for connectors mongodb default. |
+| `CLOUD_DOG__CONNECTORS__MONGODB__DEFAULT_URI` | `""` | Deployment dependent | `mongodb://<user>:<password>@mongo.example.com:27017/<db>?ssl=false` | Endpoint or connection URL for connectors mongodb default. |
 | `CLOUD_DOG__CONNECTORS__MONGODB__TIMEOUT_MS` | `30000` | Optional | `30000` | Configuration value for connectors mongodb timeout ms. |
 | `CLOUD_DOG__CONNECTORS__COUCHDB__ENABLED` | `true` | Optional | `true` | Toggle for connectors couchdb. |
-| `CLOUD_DOG__CONNECTORS__COUCHDB__DEFAULT_URI` | `${vault.dev.databases.couchdb.url || 'http://admin:cloud-dog-...` | Deployment dependent | `${vault.dev.databases.couchdb.url || 'http://admin:cloud-dog-...` | Endpoint or connection URL for connectors couchdb default. |
+| `CLOUD_DOG__CONNECTORS__COUCHDB__DEFAULT_URI` | `""` | Deployment dependent | `http://<user>:<password>@couchdb.example.com:5984/` | Endpoint or connection URL for connectors couchdb default. |
 | `CLOUD_DOG__CONNECTORS__COUCHDB__TIMEOUT_SECONDS` | `30` | Optional | `30` | Timeout or duration control for connectors couchdb timeout. |
 | `CLOUD_DOG__CONNECTORS__OPENSEARCH__ENABLED` | `true` | Optional | `true` | Toggle for connectors opensearch. |
-| `CLOUD_DOG__CONNECTORS__OPENSEARCH__DEFAULT_URI` | `${vault.dev.databases.opensearch.url || ''}` | Deployment dependent | `${vault.dev.databases.opensearch.url || ''}` | Endpoint or connection URL for connectors opensearch default. |
+| `CLOUD_DOG__CONNECTORS__OPENSEARCH__DEFAULT_URI` | `""` | Deployment dependent | `https://opensearch.example.com:9200` | Endpoint or connection URL for connectors opensearch default. |
 | `CLOUD_DOG__CONNECTORS__OPENSEARCH__TIMEOUT_SECONDS` | `30` | Optional | `30` | Timeout or duration control for connectors opensearch timeout. |
 | `CLOUD_DOG__CONNECTORS__ELASTICSEARCH__ENABLED` | `true` | Optional | `true` | Toggle for connectors elasticsearch. |
-| `CLOUD_DOG__CONNECTORS__ELASTICSEARCH__DEFAULT_URI` | `${vault.dev.databases.elasticsearch.url || ''}` | Deployment dependent | `${vault.dev.databases.elasticsearch.url || ''}` | Endpoint or connection URL for connectors elasticsearch default. |
+| `CLOUD_DOG__CONNECTORS__ELASTICSEARCH__DEFAULT_URI` | `""` | Deployment dependent | `https://elasticsearch.example.com:9200` | Endpoint or connection URL for connectors elasticsearch default. |
 | `CLOUD_DOG__CONNECTORS__ELASTICSEARCH__TIMEOUT_SECONDS` | `30` | Optional | `30` | Timeout or duration control for connectors elasticsearch timeout. |
 | `CLOUD_DOG__CONNECTORS__CASSANDRA__ENABLED` | `true` | Optional | `true` | Toggle for connectors cassandra. |
-| `CLOUD_DOG__CONNECTORS__CASSANDRA__DEFAULT_HOST` | `${vault.dev.databases.providers.cassandra.host || ''}` | Optional | `${vault.dev.databases.providers.cassandra.host || ''}` | Host binding or upstream host for connectors cassandra default. |
+| `CLOUD_DOG__CONNECTORS__CASSANDRA__DEFAULT_HOST` | `""` | Optional | `cassandra.example.com` | Host binding or upstream host for connectors cassandra default. |
 | `CLOUD_DOG__CONNECTORS__CASSANDRA__DEFAULT_PORT` | `9042` | Optional | `9042` | Port for connectors cassandra default connections. |
 | `CLOUD_DOG__CONNECTORS__CASSANDRA__TIMEOUT_SECONDS` | `30` | Optional | `30` | Timeout or duration control for connectors cassandra timeout. |
 
@@ -119,7 +119,7 @@ This reference is generated from `defaults.yaml` and the standard Cloud-Dog envi
 
 | Variable | Default | Required | Example | Description |
 |----------|---------|----------|---------|-------------|
-| `CLOUD_DOG__METADATA_STORE__URI` | `${vault.dev.databases.dbmcp_metadata_postgresql.uri || 'sqlit...` | Deployment dependent | `https://service.example.com` | Endpoint or connection URL for metadata store. |
+| `CLOUD_DOG__METADATA_STORE__URI` | `sqlite:///./data/dbmcp_webui_metadata.db` | Deployment dependent | `postgresql://<user>:<password>@db.example.com:5432/<db>` | Endpoint or connection URL for metadata store. |
 
 ## `runtime`
 
