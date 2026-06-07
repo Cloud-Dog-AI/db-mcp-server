@@ -27,10 +27,26 @@ from typing import Any
 
 from fastapi import Request
 from sqlalchemy import Engine
+from sqlalchemy.orm import sessionmaker
 
-from cloud_dog_api_kit.errors import NotFoundError, UnauthorisedError, ValidationError
+from cloud_dog_api_kit.errors import (
+    ConflictError,
+    NotFoundError,
+    UnauthorisedError,
+    ValidationError,
+)
 from cloud_dog_idam.api_keys.hashing import hash_api_key, key_matches
 from cloud_dog_idam import RBACEngine
+from cloud_dog_idam.domain.models import Role
+from cloud_dog_idam.storage.sqlalchemy.models import (
+    PermissionORM,
+    RoleORM,
+    RolePermissionORM,
+)
+from cloud_dog_idam.storage.sqlalchemy.role_store import (
+    BaselineRoleProtected,
+    SqlAlchemyRoleStore,
+)
 from cloud_dog_logging import Actor, Target
 from cloud_dog_logging.audit_logger import AuditLogger
 
@@ -67,8 +83,23 @@ class AccessControlService:
 
     def __init__(self, *, config: Any, engine: Engine, audit_logger: AuditLogger) -> None:
         self._config = config
+        self._engine = engine
         self._repository = AccessControlRepository(engine)
         self._audit_logger = audit_logger
+        # W28A-876 Gate 4b: ensure the canonical cloud_dog_idam role tables exist
+        # so the PS-71 §IW3A Roles page (/api/v1/admin/roles) is backed by the
+        # shared SqlAlchemyRoleStore. Only the role-related tables are created
+        # here; the rest of the idam schema is not part of this service.
+        RoleORM.metadata.create_all(
+            bind=engine,
+            checkfirst=True,
+            tables=[
+                RoleORM.__table__,
+                PermissionORM.__table__,
+                RolePermissionORM.__table__,
+            ],
+        )
+        self._role_session_factory = sessionmaker(bind=engine, expire_on_commit=False)
         configured_permissions = config.get("access_control.roles", {}) or {}
         role_permissions = {
             role: set(values)
@@ -89,6 +120,7 @@ class AccessControlService:
         self._bootstrap_api_key = str(config.get("auth.api_key", "") or "")
         self._bootstrap_role = str(config.get("auth.default_role", "admin") or "admin")
         self._seed_bootstrap_admin()
+        self.ensure_roles_seed()
 
     def _seed_bootstrap_admin(self) -> None:
         existing_user = self._repository.get_user(self._bootstrap_user_id)
@@ -447,6 +479,134 @@ class AccessControlService:
             resource_id=api_key_id,
             outcome="success",
             reason=reason,
+        )
+        return True
+
+    # ----- Roles (PS-71 §IW3A; canonical cloud_dog_idam role store) -----------
+    def ensure_roles_seed(self) -> None:
+        """Idempotently seed the baseline admin/user roles (IW3A.4)."""
+        with self._role_session_factory() as session:
+            SqlAlchemyRoleStore(session).seed_baseline()
+
+    def list_roles(self) -> list[dict[str, Any]]:
+        """Return roles in the PS-71 §IW3A.1 column shape (seeds baseline first)."""
+        with self._role_session_factory() as session:
+            store = SqlAlchemyRoleStore(session)
+            store.seed_baseline()
+            return store.list_response()
+
+    def get_role(self, role_id: str) -> dict[str, Any]:
+        with self._role_session_factory() as session:
+            for row in SqlAlchemyRoleStore(session).list_response():
+                if row["role_id"] == role_id:
+                    return row
+        raise NotFoundError(message=f"Role not found: {role_id}")
+
+    def create_role(
+        self,
+        payload: dict[str, Any],
+        *,
+        actor_user_id: str | None,
+        actor_roles: list[str] | None,
+    ) -> dict[str, Any]:
+        clean_name = str(payload.get("name", "") or "").strip()
+        if not clean_name:
+            raise ValidationError(message="Role name is required")
+        permissions = {
+            str(p).strip() for p in (payload.get("permissions") or []) if str(p).strip()
+        }
+        with self._role_session_factory() as session:
+            store = SqlAlchemyRoleStore(session)
+            if store.get_by_name(clean_name) is not None:
+                raise ConflictError(message=f"Role already exists: {clean_name}")
+            role = store.save(
+                Role(
+                    name=clean_name,
+                    description=str(payload.get("description", "") or ""),
+                    permissions=permissions,
+                )
+            )
+            result = {
+                "role_id": role.role_id,
+                "name": role.name,
+                "description": role.description,
+                "permissions": sorted(role.permissions),
+            }
+        self._audit_crud(
+            actor_user_id=actor_user_id,
+            actor_roles=actor_roles,
+            action="create",
+            resource_type="role",
+            resource_id=result["role_id"],
+            outcome="success",
+            role_name=result["name"],
+        )
+        return result
+
+    def update_role(
+        self,
+        role_id: str,
+        payload: dict[str, Any],
+        *,
+        actor_user_id: str | None,
+        actor_roles: list[str] | None,
+    ) -> dict[str, Any]:
+        raw_perms = payload.get("permissions")
+        permissions = (
+            {str(p).strip() for p in raw_perms if str(p).strip()}
+            if raw_perms is not None
+            else None
+        )
+        with self._role_session_factory() as session:
+            store = SqlAlchemyRoleStore(session)
+            if store.get(role_id) is None:
+                raise NotFoundError(message=f"Role not found: {role_id}")
+            role = store.update(
+                role_id,
+                description=payload.get("description"),
+                permissions=permissions,
+            )
+            result = {
+                "role_id": role.role_id,
+                "name": role.name,
+                "description": role.description,
+                "permissions": sorted(role.permissions),
+            }
+        self._audit_crud(
+            actor_user_id=actor_user_id,
+            actor_roles=actor_roles,
+            action="update",
+            resource_type="role",
+            resource_id=result["role_id"],
+            outcome="success",
+            role_name=result["name"],
+        )
+        return result
+
+    def delete_role(
+        self,
+        role_id: str,
+        *,
+        actor_user_id: str | None,
+        actor_roles: list[str] | None,
+    ) -> bool:
+        with self._role_session_factory() as session:
+            store = SqlAlchemyRoleStore(session)
+            try:
+                removed = store.delete(role_id)
+            except BaselineRoleProtected as exc:
+                raise UnauthorisedError(
+                    message=f"Baseline role cannot be deleted: {exc}"
+                )
+            if not removed:
+                raise NotFoundError(message=f"Role not found: {role_id}")
+        self._audit_crud(
+            actor_user_id=actor_user_id,
+            actor_roles=actor_roles,
+            action="delete",
+            resource_type="role",
+            resource_id=role_id,
+            outcome="success",
         )
         return True
 

@@ -30,6 +30,8 @@ from src.core.access_control.schemas import (
     MaskPreviewRequest,
     ProfileUpsertRequest,
     RevokeApiKeyRequest,
+    RoleCreateRequest,
+    RoleUpdateRequest,
     UserUpsertRequest,
 )
 
@@ -252,6 +254,87 @@ def create_access_control_router(runtime, base_path: str) -> APIRouter:
         )
         access.delete_group(group_id, actor_user_id=principal.user_id, actor_roles=principal.roles)
         return success_envelope({"deleted": True, "group_id": group_id})
+
+    @router.get("/roles")
+    async def list_roles(request: Request) -> dict:
+        access.require_request_permission(
+            request,
+            permission="profile.manage",
+            audit_resource_type="role",
+            audit_resource_id="list",
+        )
+        return success_envelope(access.list_roles())
+
+    @router.post("/roles")
+    async def create_role(payload: RoleCreateRequest, request: Request) -> dict:
+        principal = access.require_request_permission(
+            request,
+            permission="profile.manage",
+            audit_resource_type="role",
+            audit_resource_id="create",
+        )
+        return success_envelope(
+            access.create_role(
+                payload.model_dump(),
+                actor_user_id=principal.user_id,
+                actor_roles=principal.roles,
+            )
+        )
+
+    @router.get("/roles/{role_id}")
+    async def get_role(role_id: str, request: Request) -> dict:
+        access.require_request_permission(
+            request,
+            permission="profile.manage",
+            audit_resource_type="role",
+            audit_resource_id=role_id,
+        )
+        return success_envelope(access.get_role(role_id))
+
+    @router.put("/roles/{role_id}")
+    async def update_role(role_id: str, payload: RoleUpdateRequest, request: Request) -> dict:
+        principal = access.require_request_permission(
+            request,
+            permission="profile.manage",
+            audit_resource_type="role",
+            audit_resource_id=role_id,
+        )
+        return success_envelope(
+            access.update_role(
+                role_id,
+                payload.model_dump(exclude_unset=True),
+                actor_user_id=principal.user_id,
+                actor_roles=principal.roles,
+            )
+        )
+
+    @router.patch("/roles/{role_id}")
+    async def patch_role(role_id: str, payload: RoleUpdateRequest, request: Request) -> dict:
+        principal = access.require_request_permission(
+            request,
+            permission="profile.manage",
+            audit_resource_type="role",
+            audit_resource_id=role_id,
+        )
+        return success_envelope(
+            access.update_role(
+                role_id,
+                payload.model_dump(exclude_unset=True),
+                actor_user_id=principal.user_id,
+                actor_roles=principal.roles,
+            )
+        )
+
+    @router.delete("/roles/{role_id}")
+    async def delete_role(role_id: str, request: Request) -> dict:
+        principal = access.require_request_permission(
+            request,
+            permission="profile.manage",
+            audit_resource_type="role",
+            audit_resource_id=role_id,
+        )
+        access.delete_role(role_id, actor_user_id=principal.user_id, actor_roles=principal.roles)
+        return success_envelope({"deleted": True, "role_id": role_id})
 
     @router.get("/api-keys")
     async def list_api_keys(request: Request, owner_user_id: str | None = None) -> dict:

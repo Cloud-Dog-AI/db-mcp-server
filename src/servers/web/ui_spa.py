@@ -52,6 +52,7 @@ _SPA_ENTRY_ROUTES = {
     "/login",
     "/admin/profiles",
     "/admin/users",
+    "/admin/roles",
     "/catalogue",
     "/search",
     "/relationships",

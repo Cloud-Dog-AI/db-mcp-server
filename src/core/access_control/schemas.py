@@ -72,6 +72,21 @@ class ApiKeyCreateRequest(BaseModel):
     ttl_days: int | None = None
 
 
+class RoleCreateRequest(BaseModel):
+    """Payload for creating a role (PS-71 §IW3A)."""
+
+    name: str
+    description: str = ""
+    permissions: list[str] = Field(default_factory=list)
+
+
+class RoleUpdateRequest(BaseModel):
+    """Payload for updating a role's description and/or permissions (PS-71 §IW3A)."""
+
+    description: str | None = None
+    permissions: list[str] | None = None
+
+
 class RevokeApiKeyRequest(BaseModel):
     """Payload for revoking an API key."""
 
