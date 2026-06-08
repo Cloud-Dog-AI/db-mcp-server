@@ -266,4 +266,8 @@ def create_api_app(explicit_env_files: list[str] | None = None):
 
     app.include_router(router)
     app.include_router(create_access_control_router(runtime, api_base_path))
+    # W28A-876: mirror the IDAM access-control routes under /v1/admin/* so the
+    # shared @cloud-dog/idam pages (which call /v1/admin/<entity> via the web
+    # /webapi cookie bridge) resolve against the same handlers + auth.
+    app.include_router(create_access_control_router(runtime, (api_base_path or "") + "/admin"))
     return app
