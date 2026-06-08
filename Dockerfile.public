@@ -29,8 +29,17 @@ ENV HTTP_PROXY=${HTTP_PROXY} HTTPS_PROXY=${HTTPS_PROXY} NO_PROXY=${NO_PROXY} \
 # Public package index. Defaults to public PyPI; a boundary builder may override to
 # its own single index (e.g. GitHub Packages). Single --index-url only; never
 # --extra-index-url (PS-97 §3.3 / §4).
+#
+# The index is supplied to pip through the BuildKit `pip_conf` secret mounted at
+# /etc/pip.conf (single `index-url`, never persisted into an image layer). When the
+# configured index requires authentication, that secret is the ONLY place the
+# credentials live — they are never baked into ENV/ARG image layers (§9.2).
+#
+# PUBLIC_PYPI_INDEX_URL is retained only as a credential-free fallback for boundary
+# builders that build directly without supplying a pip_conf secret. pip's PIP_INDEX_URL
+# env var would OVERRIDE the mounted pip.conf, so we do NOT export it here; instead the
+# install RUN below exports it as a fallback ONLY when no pip_conf secret is present.
 ARG PUBLIC_PYPI_INDEX_URL=https://pypi.org/simple
-ENV PIP_INDEX_URL=${PUBLIC_PYPI_INDEX_URL}
 
 WORKDIR /app
 
@@ -47,6 +56,10 @@ COPY src/ ./src/
 # service itself with the SQL + NoSQL extras (drivers come transitively via
 # cloud_dog_db[nosql,sql] — never listed directly here).
 RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
+    # pip.conf (the BuildKit secret) is authoritative for the index-url, including any
+    # credentials, and is never written to an image layer. Only when no pip_conf secret
+    # is mounted do we fall back to the credential-free PUBLIC_PYPI_INDEX_URL build-arg.
+    if [ ! -s /etc/pip.conf ]; then export PIP_INDEX_URL="${PUBLIC_PYPI_INDEX_URL}"; fi && \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
       cloud-dog-config cloud-dog-logging "cloud-dog-api-kit==0.12.4" \
