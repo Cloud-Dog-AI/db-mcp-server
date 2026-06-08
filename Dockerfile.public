@@ -89,7 +89,10 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY src/ ./src/
 COPY config/ ./config/
-COPY defaults.yaml server_control.sh ./
+# pyproject.toml is the project-root marker used by src.common.storage_paths.
+# find_project_root(); without it in the runtime stage repo_root() falls back to
+# /app/src/common and defaults.yaml cannot be resolved at startup (W28A-861-R3).
+COPY pyproject.toml defaults.yaml server_control.sh ./
 COPY start_api_server.py start_web_server.py start_mcp_server.py start_a2a_server.py ./
 COPY ui/dist/ ./ui/dist/
 
