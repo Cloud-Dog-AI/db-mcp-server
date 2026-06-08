@@ -270,4 +270,10 @@ def create_api_app(explicit_env_files: list[str] | None = None):
     # shared @cloud-dog/idam pages (which call /v1/admin/<entity> via the web
     # /webapi cookie bridge) resolve against the same handlers + auth.
     app.include_router(create_access_control_router(runtime, (api_base_path or "") + "/admin"))
+    # W28A-876: mount the canonical SHARED cloud_dog_idam /idam/v1 router (resource-registry +
+    # rbac-bindings) so the shared @cloud-dog/idam RBAC page resolves /v1/idam/v1/*. ONE
+    # implementation for the whole estate (cloud_dog_idam>=0.4.1); bound to this service's engine.
+    from cloud_dog_idam.api.fastapi.router import idam_v1_router, set_idam_v1_engine
+    set_idam_v1_engine(runtime.metadata_engine)
+    app.include_router(idam_v1_router, prefix=api_base_path or "")
     return app
