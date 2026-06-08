@@ -1,0 +1,10 @@
+step	requirement	status	evidence
+1	Derive ports+prefix (no fabrication)	PASS	01-ports-prefix-derivation.txt (defaults.yaml + docs/PARAMETERS.md)
+2	Dockerfile.public	PASS	Dockerfile.public (multi-stage, single public index, no extra-index-url)
+3	docker-env.public.example (placeholders, no internal hosts/Vault)	PASS	docker-env.public.example (*.example.com placeholders)
+4	EXTERNAL-BUILD.md	PASS	EXTERNAL-BUILD.md (Docker + pure-source, Linux/macOS/Windows, evidence return)
+5	--variant public|dev in docker-build.sh	PASS	docker-build.sh (public=pypi.org default, dev=caller-supplied index)
+6	requirements.lock or EXCEPTION (nosql as extras)	EXCEPTION	requirements.lock.EXCEPTION.md (platform pkgs not on pypi.org; honest cmd+error)
+7	leakage scrub (AFTER=0)	PASS	07-leakage-before.txt (37) -> 07-leakage-after.txt (0)
+8	py_compile + honest server2 build attempt	PASS/ATTEMPTED	08-py-compile.txt, 08-build-attempt.txt
+9	scope-guarded commit + push fix/W28A-861-R3-db-mcp	PASS	remote-proof (see final report)

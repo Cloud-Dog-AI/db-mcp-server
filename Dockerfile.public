@@ -1,0 +1,112 @@
+# syntax=docker/dockerfile:1
+# db-mcp-server — Dockerfile.public (PS-97 v1.1 §1.1.3)
+#
+# PUBLIC variant — for external / GitHub-boundary builds (e.g. ghcr.io, Docker Hub).
+# Uses the active package index supplied by the build environment via PUBLIC_PYPI_INDEX_URL.
+# Defaults to public PyPI (pypi.org). No internal Cloud-Dog index, Vault, GitLab,
+# staging, or private hostnames are referenced here, and --extra-index-url is never used.
+#
+# Select via: docker-build.sh --variant public
+#
+# NOTE: the Cloud-Dog platform packages (cloud-dog-config, cloud-dog-logging,
+# cloud-dog-api-kit, cloud-dog-idam, cloud-dog-db, cloud-dog-jobs, cloud-dog-storage)
+# MUST be resolvable from the configured public index before this Dockerfile can build
+# end-to-end. On the GitHub boundary they are built from GitHub-mirrored source / GitHub
+# Packages (PS-97 §3.3); on public PyPI they resolve from the Cloud-Dog public namespace.
+#
+# NoSQL / search drivers (pymongo, couchdb, couchbase, cassandra-driver,
+# elasticsearch, opensearch-py) and SQL drivers (psycopg, PyMySQL, SQLAlchemy) are
+# NOT direct dependencies of db-mcp-server. They are pulled transitively through the
+# cloud_dog_db[nosql,sql] OPTIONAL EXTRAS (W28E-606 / §1.4). Do not add them directly.
+
+# ── Builder ──────────────────────────────────────────────────────
+FROM python:3.12-slim AS builder
+
+ARG HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy
+ENV HTTP_PROXY=${HTTP_PROXY} HTTPS_PROXY=${HTTPS_PROXY} NO_PROXY=${NO_PROXY} \
+    http_proxy=${http_proxy} https_proxy=${https_proxy} no_proxy=${no_proxy}
+
+# Public package index. Defaults to public PyPI; a boundary builder may override to
+# its own single index (e.g. GitHub Packages). Single --index-url only; never
+# --extra-index-url (PS-97 §3.3 / §4).
+#
+# The index is supplied to pip through the BuildKit `pip_conf` secret mounted at
+# /etc/pip.conf (single `index-url`, never persisted into an image layer). When the
+# configured index requires authentication, that secret is the ONLY place the
+# credentials live — they are never baked into ENV/ARG image layers (§9.2).
+#
+# PUBLIC_PYPI_INDEX_URL is retained only as a credential-free fallback for boundary
+# builders that build directly without supplying a pip_conf secret. pip's PIP_INDEX_URL
+# env var would OVERRIDE the mounted pip.conf, so we do NOT export it here; instead the
+# install RUN below exports it as a fallback ONLY when no pip_conf secret is present.
+ARG PUBLIC_PYPI_INDEX_URL=https://pypi.org/simple
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates gcc git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Public build — no private CA overlay. System ca-certificates trust store is
+# sufficient for public or boundary-provided package indexes.
+
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+# Platform packages first (resolve from the single configured public index), then the
+# service itself with the SQL + NoSQL extras (drivers come transitively via
+# cloud_dog_db[nosql,sql] — never listed directly here).
+RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
+    # pip.conf (the BuildKit secret) is authoritative for the index-url, including any
+    # credentials, and is never written to an image layer. Only when no pip_conf secret
+    # is mounted do we fall back to the credential-free PUBLIC_PYPI_INDEX_URL build-arg.
+    if [ ! -s /etc/pip.conf ]; then export PIP_INDEX_URL="${PUBLIC_PYPI_INDEX_URL}"; fi && \
+    pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+      cloud-dog-config cloud-dog-logging "cloud-dog-api-kit==0.12.4" \
+      cloud-dog-idam "cloud-dog-jobs>=0.3.0" "cloud-dog-db[nosql,sql]>=0.3.0" \
+      cloud-dog-storage && \
+    pip install --no-cache-dir .
+
+# ── Final ────────────────────────────────────────────────────────
+FROM python:3.12-slim
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+LABEL org.opencontainers.image.vendor="Cloud-Dog, Viewdeck Engineering Limited"
+
+ARG HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy
+ENV HTTP_PROXY=${HTTP_PROXY} HTTPS_PROXY=${HTTPS_PROXY} NO_PROXY=${NO_PROXY} \
+    http_proxy=${http_proxy} https_proxy=${https_proxy} no_proxy=${no_proxy}
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl netcat-openbsd procps net-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# Public runtime — no private CA overlay.
+
+WORKDIR /app
+
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+COPY src/ ./src/
+COPY config/ ./config/
+COPY defaults.yaml server_control.sh ./
+COPY start_api_server.py start_web_server.py start_mcp_server.py start_a2a_server.py ./
+COPY ui/dist/ ./ui/dist/
+
+RUN mkdir -p /app/logs /app/data /app/.pids && \
+    chmod +x /app/server_control.sh /app/start_*.py
+
+RUN useradd --system --create-home --uid 10001 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Start scripts import `from src.common...`, so the repo root (/app) must be on
+# the import path; defaults.yaml resolves relative to that root.
+ENV PYTHONUNBUFFERED=1 PYTHONPATH=/app
+
+EXPOSE 8086 8087 8088 8089
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
+  CMD curl -fsS http://127.0.0.1:8086/health || exit 1
+
+CMD ["bash", "-lc", "./server_control.sh --env /app/env start all && tail -F logs/*.log"]

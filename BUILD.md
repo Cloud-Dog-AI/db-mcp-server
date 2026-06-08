@@ -16,10 +16,11 @@ pip install --upgrade pip
 pip install -e ".[dev]"
 ```
 
-If platform dependencies are served from a package index rather than editable local source:
+If platform dependencies are served from a package index rather than editable local source,
+use a single index (no `--extra-index-url`; PS-97 §3.3 / W28A-861-R3 §4):
 ```bash
-PYPI_URL=https://gitea.cloud-dog.net/api/packages/Cloud-Dog-External/pypi/simple
-pip install -e ".[dev]" --extra-index-url "$PYPI_URL"
+PYPI_URL=https://pypi.org/simple
+pip install -e ".[dev]" --index-url "$PYPI_URL"
 ```
 
 ## Local Configuration
@@ -60,15 +61,22 @@ python -m build
 The exported tree includes the UI files used by the Docker build. Rebuild the UI only if you maintain a separate UI source tree.
 
 ### Docker Container
-The provided script builds from the parent workspace as the Docker context:
+The provided script builds with this repository as the Docker context. Use the
+public variant for publication (single public index, no internal hosts):
 ```bash
-PUBLICATION_TAG_SUFFIX=gitea-test ./docker-build.sh latest
+./docker-build.sh latest --variant public
+# or a throwaway publication-test image:
+PUBLICATION_TAG_SUFFIX=github-test ./docker-build.sh latest --variant public
 ```
 
 Equivalent direct Docker invocation:
 ```bash
-DOCKER_BUILDKIT=1 docker build --network host -f ./Dockerfile -t registry.example.com/team/db-mcp-server:latest ..
+DOCKER_BUILDKIT=1 docker build --network host -f ./Dockerfile.public \
+  --build-arg PUBLIC_PYPI_INDEX_URL=https://pypi.org/simple \
+  -t registry.example.com/team/db-mcp-server:latest .
 ```
+
+See [EXTERNAL-BUILD.md](EXTERNAL-BUILD.md) for the full external-builder guide.
 
 ## Docker Push
 ```bash

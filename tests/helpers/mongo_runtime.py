@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Description: Real MongoDB test runtime helper using shared preprod MongoDB.
+# Description: Real MongoDB test runtime helper using a shared test MongoDB.
 # Related requirements: CN-01
 # Related tests: ST1.3, IT1.2
 

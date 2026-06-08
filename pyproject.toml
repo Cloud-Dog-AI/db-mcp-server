@@ -17,34 +17,30 @@ dependencies = [
   "cloud_dog_api_kit==0.12.4",
   "cloud_dog_idam>=0.2.0",
   "cloud_dog_jobs>=0.3.0",
-  "cloud_dog_db>=0.1.0",
+  # W28A-861-R3 / W28E-606: all SQL + NoSQL backend access goes through
+  # cloud_dog_db. The DB drivers (pymongo, CouchDB, couchbase, cassandra-driver,
+  # elasticsearch, opensearch-py, psycopg, PyMySQL) and SQLAlchemy are pulled
+  # transitively via the [nosql] and [sql] OPTIONAL EXTRAS — db-mcp-server
+  # lists none of them as direct dependencies (§1.4).
+  "cloud_dog_db[nosql,sql]>=0.3.0",
   "cloud-dog-storage>=0.1.1",
   "alembic>=1.13.0",
   "argon2-cffi>=23.1.0",
-  "couchdb>=1.2",
   "cryptography>=42.0.0",
   "fastapi>=0.110.0",
   "uvicorn>=0.29.0",
   "websockets>=12.0",
   "pyjwt>=2.8.0",
   "pydantic>=2.6.0",
-  "cassandra-driver>=3.28",
-  "elasticsearch>=8.0,<9.0",
-  "opensearch-py>=2.0",
-  "psycopg[binary]>=3.1.0",
-  "pymysql>=1.1.0",
-  "pymongo>=4.0.0",
   "redis>=5.0.0",
-  "sqlalchemy>=2.0.0",
   "httpx>=0.27.0",
   "hvac>=2.0",
-  "requests>=2.31.0",
   "pyyaml>=6.0.1",
 ]
 
 [project.optional-dependencies]
 dev = [
-  "cassandra-driver>=3.29.0",
+  # DB drivers (incl. cassandra-driver) come via cloud_dog_db[nosql,sql] above.
   "pytest>=8.0.0",
   "pytest-asyncio>=0.23.0",
   "pytest-timeout>=2.3.0",
@@ -75,7 +71,6 @@ include = [
   "tests/**",
   "defaults.yaml",
   "README.md",
-  "RULES.md",
   "docs/**",
   "docker/**",
   "start_api_server.py",
@@ -83,8 +78,11 @@ include = [
   "start_mcp_server.py",
   "start_a2a_server.py",
   "server_control.sh",
-  "scripts/**",
   "Dockerfile",
+  "Dockerfile.public",
   "docker-compose.yml",
   "docker-build.sh",
+  "docker-env.public.example",
+  "EXTERNAL-BUILD.md",
+  "PUBLICATION-SMOKE.md",
 ]

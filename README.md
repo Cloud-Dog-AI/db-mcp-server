@@ -8,12 +8,19 @@ Prerequisites:
 
 - Docker 24 or newer with BuildKit enabled
 - Python 3.12 if you run the package locally
-- Public package source: `https://gitea.cloud-dog.net/api/packages/Cloud-Dog-External/pypi/simple`
+- Public package source: `https://pypi.org/simple` (single index; no `--extra-index-url`)
 
-Build an isolated publication-test image:
+Build the public image (see [EXTERNAL-BUILD.md](EXTERNAL-BUILD.md) for the full
+external-builder guide):
 
 ```bash
-PUBLICATION_TAG_SUFFIX=gitea-test ./docker-build.sh latest
+./docker-build.sh latest --variant public
+```
+
+Or an isolated, registry-skipping publication-test image:
+
+```bash
+PUBLICATION_TAG_SUFFIX=github-test ./docker-build.sh latest --variant public
 ```
 
 Run the local smoke by executing the shell block in [PUBLICATION-SMOKE.md](PUBLICATION-SMOKE.md) with `TAG=latest-gitea-test`.
@@ -31,8 +38,12 @@ The smoke run uses [.env.example](.env.example) and probes:
 python3 -m venv .venv
 . .venv/bin/activate
 pip install --upgrade pip
-pip install -e ".[dev]" --extra-index-url https://gitea.cloud-dog.net/api/packages/Cloud-Dog-External/pypi/simple
+# Single public index; the cloud_dog_db[nosql,sql] extras pull the DB drivers.
+pip install -e ".[dev]" --index-url https://pypi.org/simple
 ```
+
+The Cloud-Dog platform packages must be resolvable from the index you use. See
+[EXTERNAL-BUILD.md](EXTERNAL-BUILD.md) for the public package-source strategy.
 
 Runtime configuration is loaded from the env file passed to `server_control.sh`, then from shell environment variables, then from `defaults.yaml`.
 

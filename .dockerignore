@@ -12,3 +12,10 @@ __pycache__
 .pytest_cache
 working/
 archive/
+vendor/
+venv/
+venv.ps100-backup-*/
+AGENT-LESSONS.md
+RULES.md
+CONTEXT-SUMMARY.md
+scripts/validate-vault.sh

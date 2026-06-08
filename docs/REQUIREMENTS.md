@@ -259,9 +259,9 @@ Acceptance criteria:
 - validation expectations are defined
 
 ### CFG-03 (P2)
-The system shall support preprod and production deployment overlays with Vault-backed credentials.
+The system shall support staging and production deployment overlays with secret-store-backed credentials.
 Acceptance criteria:
-- preprod documentation skeleton exists
+- staging documentation skeleton exists
 - operator/test overlay expectations are documented
 
 ## NF — Non-Functional Requirements
@@ -312,7 +312,7 @@ This section merges the W28A-871 sections `a` through `g` into the published req
 | F1 | Relationships | EXISTING | The system shall list declared, curated, and inferred relationships with provenance and profile scoping. | RL-01 |
 | F2 | Relationships | EXISTING | The system shall support curated relationship create/update/delete flows and candidate inference with review before promotion. | RL-02, RL-03 |
 | G1 | Multi-Connector Verification | NEW | The published requirements shall include a seven-connector verification matrix covering MongoDB, PostgreSQL, MariaDB, CouchDB, OpenSearch, Elasticsearch, and Cassandra. | CN-01..CN-05 |
-| G2 | Multi-Connector Verification | NEW | The published requirements shall identify the preprod/runtime overlay inputs required to exercise each connector safely in ST/IT/AT tiers. | CFG-03, NF-02 |
+| G2 | Multi-Connector Verification | NEW | The published requirements shall identify the staging/runtime overlay inputs required to exercise each connector safely in ST/IT/AT tiers. | CFG-03, NF-02 |
 | G3 | Multi-Connector Verification | NEW | Each connector shall have a minimum lifecycle verification path: create profile, discover namespaces/entities, run a representative query, and verify the result through the service interfaces. | CD-01, CD-02, CO-01, SI-02 |
 
 ## W28A-871 Source-Verified Notes

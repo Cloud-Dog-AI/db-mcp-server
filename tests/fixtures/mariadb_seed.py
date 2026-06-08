@@ -40,7 +40,7 @@ strings. JSON serialisation preserves round-trip via ``json.dumps`` /
 
 Usage::
 
-    cd /opt/iac/Development/cloud-dog-ai/db-mcp-server
+    cd <repo-root>
     set -a && source tests/env-mariadb && set +a
     python -m tests.fixtures.mariadb_seed
 """

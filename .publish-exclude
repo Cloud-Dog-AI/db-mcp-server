@@ -3,5 +3,10 @@ docs/DEPLOY-INTERNAL.md
 tests/env-*
 private/
 working/
+vendor/
 CONTEXT-SUMMARY.md
+AGENT-LESSONS.md
+RULES.md
+scripts/validate-vault.sh
+Dockerfile
 .publish-exclude

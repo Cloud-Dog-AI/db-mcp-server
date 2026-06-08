@@ -1,0 +1,75 @@
+# db-mcp-server — Docker Environment (PS-97 v1.1 §1.1.4 PUBLIC variant)
+#
+# PUBLIC variant — for external / GitHub-boundary deployments.
+# Uses *.example.com placeholders and <your-...-here> tokens only.
+# No internal Cloud-Dog FQDNs, Vault paths, or private hosts appear here.
+#
+# Copy to .env and fill in real endpoints + secrets before running:
+#   cp docker-env.public.example .env
+# then mount it at /app/env (see PUBLICATION-SMOKE.md).
+#
+# Config precedence: env file -> shell env -> defaults.yaml.
+# Env keys map onto defaults.yaml using the CLOUD_DOG__ prefix with `__` as the
+# section delimiter (e.g. api_server.port -> CLOUD_DOG__API_SERVER__PORT).
+
+# ── Server Ports ─────────────────────────────────────────────────
+CLOUD_DOG__API_SERVER__HOST=0.0.0.0
+CLOUD_DOG__API_SERVER__PORT=8086
+CLOUD_DOG__WEB_SERVER__HOST=0.0.0.0
+CLOUD_DOG__WEB_SERVER__PORT=8087
+CLOUD_DOG__MCP_SERVER__HOST=0.0.0.0
+CLOUD_DOG__MCP_SERVER__PORT=8088
+CLOUD_DOG__A2A_SERVER__HOST=0.0.0.0
+CLOUD_DOG__A2A_SERVER__PORT=8089
+
+# Web UI -> API base URL (browser-visible). Point at your public API endpoint.
+CLOUD_DOG__WEB_SERVER__API_BASE_URL=http://127.0.0.1:8086
+
+# ── Authentication ───────────────────────────────────────────────
+CLOUD_DOG__AUTH__MODE=api_key_only
+# Provide the admin API key from your own secret store. Leave blank to have the
+# service generate a bootstrap key on first start (printed to the logs).
+CLOUD_DOG__AUTH__API_KEY=<your-api-key-here>
+CLOUD_DOG__WEB_LOGIN__USERNAME=<your-web-login-username>
+CLOUD_DOG__WEB_LOGIN__PASSWORD=<your-web-login-password>
+
+# ── Metadata + Audit Stores ──────────────────────────────────────
+# Default to local SQLite files; supply your own database URLs to externalise.
+CLOUD_DOG__METADATA_STORE__URI=sqlite:///./data/dbmcp_webui_metadata.db
+CLOUD_DOG__AUDIT_STORE__URI=sqlite:///./data/dbmcp_audit.db
+
+# ── Database Connectors (all optional — set only what you use) ────
+# SQL connection strings.
+CLOUD_DOG__CONNECTORS__POSTGRESQL__DEFAULT_URI=postgresql://<user>:<password>@db.example.com:5432/<database>
+CLOUD_DOG__CONNECTORS__MARIADB__DEFAULT_URI=mysql+pymysql://<user>:<password>@db.example.com:3306/<database>
+
+# NoSQL / search connection strings. These require the cloud_dog_db[nosql] extra,
+# which is installed by Dockerfile.public. Leave blank to disable a connector.
+CLOUD_DOG__CONNECTORS__MONGODB__DEFAULT_URI=mongodb://<user>:<password>@mongo.example.com:27017/<database>?ssl=false
+CLOUD_DOG__CONNECTORS__COUCHDB__DEFAULT_URI=http://<user>:<password>@couchdb.example.com:5984/
+CLOUD_DOG__CONNECTORS__OPENSEARCH__DEFAULT_URI=https://opensearch.example.com:9200
+CLOUD_DOG__CONNECTORS__ELASTICSEARCH__DEFAULT_URI=https://elasticsearch.example.com:9200
+CLOUD_DOG__CONNECTORS__CASSANDRA__DEFAULT_HOST=cassandra.example.com
+CLOUD_DOG__CONNECTORS__CASSANDRA__DEFAULT_PORT=9042
+
+# ── Jobs ─────────────────────────────────────────────────────────
+CLOUD_DOG__JOBS__BACKEND=sql
+# Leave blank to reuse the metadata store; set to externalise the jobs queue.
+CLOUD_DOG__JOBS__SQL_DATABASE_URL=
+
+# ── Environment / Logging ────────────────────────────────────────
+CLOUD_DOG_ENVIRONMENT=prod
+CLOUD_DOG__LOG__LEVEL=INFO
+CLOUD_DOG__LOG__FORMAT=json
+
+# ── Corporate Proxy (optional) ──────────────────────────────────
+HTTP_PROXY=
+HTTPS_PROXY=
+NO_PROXY=127.0.0.1,localhost,.example.com
+
+# ── TLS (optional) ──────────────────────────────────────────────
+# Single combined bundle:
+# CLOUD_DOG_TLS_CA_BUNDLE=/app/certs/ca-bundle.crt
+# Or provide both chains separately:
+# CLOUD_DOG_TLS_CORPORATE_CA=/app/certs/corporate-ca.crt
+# CLOUD_DOG_TLS_ACME_CA=/app/certs/acme-chain.crt

@@ -27,11 +27,11 @@
 
 """Real OpenSearch test runtime helper.
 
-This module connects test code to the shared, Terraform-managed OpenSearch
-instance whose URL is provided via the ``DB_MCP_TEST_OPENSEARCH_URL``
-environment variable (typically loaded from ``tests/env-all`` or
-``tests/env-opensearch`` which carry the canonical
-``http://opensearch0.app.vpc0.cloud-dog.net:1201`` value).
+This module connects test code to a shared, externally-managed OpenSearch
+instance whose URL is provided entirely via the ``DB_MCP_TEST_OPENSEARCH_URL``
+environment variable (loaded from a deployment-specific env file such as
+``tests/env-all`` or ``tests/env-opensearch``, e.g.
+``http://opensearch.example.com:9200``). No host is hard-coded here.
 
 It deliberately does NOT spin up a local Docker container, in compliance
 with RULES.md §3.2.3 (Infrastructure Reuse — do not spin up new backends)
