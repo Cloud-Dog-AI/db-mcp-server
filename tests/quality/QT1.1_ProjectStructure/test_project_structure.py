@@ -59,7 +59,14 @@ def test_required_platform_package_declarations_are_present() -> None:
     root = Path(__file__).resolve().parents[3]
     pyproject = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
     dependencies = pyproject["project"]["dependencies"]
-    dependency_names = {dependency.split("=", 1)[0].split("<", 1)[0].split(">", 1)[0].strip() for dependency in dependencies}
+    # W28A-861-R3: strip the optional ``[extras]`` suffix so that an extras-bearing
+    # declaration (e.g. ``cloud_dog_db[nosql,sql]>=0.3.0``) is locked under its bare
+    # package name. The DB drivers now arrive transitively via cloud_dog_db[nosql,sql]
+    # rather than as direct dependencies (§1.4 boundary).
+    dependency_names = {
+        dependency.split("=", 1)[0].split("<", 1)[0].split(">", 1)[0].split("[", 1)[0].strip()
+        for dependency in dependencies
+    }
 
     expected = {
         "cloud_dog_config",
