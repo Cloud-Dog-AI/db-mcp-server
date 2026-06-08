@@ -15,7 +15,7 @@ This file extends — never overrides — the central platform doctrine. Before 
 - `cloud-dog-ai-platform-standards/AGENT-BOOTSTRAP-DIRECTIVE.md` (latest version)
 - This file
 
-Fix-what-you-find is the default (central `RULES.md §13.3` + central `AGENT-LESSONS.md §6.81`/§6.101).
+Fix-what-you-find is the default (central `RULES.md §14.3` + central `AGENT-LESSONS.md §6.81`/§6.101).
 "Not a fix lane" language is invalid unless the instruction is explicitly READ-ONLY/AUDIT-ONLY.
 
 The lessons below capture `db-mcp-server`-specific knowledge only. If you find yourself
