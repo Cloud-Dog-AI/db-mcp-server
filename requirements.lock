@@ -41,7 +41,7 @@ cloud_dog_db[nosql,sql]==0.3.0
 cloud-dog-idam==0.4.0
 cloud-dog-jobs==0.4.1
 cloud-dog-logging==0.4.0
-cloud_dog_storage==0.1.6
+cloud_dog_storage==0.1.4
 couchbase==4.6.1
 CouchDB==1.2
 cryptography==48.0.0

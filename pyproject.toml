@@ -23,7 +23,7 @@ dependencies = [
   # transitively via the [nosql] and [sql] OPTIONAL EXTRAS — db-mcp-server
   # lists none of them as direct dependencies (§1.4).
   "cloud_dog_db[nosql,sql]>=0.3.0",
-  "cloud-dog-storage>=0.1.1",
+  "cloud-dog-storage==0.1.4",
   "alembic>=1.13.0",
   "argon2-cffi>=23.1.0",
   "cryptography>=42.0.0",

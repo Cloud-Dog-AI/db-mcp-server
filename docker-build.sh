@@ -8,7 +8,7 @@
 #
 # Variant selector (PS-97 v1.1 §1.1.3):
 #   --variant public  (default) builds Dockerfile.public for publication.
-#                      Single public index (PYPI_URL defaults to pypi.org),
+#                      Single public index (PIP_INDEX_URL defaults to pypi.org),
 #                      no --extra-index-url, no internal-host default
 #                      (W28A-861-R3 §4).
 #   --variant dev      builds the internal Dockerfile (internal staging package
@@ -89,37 +89,37 @@ echo "=========================================="
 # ── PyPI Configuration ───────────────────────────────────────────
 # Default index depends on variant:
 #   public → public PyPI (single index, no extra-index-url; PS-97 §3.3 / §4).
-#   dev    → caller-supplied internal staging mirror (set PYPI_URL or DEV_PYPI_URL;
+#   dev    → caller-supplied internal staging mirror (set PIP_INDEX_URL or DEV_PIP_INDEX_URL;
 #            no internal host is hard-coded in this published script — §5).
-if [[ -n "${PYPI_URL:-}" ]]; then
+if [[ -n "${PIP_INDEX_URL:-}" ]]; then
   : # honour caller override
 elif [[ "${VARIANT}" == "public" ]]; then
-  PYPI_URL="https://pypi.org/simple"
-elif [[ -n "${DEV_PYPI_URL:-}" ]]; then
-  PYPI_URL="${DEV_PYPI_URL}"
+  PIP_INDEX_URL="https://pypi.org/simple"
+elif [[ -n "${DEV_PIP_INDEX_URL:-}" ]]; then
+  PIP_INDEX_URL="${DEV_PIP_INDEX_URL}"
 else
-  echo "ERROR: --variant dev requires PYPI_URL or DEV_PYPI_URL (internal index)." >&2
+  echo "ERROR: --variant dev requires PIP_INDEX_URL or DEV_PIP_INDEX_URL (internal index)." >&2
   echo "       The public-build path is: ./docker-build.sh latest --variant public" >&2
   exit 2
 fi
 PYPI_USERNAME="${PYPI_USERNAME:-}"
 PYPI_PASSWORD="${PYPI_PASSWORD:-}"
 
-PYPI_HOST="$(python3 -c "from urllib.parse import urlsplit; print(urlsplit('${PYPI_URL}').hostname or 'pypi.org')")"
+PYPI_HOST="$(python3 -c "from urllib.parse import urlsplit; print(urlsplit('${PIP_INDEX_URL}').hostname or 'pypi.org')")"
 
 if [[ "${VARIANT}" == "public" ]]; then
   # Single strict index — no extra-index-url (PS-97 §3.3 / §4).
   if [[ -n "${PYPI_USERNAME}" ]] && [[ -n "${PYPI_PASSWORD}" ]]; then
     cat > "${SCRIPT_DIR}/${PIP_CONF}" << EOF
 [global]
-index-url = https://${PYPI_USERNAME}:${PYPI_PASSWORD}@${PYPI_URL#https://}
+index-url = https://${PYPI_USERNAME}:${PYPI_PASSWORD}@${PIP_INDEX_URL#https://}
 trusted-host = ${PYPI_HOST}
 EOF
     echo "pip.conf: public variant, authenticated single-index access (${PYPI_HOST})."
   else
     cat > "${SCRIPT_DIR}/${PIP_CONF}" << EOF
 [global]
-index-url = ${PYPI_URL}
+index-url = ${PIP_INDEX_URL}
 trusted-host = ${PYPI_HOST}
 EOF
     echo "pip.conf: public variant, anonymous single-index access (${PYPI_HOST})."
@@ -130,7 +130,7 @@ else
   if [[ -n "${PYPI_USERNAME}" ]] && [[ -n "${PYPI_PASSWORD}" ]]; then
     cat > "${SCRIPT_DIR}/${PIP_CONF}" << EOF
 [global]
-extra-index-url = https://${PYPI_USERNAME}:${PYPI_PASSWORD}@${PYPI_URL#https://}
+extra-index-url = https://${PYPI_USERNAME}:${PYPI_PASSWORD}@${PIP_INDEX_URL#https://}
 trusted-host = ${PYPI_HOST}
                files.pythonhosted.org
 EOF
@@ -138,7 +138,7 @@ EOF
   else
     cat > "${SCRIPT_DIR}/${PIP_CONF}" << EOF
 [global]
-extra-index-url = ${PYPI_URL}
+extra-index-url = ${PIP_INDEX_URL}
 trusted-host = ${PYPI_HOST}
                files.pythonhosted.org
 EOF
@@ -154,8 +154,8 @@ DOCKER_BUILDKIT=1 docker buildx build \
   --load \
   -f "${SCRIPT_DIR}/${DOCKERFILE}" \
   --secret id=pip_conf,src="${SCRIPT_DIR}/${PIP_CONF}" \
-  --build-arg PUBLIC_PYPI_INDEX_URL="${PYPI_URL}" \
-  --build-arg PYPI_URL="${PYPI_URL}" \
+  --build-arg PUBLIC_PYPI_INDEX_URL="${PIP_INDEX_URL}" \
+  --build-arg PIP_INDEX_URL="${PIP_INDEX_URL}" \
   --build-arg HTTP_PROXY="${HTTP_PROXY:-}" \
   --build-arg HTTPS_PROXY="${HTTPS_PROXY:-}" \
   --build-arg NO_PROXY="${NO_PROXY:-}" \
