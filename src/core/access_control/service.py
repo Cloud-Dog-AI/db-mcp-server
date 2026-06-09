@@ -136,6 +136,23 @@ class AccessControlService:
         self._bootstrap_role = str(config.get("auth.default_role", "admin") or "admin")
         self._seed_bootstrap_admin()
         self.ensure_roles_seed()
+        self._seed_default_group()
+
+    def _seed_default_group(self) -> None:
+        """Idempotently seed one baseline group so the IDAM Groups page renders a
+        real row rather than an empty 0-record table (W28A-889-B-R2). The
+        bootstrap admin is its member and it carries the data_steward role."""
+        if self._repository.list_groups():
+            return
+        group = AccessGroup(
+            group_id="data-stewards",
+            name="data-stewards",
+            description="Baseline data-steward group (catalog and schema read access).",
+            roles=["data_steward"],
+            member_user_ids=[self._bootstrap_user_id],
+        )
+        self._repository.upsert_group(group)
+        self._rebuild_rbac()
 
     def _seed_bootstrap_admin(self) -> None:
         existing_user = self._repository.get_user(self._bootstrap_user_id)
@@ -804,11 +821,19 @@ class AccessControlService:
         payload = asdict(group)
         payload["created_at"] = group.created_at.isoformat()
         payload["updated_at"] = group.updated_at.isoformat()
+        # Surface member_count so the IDAM Groups page shows a real count rather
+        # than 0 for a populated group (W28A-889-B-R2).
+        payload["member_count"] = len(group.member_user_ids)
         return payload
 
     def _api_key_view(self, api_key: AccessApiKey) -> dict[str, Any]:
         return {
             "api_key_id": api_key.api_key_id,
+            # Alias the canonical identifiers under the keys the shared IDAM
+            # API-Keys page reads (id / user_id) so the owner column resolves to
+            # the real owner instead of rendering "undefined" (W28A-889-B-R2).
+            "id": api_key.api_key_id,
+            "user_id": api_key.owner_user_id,
             "owner_user_id": api_key.owner_user_id,
             "name": api_key.name,
             "key_prefix": api_key.key_prefix,
