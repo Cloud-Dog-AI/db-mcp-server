@@ -1,0 +1,6 @@
+# W28A-861-R5(db) — publish-gate leak (pre-existing) + scrub proof
+BLOCKING leak: ui/dist/runtime-config.example.js:3  API_BASE_URL https://dbmcp.cloud-dog.net (service FQDN)
+  (requirements.lock:6 'pypi.cloud-dog.net' comment is a NON-blocking WARN — same allowlisted class as imap Dockerfile.public; left as-is)
+BEFORE scrub: filter+publish-gate exit=1  (FATAL: publish gate failed - leakage-scan)
+AFTER  scrub (dbmcp.cloud-dog.net -> db-mcp.example.com): filter+publish-gate exit=0 (CLEAN)
+imap published tree: gate exit=0 (publication-clean) — control
