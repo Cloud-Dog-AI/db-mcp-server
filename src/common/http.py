@@ -48,11 +48,16 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
         exempt_paths: set[str] | None = None,
         api_key_header: str = "X-API-Key",
         public_mcp_paths: set[str] | None = None,
+        resolve_web_user: Callable[[str], Any] | None = None,
     ) -> None:
         super().__init__(app)
         self._verify_api_key = verify_api_key
         self._exempt_paths = exempt_paths or set()
         self._api_key_header = api_key_header
+        # W28A-889-B-R2 / W28A-890: optional resolver that maps a forwarded
+        # X-Request-User (webui-trusted) to that user's OWN RBAC principal, so the
+        # web tier no longer collapses every session to the service principal.
+        self._resolve_web_user = resolve_web_user
         self._public_mcp_paths = frozenset(
             normalise_base_path(path) or "/"
             for path in (public_mcp_paths or set(self._MCP_PATHS))
@@ -106,4 +111,34 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
         request.state.profile_ids = auth_result.get("profile_ids", [])
         request.state.scopes = auth_result.get("scopes", [])
         request.state.principal = auth_result.get("principal")
+
+        # W28A-889-B-R2 / W28A-890: web-tier identity forwarding. The web origin
+        # authenticates with the service api-key (transport trust); authorization
+        # MUST be the forwarded caller's own RBAC, never the service principal.
+        # Only an admin/service-key transport principal ("*") may forward identity,
+        # so a non-admin api-key holder cannot escalate by sending the header.
+        forwarded_source = request.headers.get("X-Request-Source", "").strip().lower()
+        forwarded_user = request.headers.get("X-Request-User", "").strip()
+        transport_permissions = auth_result.get("permissions", []) or []
+        if (
+            forwarded_source == "webui"
+            and forwarded_user
+            and self._resolve_web_user is not None
+            and "*" in transport_permissions
+        ):
+            forwarded_principal = self._resolve_web_user(forwarded_user)
+            if forwarded_principal is None:
+                return JSONResponse(
+                    status_code=401,
+                    content={"ok": False, "error": {"code": "UNAUTHENTICATED", "message": "Unknown forwarded web user"}},
+                )
+            request.state.user = forwarded_principal.user_id
+            request.state.username = forwarded_principal.username
+            request.state.roles = forwarded_principal.roles
+            request.state.permissions = forwarded_principal.permissions
+            request.state.tenant_id = forwarded_principal.tenant_id
+            request.state.api_key_id = forwarded_principal.api_key_id
+            request.state.profile_ids = forwarded_principal.profile_ids
+            request.state.scopes = forwarded_principal.scopes
+            request.state.principal = forwarded_principal
         return await call_next(request)

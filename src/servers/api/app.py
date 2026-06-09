@@ -188,6 +188,9 @@ def create_api_app(explicit_env_files: list[str] | None = None):
         APIKeyAuthMiddleware,
         verify_api_key=runtime.auth.verify_api_key,
         exempt_paths=exempt_paths_for_surface(api_base_path),
+        # W28A-889-B-R2 / W28A-890: resolve a forwarded webui user to its own RBAC
+        # principal so the web tier cannot collapse every session to service-admin.
+        resolve_web_user=runtime.access_control.principal_for_username,
     )
     # W28A-529: Outermost audit middleware — captures auth failures (401/403)
     # that are returned by APIKeyAuthMiddleware before reaching create_app()'s

@@ -20,6 +20,7 @@
 
 from __future__ import annotations
 
+import re
 import secrets
 from dataclasses import asdict, dataclass
 from datetime import timedelta
@@ -62,6 +63,20 @@ from src.core.access_control.models import (
     utcnow,
 )
 from src.core.access_control.repository import AccessControlRepository
+
+
+def _mask_connection_secret(value: Any) -> Any:
+    """Mask the password embedded in a DB connection string.
+
+    W28A-889-B-R2 / W28A-890: profile reads (/v1/profiles) must never return the
+    DB credential. Masks both URI userinfo (``scheme://user:password@host`` ->
+    ``scheme://user:****@host``) and DSN/keyword forms (``password=...``).
+    """
+    if not isinstance(value, str) or not value:
+        return value
+    masked = re.sub(r"(://[^:/@\s]+:)[^@/\s]+(@)", r"\1****\2", value)
+    masked = re.sub(r"(?i)(\b(?:password|passwd|pwd)\s*=\s*)[^;\s]+", r"\1****", masked)
+    return masked
 
 
 @dataclass(slots=True)
@@ -645,6 +660,35 @@ class AccessControlService:
             tenant_id=user.tenant_id,
         )
 
+    def principal_for_username(self, username: str) -> PrincipalContext | None:
+        """Resolve a forwarded (web-trusted) username to its OWN RBAC principal.
+
+        W28A-889-B-R2 / W28A-890: the web tier authenticates the trusted web
+        origin with the service api-key (transport trust only) and forwards
+        ``X-Request-User``. Authorization MUST be the forwarded user's own RBAC,
+        never the service/bootstrap-admin principal — otherwise every web session
+        collapses to service-admin. Returns ``None`` for unknown/inactive users so
+        the caller denies (401).
+        """
+        if not username:
+            return None
+        user = self._repository.get_user_by_username(username)
+        if user is None or str(getattr(user, "status", "")).lower() != "active":
+            return None
+        self._rebuild_rbac()
+        roles = sorted(self._rbac.get_effective_roles(user.user_id))
+        permissions = sorted(self._rbac.get_effective_permissions(user.user_id))
+        return PrincipalContext(
+            user_id=user.user_id,
+            username=user.username,
+            roles=roles,
+            permissions=permissions,
+            api_key_id="",
+            profile_ids=["*"],
+            scopes=["*"],
+            tenant_id=user.tenant_id,
+        )
+
     def ensure_permission(
         self,
         principal: PrincipalContext,
@@ -743,6 +787,9 @@ class AccessControlService:
         payload = asdict(profile)
         payload["created_at"] = profile.created_at.isoformat()
         payload["updated_at"] = profile.updated_at.isoformat()
+        # W28A-889-B-R2 / W28A-890: never expose the DB-connection password on read.
+        if payload.get("source_connection"):
+            payload["source_connection"] = _mask_connection_secret(payload["source_connection"])
         return payload
 
     def _user_view(self, user: AccessUser) -> dict[str, Any]:

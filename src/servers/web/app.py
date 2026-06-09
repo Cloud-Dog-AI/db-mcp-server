@@ -113,6 +113,12 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     _admin_username = str(runtime.config.get("web_login.username", "admin") or "admin").strip() or "admin"
     _admin_password = str(runtime.config.get("web_login.password", "") or "")
     _service_api_key = str(runtime.config.get("auth.api_key", "") or "").strip()
+    # W28A-889-B-R2 / W28A-890: the real IDAM principal a web session forwards as
+    # (X-Request-User). The web admin login binds to the seeded IDAM admin so the
+    # API authorizes per-user RBAC instead of the blanket service principal.
+    _webui_principal = str(
+        runtime.config.get("access_control.bootstrap_admin.username", "bootstrap-admin") or "bootstrap-admin"
+    ).strip() or "bootstrap-admin"
     _cookie_name = "db_web_session"
     api_base = _server_base(runtime.config.get("api_server.host"), runtime.config.get("api_server.port"))
     mcp_base = _server_base(runtime.config.get("mcp_server.host"), runtime.config.get("mcp_server.port"))
@@ -137,6 +143,19 @@ def create_web_app(explicit_env_files: list[str] | None = None):
             del _sessions[token]
         return None
 
+    def _webui_identity_headers(sess: dict | None) -> dict[str, str]:
+        """Forward the authenticated caller identity to the API (webui-trusted).
+
+        W28A-889-B-R2 / W28A-890: the API resolves this user's OWN RBAC; the
+        service api-key is transport trust only, never the authorization identity.
+        """
+        if not sess:
+            return {}
+        return {
+            "X-Request-Source": "webui",
+            "X-Request-User": str(sess.get("idam_username") or sess.get("user") or ""),
+        }
+
     @app.post(join_route(web_base_path, "/auth/login"))
     async def auth_login(request: Request) -> JSONResponse:
         body = await request.json()
@@ -147,7 +166,15 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         if username != _admin_username or password != _admin_password:
             raise HTTPException(status_code=401, detail="Invalid credentials")
         token = secrets.token_urlsafe(32)
-        _sessions[token] = {"user": username, "user_id": "1", "role": "admin", "_created": time.time()}
+        _sessions[token] = {
+            "user": username,
+            "user_id": "1",
+            "role": "admin",
+            # W28A-889-B-R2 / W28A-890: bind the session to the real seeded IDAM
+            # admin so the API authorizes per-user RBAC (not the service principal).
+            "idam_username": _webui_principal,
+            "_created": time.time(),
+        }
         resp = JSONResponse({"user": {"id": "1", "displayName": username, "email": None, "roles": ["admin"], "permissions": ["*"]}})
         resp.set_cookie(_cookie_name, token, httponly=True, samesite="lax", max_age=3600, path=cookie_path)
         return resp
@@ -181,10 +208,12 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         Strips the /api prefix so the API server receives /v1/…
         (mirroring the Traefik stripprefix on the api_path router).
         """
+        sess = _get_session(request)
         return await _proxy_via(
             request,
-            proxy=api_session_proxy if _get_session(request) else api_proxy,
+            proxy=api_session_proxy if sess else api_proxy,
             strip_prefix=api_proxy_prefix,
+            extra_headers=_webui_identity_headers(sess),
         )
 
     @app.api_route(webapi_prefix, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
@@ -195,11 +224,13 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         Strips /webapi → /v1/… so the API server receives the
         correct route prefix (matching api_server.base_path).
         """
+        sess = _get_session(request)
         return await _proxy_via(
             request,
-            proxy=api_session_proxy if _get_session(request) else api_proxy,
+            proxy=api_session_proxy if sess else api_proxy,
             strip_prefix=webapi_prefix,
             rewrite_prefix=api_alias_rewrite_prefix,
+            extra_headers=_webui_identity_headers(sess),
         )
 
     @app.api_route(webapi_docs_prefix, methods=["GET"])
@@ -298,6 +329,7 @@ async def _proxy_via(
     proxy: WebApiProxy,
     strip_prefix: str,
     rewrite_prefix: str = "",
+    extra_headers: dict[str, str] | None = None,
 ) -> Response:
     """Proxy JSON-capable web requests through the platform WebApiProxy."""
     target_path = request.url.path
@@ -311,6 +343,8 @@ async def _proxy_via(
         for key, value in request.headers.items()
         if key.lower() not in _HOP_BY_HOP_HEADERS
     }
+    if extra_headers:
+        headers.update(extra_headers)
     body = await request.body()
     payload = None
     if body:
@@ -324,6 +358,7 @@ async def _proxy_via(
                 strip_prefix=strip_prefix,
                 rewrite_prefix=rewrite_prefix,
                 session_api_key=str(getattr(proxy, "_api_key", "") or ""),
+                extra_headers=extra_headers,
             )
 
     proxied = await proxy.request(
@@ -357,6 +392,7 @@ async def _proxy_request(
     strip_prefix: str,
     rewrite_prefix: str = "",
     session_api_key: str = "",
+    extra_headers: dict[str, str] | None = None,
 ) -> Response:
     target_path = request.url.path
     if strip_prefix and target_path.startswith(strip_prefix):
@@ -370,6 +406,8 @@ async def _proxy_request(
         for key, value in request.headers.items()
         if key.lower() not in _HOP_BY_HOP_HEADERS
     }
+    if extra_headers:
+        headers.update(extra_headers)
     lower_headers = {key.lower() for key in headers}
     if session_api_key:
         if "x-api-key" not in lower_headers:
