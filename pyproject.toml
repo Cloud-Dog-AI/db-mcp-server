@@ -14,7 +14,7 @@ authors = [
 dependencies = [
   "cloud_dog_config>=0.3.1",
   "cloud_dog_logging>=0.3.3",
-  "cloud_dog_api_kit==0.12.4",
+  "cloud_dog_api_kit==0.13.0",
   "cloud_dog_idam>=0.4.3",
   "cloud_dog_jobs>=0.3.0",
   # W28A-861-R3 / W28E-606: all SQL + NoSQL backend access goes through
