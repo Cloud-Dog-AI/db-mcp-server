@@ -115,8 +115,16 @@ def serve_spa_asset(relative_path: str) -> Response:
 def serve_runtime_config(runtime, request: Request) -> Response:
     """Return runtime-config.js for the SPA bootstrap contract."""
     environment = str(runtime.config.get("environment", "dev"))
-    configured_auth_mode = str(runtime.config.get("auth.mode", "api_key_only")).strip().lower()
-    spa_auth_mode = "cookie" if configured_auth_mode in {"cookie", "session"} else "api_key"
+    # W28A-732-R5 (login-contract reopen): the WebUI front-door login is ALWAYS
+    # username/password (cookie). The SPA bundle branches
+    # ``AUTH_MODE === "cookie" ? cookie : api_key`` — so this MUST advertise
+    # "cookie" to render the username/password form. This is the *browser login
+    # mode* and is deliberately independent of the API/MCP service auth tier
+    # (`auth.mode`, default api_key_only), which governs machine X-API-Key
+    # callers and is unaffected by the advertised browser AUTH_MODE. Deriving
+    # this value from `auth.mode` was the regression that advertised
+    # `AUTH_MODE: "api_key"` and broke live username/password login.
+    spa_auth_mode = "cookie"
     app_version = _application_release()
     body = (
         "const __origin = window.location.origin;\n"

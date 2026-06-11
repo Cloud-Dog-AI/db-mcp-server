@@ -39,6 +39,17 @@ from cloud_dog_idam.rbac import RBACEngine as _RBACEngine  # PS-70 RBAC enforcem
 
 _rbac_engine = _RBACEngine()
 
+# W28A-732-R5 (login-contract reopen): platform flat WebUI roles.
+_WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+_ADMIN_ROLE = "admin"
+_READ_WRITE_ROLE = "read-write"
+_READ_ONLY_ROLE = "read-only"
+
+
+def _role_can_write(role: str | None) -> bool:
+    """Flat-role write capability: admin and read-write may mutate; read-only may not."""
+    return str(role or "").strip().lower() in {_ADMIN_ROLE, _READ_WRITE_ROLE}
+
 
 def _has_permission(user_id: str, permission: str) -> bool:
     """PS-70 RBAC permission check via cloud_dog_idam."""
@@ -113,12 +124,30 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     _admin_username = str(runtime.config.get("web_login.username", "admin") or "admin").strip() or "admin"
     _admin_password = str(runtime.config.get("web_login.password", "") or "")
     _service_api_key = str(runtime.config.get("auth.api_key", "") or "").strip()
-    # W28A-889-B-R2 / W28A-890: the real IDAM principal a web session forwards as
-    # (X-Request-User). The web admin login binds to the seeded IDAM admin so the
-    # API authorizes per-user RBAC instead of the blanket service principal.
-    _webui_principal = str(
-        runtime.config.get("access_control.bootstrap_admin.username", "bootstrap-admin") or "bootstrap-admin"
-    ).strip() or "bootstrap-admin"
+
+    # W28A-732-R5 (login-contract reopen): the platform flat WebUI login contract —
+    # three username/password roles admin / read-write / read-only. admin keeps its
+    # Vault/TF-env credential (CLOUD_DOG_WEB_LOGIN_*); read-write/read-only carry the
+    # estate-canonical in-code demo defaults (BlueRiverChair / GreenRiverDesk) —
+    # mirroring git-mcp (W28A-731-R5), chat-client (727) and notification-agent (730) —
+    # so all three flat roles log in out-of-the-box without a Terraform/Vault write.
+    _rw_username = str(runtime.config.get("web_login.read_write_username", "read-write") or "read-write").strip() or "read-write"
+    _rw_password = str(runtime.config.get("web_login.read_write_password", "") or "").strip() or "BlueRiverChair"
+    _ro_username = str(runtime.config.get("web_login.read_only_username", "read-only") or "read-only").strip() or "read-only"
+    _ro_password = str(runtime.config.get("web_login.read_only_password", "") or "").strip() or "GreenRiverDesk"
+    # username -> (password, flat-role, forwarded-IDAM-principal). The forwarded
+    # principal is the seeded IDAM user (src/core/access_control FLAT_DEMO_ROLES) whose
+    # OWN RBAC the API tier resolves (W28A-889-B-R2) — so read-only data writes are
+    # denied at the API tier natively, and read-write/admin are authorised to mutate.
+    # All three bind to the seeded flat-* principals (flat-admin/flat-read-write/
+    # flat-read-only): unlike the bootstrap-admin user, every flat-* user is enrolled
+    # in the repository by username, so principal_for_username resolves it.
+    _flat_accounts: dict[str, tuple[str, str, str]] = {
+        _admin_username: (_admin_password, _ADMIN_ROLE, "flat-admin"),
+        _rw_username: (_rw_password, _READ_WRITE_ROLE, "flat-read-write"),
+        _ro_username: (_ro_password, _READ_ONLY_ROLE, "flat-read-only"),
+    }
+    _user_ids = {_ADMIN_ROLE: "1", _READ_WRITE_ROLE: "2", _READ_ONLY_ROLE: "3"}
     _cookie_name = "db_web_session"
     api_base = _server_base(runtime.config.get("api_server.host"), runtime.config.get("api_server.port"))
     mcp_base = _server_base(runtime.config.get("mcp_server.host"), runtime.config.get("mcp_server.port"))
@@ -156,6 +185,34 @@ def create_web_app(explicit_env_files: list[str] | None = None):
             "X-Request-User": str(sess.get("idam_username") or sess.get("user") or ""),
         }
 
+    def _role_permissions(role: str) -> list[str]:
+        """Resolve a flat role's permission list for /auth/me (cosmetic SPA hints)."""
+        if str(role).strip().lower() == _ADMIN_ROLE:
+            return ["*"]
+        perms = runtime.config.get(f"access_control.roles.{role}", [])
+        return list(perms) if isinstance(perms, (list, tuple)) else []
+
+    def _read_only_write_block(sess: dict | None, request: Request) -> JSONResponse | None:
+        """W28A-732-R5: web-tier read-only write-gate (defence in depth).
+
+        A logged-in read-only visitor may VIEW every data surface but any write
+        method on a non-health data path resolves to 403-inline (not 401, not a
+        blank UI). admin / read-write fall through; the API tier's own per-user
+        RBAC (forwarded X-Request-User) is the backstop on the same surface.
+        """
+        if sess is None:
+            return None
+        if (
+            request.method.upper() in _WRITE_METHODS
+            and not _role_can_write(sess.get("role"))
+            and not request.url.path.endswith("/health")
+        ):
+            return JSONResponse(
+                {"detail": "read-only role: write operations are not permitted", "role": _READ_ONLY_ROLE},
+                status_code=403,
+            )
+        return None
+
     def _request_api_key(request: Request) -> str:
         """Extract an API key from the configured browser auth headers."""
         api_key = request.headers.get("X-API-Key", "").strip()
@@ -168,24 +225,40 @@ def create_web_app(explicit_env_files: list[str] | None = None):
 
     @app.post(join_route(web_base_path, "/auth/login"))
     async def auth_login(request: Request) -> JSONResponse:
+        """Validate username/password and mint a flat-role cookie session.
+
+        W28A-732-R5: the WebUI front door is username/password (cookie). Compare
+        against EVERY flat account with secrets.compare_digest so a wrong username
+        and a wrong password are indistinguishable (no enumeration). The matched
+        account decides the flat role and the forwarded IDAM principal.
+        """
         body = await request.json()
         username = str(body.get("username", "")).strip()
         password = str(body.get("password", "")).strip()
         if not username or not password:
             raise HTTPException(status_code=400, detail="Username and password required")
-        if username != _admin_username or password != _admin_password:
+        matched: tuple[str, str] | None = None  # (flat_role, idam_principal)
+        for cand_user, (cand_pw, cand_role, cand_principal) in _flat_accounts.items():
+            user_ok = secrets.compare_digest(username, cand_user)
+            pw_ok = bool(cand_pw) and secrets.compare_digest(password, cand_pw)
+            if user_ok and pw_ok:
+                matched = (cand_role, cand_principal)
+                break
+        if matched is None:
             raise HTTPException(status_code=401, detail="Invalid credentials")
+        role, idam_principal = matched
+        user_id = _user_ids[role]
         token = secrets.token_urlsafe(32)
         _sessions[token] = {
             "user": username,
-            "user_id": "1",
-            "role": "admin",
+            "user_id": user_id,
+            "role": role,
             # W28A-889-B-R2 / W28A-890: bind the session to the real seeded IDAM
-            # admin so the API authorizes per-user RBAC (not the service principal).
-            "idam_username": _webui_principal,
+            # principal so the API authorizes per-user RBAC (not the service principal).
+            "idam_username": idam_principal,
             "_created": time.time(),
         }
-        resp = JSONResponse({"user": {"id": "1", "displayName": username, "email": None, "roles": ["admin"], "permissions": ["*"]}})
+        resp = JSONResponse({"user": {"id": user_id, "displayName": username, "email": None, "roles": [role], "permissions": _role_permissions(role)}})
         resp.set_cookie(_cookie_name, token, httponly=True, samesite="lax", max_age=3600, path=cookie_path)
         return resp
 
@@ -199,7 +272,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
                 if principal is not None:
                     return JSONResponse({"user": runtime.access_control.principal_summary(principal)})
             raise HTTPException(status_code=401, detail="Not authenticated")
-        return JSONResponse({"user": {"id": sess["user_id"], "displayName": sess["user"], "email": None, "roles": [sess["role"]], "permissions": ["*"]}})
+        return JSONResponse({"user": {"id": sess["user_id"], "displayName": sess["user"], "email": None, "roles": [sess["role"]], "permissions": _role_permissions(sess["role"])}})
 
     @app.post(join_route(web_base_path, "/auth/logout"))
     async def auth_logout(request: Request) -> JSONResponse:
@@ -224,6 +297,9 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         (mirroring the Traefik stripprefix on the api_path router).
         """
         sess = _get_session(request)
+        blocked = _read_only_write_block(sess, request)
+        if blocked is not None:
+            return blocked
         return await _proxy_via(
             request,
             proxy=api_session_proxy if sess else api_proxy,
@@ -240,6 +316,9 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         correct route prefix (matching api_server.base_path).
         """
         sess = _get_session(request)
+        blocked = _read_only_write_block(sess, request)
+        if blocked is not None:
+            return blocked
         return await _proxy_via(
             request,
             proxy=api_session_proxy if sess else api_proxy,

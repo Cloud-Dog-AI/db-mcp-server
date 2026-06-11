@@ -49,7 +49,11 @@ def test_runtime_config_is_served_for_spa_bootstrap(web_client: TestClient) -> N
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/javascript")
     assert 'window.__RUNTIME_CONFIG__' in response.text
-    assert '"AUTH_MODE": "api_key"' in response.text
+    # W28A-732-R5 (login-contract reopen): the WebUI front door is username/password
+    # (cookie). The SPA bundle branches AUTH_MODE === "cookie" ? cookie : api_key,
+    # so the served runtime-config MUST advertise "cookie" — never "api_key".
+    assert '"AUTH_MODE": "cookie"' in response.text
+    assert '"AUTH_MODE": "api_key"' not in response.text
     assert '"API_KEY_HEADER": "X-API-Key"' in response.text
     assert '"A2A_BASE_URL": __origin' in response.text
 

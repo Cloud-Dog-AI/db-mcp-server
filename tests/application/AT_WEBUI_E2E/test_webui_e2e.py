@@ -33,6 +33,7 @@ for every test (pass and fail).  Browser error tracking active.
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 from uuid import uuid4
 
@@ -52,7 +53,28 @@ TEST_CONFIG = load_test_runtime_config(default_tier="AT")
 WEB_URL = service_base_url("web", default_tier="AT")
 API_URL = service_base_url("api", default_tier="AT")
 API_KEY = str(TEST_CONFIG.get("auth.api_key"))
-AUTH_MODE = str(TEST_CONFIG.get("auth.mode", "api_key"))
+
+
+def _served_auth_mode() -> str:
+    """Resolve the SPA login mode from the live /runtime-config.js contract.
+
+    W28A-732-R5 (login-contract reopen): the WebUI front door is username/password
+    (cookie) and the served runtime-config advertises AUTH_MODE accordingly —
+    independent of the API tier's auth.mode. The login form the SPA renders is
+    driven by the SERVED value, so the E2E must read it there (with a config
+    fallback if the probe fails) rather than from the static service auth.mode.
+    """
+    try:
+        text = httpx.get(f"{WEB_URL}/runtime-config.js", timeout=5).text
+        match = re.search(r'"AUTH_MODE":\s*"([^"]+)"', text)
+        if match:
+            return match.group(1)
+    except Exception:
+        pass
+    return str(TEST_CONFIG.get("auth.mode", "api_key"))
+
+
+AUTH_MODE = _served_auth_mode()
 WEB_LOGIN_USERNAME = str(TEST_CONFIG.get("web_login.username"))
 WEB_LOGIN_PASSWORD = str(TEST_CONFIG.get("web_login.password"))
 
