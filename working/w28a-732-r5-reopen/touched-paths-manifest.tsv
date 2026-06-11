@@ -1,0 +1,7 @@
+path	repo	reason	created_or_modified_by_lane	commit_hash
+src/servers/web/ui_spa.py	db-mcp-server	runtime-config AUTH_MODE forced to cookie	W28A-732-R5	6b41809
+src/servers/web/app.py	db-mcp-server	3-role flat login + read-only write block + role-key MCP forward	W28A-732-R5	8455944
+tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py	db-mcp-server	cookie AUTH_MODE + role-key inject assertions	W28A-732-R5	8455944
+tests/unit/UT1.52_FlatLoginContract/test_flat_login_contract.py	db-mcp-server	new flat-login contract unit suite	W28A-732-R5	8455944
+tests/application/AT_WEBUI_E2E/test_webui_e2e.py	db-mcp-server	derive AUTH_MODE from served runtime-config	W28A-732-R5	6b41809
+working/w28a-732-r5-reopen/	db-mcp-server	reopen evidence pack (G7 deploy + live G8 + tiers)	W28A-732-R5	(this commit)

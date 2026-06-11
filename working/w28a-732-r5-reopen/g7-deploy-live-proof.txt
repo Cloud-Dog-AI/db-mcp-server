@@ -1,0 +1,12 @@
+W28A-732-R5 REOPEN — LIVE DEPLOY + G8 PROOF  2026-06-11T19:29:07Z
+origin/main = 8455944fe7a6eb42b5700634478fdf3eaee138d9
+deployed repo digest = sha256:8d06acbcc4fd5b18f8f4f5560747ae0108cd1a60e47ed5018d8661a0445065b6
+deploy method = terraform -chdir='.../27 MLAgents' apply -target=docker_image.dbmcpserver -target=docker_container.dbmcpserver0 (operator-authorised 'FIX IT')
+live container image id = sha256:57049f7a84165f3e479ec182a55f10a389ff516535147e78f5e1c2f24f2b633c
+--- live HTTP contract (curl) ---
+GET /api/health = 200
+GET /runtime-config.js AUTH_MODE = cookie (api_key absent)
+GET /auth/me anon = 401
+POST /auth/login admin/read-write/read-only = 200/200/200
+POST /webapi/v1/profiles read-only = 403
+POST /webmcp/tools/data.create read-only = 403

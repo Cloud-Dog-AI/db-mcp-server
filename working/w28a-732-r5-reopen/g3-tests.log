@@ -1,0 +1,8 @@
+W28A-732-R5 reopen — test tiers  2026-06-11T19:30:54Z
+## UT (env-UT)
+86 passed in 17.90s
+## QT (env-QT)
+4 passed in 0.18s
+## ST login/auth (env-ST) [recorded earlier this session]: tests/system/ST1.8_WebUiServing+ST1.1+ST1.2+ST1.16 = 3 passed
+## IT1.1 AccessControlLifecycle (env-IT) [recorded]: 1 passed
+## AT login (env-AT) [recorded]: test_t1_login_page_renders + test_t1_login_with_credentials = 2 passed (cookie form, real browser)

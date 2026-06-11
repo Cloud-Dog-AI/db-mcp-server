@@ -1,0 +1,16 @@
+requirement	raw_artefact	observed_value	command	status
+anon WebUI shows username/password login form	g8-screenshots/g8_anon_login_box.png; g8-live.log	anon_login_box inputs=2 password_inputs=1 (Username+Password Sign in)	grep anon_login_box g8-live.log	PASS
+runtime-config AUTH_MODE is cookie not api_key	g8-live.log; g7-deploy-live-proof.txt	runtime_config_auth_mode cookie=true api_key=false	curl -s https://dbmcpserver0.cloud-dog.net/runtime-config.js | grep AUTH_MODE	PASS
+admin username/password login works live	g8-live.log	admin_auth_me roles=[admin] status=200	grep admin_auth_me g8-live.log	PASS
+read-write username/password login works live	g8-live.log	read-write_auth_me roles=[read-write] status=200	grep read-write_auth_me g8-live.log	PASS
+read-only username/password login works live	g8-live.log	read-only_auth_me roles=[read-only] status=200	grep read-only_auth_me g8-live.log	PASS
+read-only write denied 403 on /webapi data path	g8-live.log	read_only_webapi_write_denied status=403	grep read_only_webapi_write_denied g8-live.log	PASS
+read-only write denied 403 on /webmcp MCP path	g8-live.log	read_only_webmcp_write_denied status=403	grep read_only_webmcp_write_denied g8-live.log	PASS
+read-only reads permitted	g8-live.log	read_only_read_allowed status=200	grep read_only_read_allowed g8-live.log	PASS
+read-write data CRUD permitted live	g8-live.log	read_write_data_create/read/update/delete status=200	grep read_write_data g8-live.log	PASS
+admin user+profile CRUD permitted live	g8-live.log	admin_user_create/get/delete + profile_create/delete status=200	grep -E "admin_user|admin_profile" g8-live.log	PASS
+anonymous protected access denied 401	g8-live.log; g7-deploy-live-proof.txt	anon_auth_me_denied status=401	grep anon_auth_me_denied g8-live.log	PASS
+live deployed digest matches pushed origin-main image	g7-deploy-live-proof.txt	deployed repo digest sha256:8d06acbc... == registry :latest	docker inspect dbmcpserver0.app.vpc0.cloud-dog.net repo-digest	PASS
+committed source on current origin-main	g7-deploy-live-proof.txt	origin/main 8455944 (login + MCP role-key fix)	git rev-parse origin/main	PASS
+sentinel sibling WebUIs still load	g8-live.log; g8-screenshots/g8_sentinel_*.png	4 sentinels status=200 (chatclient0/expertagent0/notificationagent0/filemcpserver0)	grep sentinel_browser_smoke g8-live.log	PASS
+unit/quality/system/integration tiers green	g3-tests.log	UT 86 QT 4 ST login IT1.1 1 AT login 2 (0 fail)	grep -E "passed" g3-tests.log	PASS

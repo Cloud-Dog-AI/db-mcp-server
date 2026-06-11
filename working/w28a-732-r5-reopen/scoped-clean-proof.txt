@@ -1,0 +1,9 @@
+Scoped clean proof commands for final auditor replay (run after the evidence commit + push):
+
+```bash
+git status --short -- src/servers/web/app.py src/servers/web/ui_spa.py tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py tests/unit/UT1.52_FlatLoginContract tests/application/AT_WEBUI_E2E/test_webui_e2e.py working/w28a-732-r5-reopen
+git diff --name-only -- src/servers/web/app.py src/servers/web/ui_spa.py tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py tests/unit/UT1.52_FlatLoginContract tests/application/AT_WEBUI_E2E/test_webui_e2e.py working/w28a-732-r5-reopen
+git diff --cached --name-only -- src/servers/web/app.py src/servers/web/ui_spa.py tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py tests/unit/UT1.52_FlatLoginContract tests/application/AT_WEBUI_E2E/test_webui_e2e.py working/w28a-732-r5-reopen
+```
+
+Observed final scoped output after evidence commit: empty for all three commands.

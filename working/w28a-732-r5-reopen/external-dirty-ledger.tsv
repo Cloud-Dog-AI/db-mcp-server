@@ -1,0 +1,3 @@
+path	repo	status	suspected_owner_lane	why_external_to_this_lane
+src/common/http.py	db-mcp-server	stashed (git stash@{0})	W28A-416 / unrelated MCP-auth lane	removal of tools/list anon service-discovery exemption; pre-existing uncommitted WIP not created by this lane, set aside not landed
+tests/unit/UT1.20_McpServer/test_mcp_server.py	db-mcp-server	stashed (git stash@{0})	W28A-416 / unrelated MCP-auth lane	companion test to the stashed http.py change; not this lane

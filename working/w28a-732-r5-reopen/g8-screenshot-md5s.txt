@@ -1,0 +1,9 @@
+24ce586e93dd281c3fdd02721679b685  working/w28a-732-r5-reopen/g8-screenshots/g8_read_write_dashboard.png
+275513202efef24e046259eeec707481  working/w28a-732-r5-reopen/g8-screenshots/g8_sentinel_expertagent0.png
+368f8d8f04a7cb4f3d9d9f5096902ffe  working/w28a-732-r5-reopen/g8-screenshots/g8_sentinel_chatclient0.png
+45a238f1487370625395a00cf12617ee  working/w28a-732-r5-reopen/g8-screenshots/g8_sentinel_filemcpserver0.png
+6cd85145198a317ed882270841f4282d  working/w28a-732-r5-reopen/g8-screenshots/g8_sentinel_notificationagent0.png
+8794bce16c6a67ee4593332f219a94eb  working/w28a-732-r5-reopen/g8-screenshots/g8_admin_dashboard.png
+8f4ce726ee1df78ccdf90c7685c1e3c1  working/w28a-732-r5-reopen/g8-screenshots/g8_read_only_403_inline.png
+baf4d3d598b2e20220e87e848a45225d  working/w28a-732-r5-reopen/g8-screenshots/g8_read_only_dashboard.png
+d3f648114d19c2003c01da3c81779460  working/w28a-732-r5-reopen/g8-screenshots/g8_anon_login_box.png
