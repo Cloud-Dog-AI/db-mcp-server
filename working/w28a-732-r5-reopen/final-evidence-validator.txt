@@ -1,0 +1,53 @@
+FINAL_EVIDENCE_VALIDATOR lane=W28A-732-R5 started=2026-06-11T20:35:09+01:00
+Evidence path: working/w28a-732-r5-reopen
+PASS: evidence path exists
+PASS: evidence files tracked under working/w28a-732-r5-reopen: 22
+PASS: evidence path has no dirty/untracked scoped files
+PASS: live remote branch HEAD found: refs/heads/main 210ef6b37557a87a35a0dbc81b174e827c078be7
+PASS: Evidence Matrix header found
+PASS: no future proof language found
+PASS: no forbidden alternate acceptance labels found
+PASS: saved validator outputs are clean
+PASS: mandatory reading proof file found: working/w28a-732-r5-reopen/00-reading-proof.md
+PASS: RULES.md reread/version proof found
+PASS: AGENT-LESSONS.md reread/version proof found
+PASS: reading proof answers marker found
+PASS: requirements-map.tsv found: working/w28a-732-r5-reopen/requirements-map.tsv
+PASS: requirements-map.tsv row width check passed
+PASS: requirements-map.tsv required fields are populated
+PASS: requirements-map.tsv final status column is PASS for every row
+PASS: instruction file found for acceptance comparison: /opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards/working/instructions/W28A-732-R5-DBMCP-LOGIN-CONTRACT-REOPEN-2026-06-11.md
+PASS: instruction acceptance list has no extractor-compatible rows
+PASS: touched-paths-manifest.tsv found: working/w28a-732-r5-reopen/touched-paths-manifest.tsv
+PASS: touched-paths-manifest.tsv header is valid
+PASS: external-dirty-ledger.tsv found: working/w28a-732-r5-reopen/external-dirty-ledger.tsv
+PASS: external-dirty-ledger.tsv header is valid
+PASS: scoped-clean-proof.txt found: working/w28a-732-r5-reopen/scoped-clean-proof.txt
+PASS: scoped-clean-proof.txt contains required scoped git commands
+PASS: scoped-clean-proof.txt shows no modified/staged/untracked files
+PASS: remote-proof.txt found: working/w28a-732-r5-reopen/remote-proof.txt
+PASS: remote-proof.txt contains remote/HEAD proof markers
+INFO: saved proof does not embed live git rev-parse HEAD: 210ef6b37557a87a35a0dbc81b174e827c078be7
+INFO: saved proof does not embed live remote branch HEAD; live auditor verification is authoritative
+INFO: remote-proof.txt records FINAL_PROOF_TAG candidate: W28A-732-R5-reopen-final-proof
+INFO: FINAL-TAG-VERIFICATION.txt not found; live auditor verification remains authoritative when tags are named elsewhere
+PASS: EVIDENCE_TAG belongs to lane W28A-732-R5
+PASS: EVIDENCE_TAG exists remotely: W28A-732-R5-reopen-evidence 210ef6b37557a87a35a0dbc81b174e827c078be7
+PASS: FINAL_PROOF_TAG belongs to lane W28A-732-R5
+PASS: FINAL_PROOF_TAG exists remotely: W28A-732-R5-reopen-final-proof 210ef6b37557a87a35a0dbc81b174e827c078be7
+PASS: FINAL_PROOF_TAG is an ancestor of current remote HEAD
+PASS: sha256sum -c CHECKSUMS.sha256 passed
+PASS: close gate found
+PASS: completion claim present
+PASS: no common contradiction markers found with completion claim
+PASS: no substantive raw FAIL found
+PASS: no stale failed artefact names found
+PASS: no unavailable/waived/out-of-scope claims found
+
+Repo: .
+HEAD: 210ef6b37557a87a35a0dbc81b174e827c078be7
+BRANCH: main
+PASS: repo worktree clean: /opt/iac/Development/cloud-dog-ai/db-mcp-server
+PASS: HEAD equals origin/main
+
+FINAL_EVIDENCE_VALIDATOR: PASS failures=0
