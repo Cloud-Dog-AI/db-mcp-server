@@ -1,0 +1,12 @@
+G1 started 2026-06-11T09:54:36Z
+COMMAND direct-env: grep -rn "os\.environ\.get\|os\.environ\[\|os\.getenv" src/ | grep -v "\.pyc\|__pycache__"
+direct-env matches=0
+COMMAND logging: grep -rn "^import logging\|^from logging\|logging.getLogger\|logging.basicConfig" src/ | grep -v "cloud_dog_logging\|\.pyc"
+logging matches=0
+COMMAND cache: grep -rn "functools.lru_cache\|functools.cache" src/ | grep -v "cloud_dog_cache\|\.pyc"
+cache matches=0
+COMMAND vault: grep -rn "import hvac\|VaultClient()" src/ | grep -v "cloud_dog_config\|\.pyc"
+vault matches=0
+COMMAND class-cache: grep -rn "class.*Cache" src/ | grep -v "cloud_dog_cache\|\.pyc\|test"
+class-cache matches=0
+G1 PASS

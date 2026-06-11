@@ -1,0 +1,9 @@
+G6 COMMIT 2026-06-11T12:48:45+01:00
+edd4e69cdb36d42a8a230546a7f409e028d53367
+edd4e69 W28A-732-R5: db-mcp flat RBAC login
+edd4e69cdb36d42a8a230546a7f409e028d53367	refs/heads/main
+G6 REDEPLOY-FIX COMMIT 2026-06-11T12:50:30+01:00
+86ab9f5192dfe39fd7ac9f3d6c3be94010e01dfb
+86ab9f5 W28A-732-R5: make public image env-file tolerant
+edd4e69 W28A-732-R5: db-mcp flat RBAC login
+86ab9f5192dfe39fd7ac9f3d6c3be94010e01dfb	refs/heads/main

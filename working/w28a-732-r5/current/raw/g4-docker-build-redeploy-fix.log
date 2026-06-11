@@ -1,0 +1,85 @@
+==========================================
+Docker Build: cloud-dog/db-mcp-server:latest (variant=public, dockerfile=Dockerfile.public)
+==========================================
+pip.conf: public variant, anonymous single-index access (gitea.cloud-dog.net).
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.public
+#1 transferring dockerfile: 6.57kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.5s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 398B done
+#5 DONE 0.0s
+
+#6 [builder 1/6] FROM docker.io/library/python:3.12-slim
+#6 DONE 0.0s
+
+#7 [internal] load build context
+#7 transferring context: 60.52kB 0.1s done
+#7 DONE 0.1s
+
+#8 [builder 2/6] WORKDIR /app
+#8 CACHED
+
+#9 [stage-1  9/12] COPY start_api_server.py start_web_server.py start_mcp_server.py start_a2a_server.py ./
+#9 CACHED
+
+#10 [builder 4/6] COPY pyproject.toml README.md ./
+#10 CACHED
+
+#11 [builder 3/6] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates gcc git     && rm -rf /var/lib/apt/lists/*
+#11 CACHED
+
+#12 [stage-1  6/12] COPY src/ ./src/
+#12 CACHED
+
+#13 [builder 6/6] RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf     if [ ! -s /etc/pip.conf ]; then export PIP_INDEX_URL="https://gitea.cloud-dog.net/api/packages/Cloud-Dog-External/pypi/simple"; fi &&     pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir       cloud-dog-config cloud-dog-logging "cloud-dog-api-kit==0.13.0"       cloud-dog-idam "cloud-dog-jobs>=0.3.0" "cloud-dog-db[nosql,sql]>=0.3.0"       "cloud-dog-storage==0.1.4" &&     pip install --no-cache-dir .
+#13 CACHED
+
+#14 [stage-1 10/12] COPY ui/dist/ ./ui/dist/
+#14 CACHED
+
+#15 [stage-1  8/12] COPY pyproject.toml defaults.yaml server_control.sh ./
+#15 CACHED
+
+#16 [stage-1  4/12] COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+#16 CACHED
+
+#17 [stage-1  2/12] RUN apt-get update && apt-get install -y --no-install-recommends     ca-certificates curl netcat-openbsd procps net-tools     && rm -rf /var/lib/apt/lists/*
+#17 CACHED
+
+#18 [stage-1  3/12] WORKDIR /app
+#18 CACHED
+
+#19 [stage-1  7/12] RUN mkdir -p config
+#19 CACHED
+
+#20 [stage-1 11/12] RUN mkdir -p /app/logs /app/data /app/.pids &&     chmod +x /app/server_control.sh /app/start_*.py
+#20 CACHED
+
+#21 [builder 5/6] COPY src/ ./src/
+#21 CACHED
+
+#22 [stage-1  5/12] COPY --from=builder /usr/local/bin /usr/local/bin
+#22 CACHED
+
+#23 [stage-1 12/12] RUN useradd --system --create-home --uid 10001 appuser &&     chown -R appuser:appuser /app
+#23 CACHED
+
+#24 exporting to image
+#24 exporting layers done
+#24 writing image sha256:21fe6bc351db3e16ef1eb072b63b90513131319a7f43c2f4da49b94606e89435 done
+#24 naming to docker.io/cloud-dog/db-mcp-server:latest 0.0s done
+#24 DONE 0.0s
+Build OK: cloud-dog/db-mcp-server:latest (variant=public)
+Registry tag skipped (public variant or no REGISTRY set; PS-97 §1.1.3 closed-loop).

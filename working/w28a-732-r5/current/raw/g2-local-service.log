@@ -1,0 +1,21 @@
+G2 started 2026-06-11T09:54:56Z
+COMMAND stop: ./server_control.sh --env tests/env-ST stop all
+api stopped
+web stopped
+mcp stopped
+a2a stopped
+COMMAND start: ./server_control.sh --env tests/env-ST start all
+api started (pid 3369323, port 8086)
+web started (pid 3372011, port 8087)
+mcp started (pid 3373418, port 8088)
+a2a started (pid 3374831, port 8089)
+COMMAND status: ./server_control.sh --env tests/env-ST status all
+api running (pid 3369323, port 8086)
+web running (pid 3372011, port 8087)
+mcp running (pid 3373418, port 8088)
+a2a running (pid 3374831, port 8089)
+health port=8086 http=200 body={"status":"ok","application":"db-mcp-server-api","version":"0.1.0","env_file":"tests/env-ST","checks":{"metadata_store":{"status":"ok","ok":true,"result":1},"audit_store":{"status":"ok","ok":true,"result":1},"jobs":{"status":"ok","backend":"sql"},"search":{"status":"ok","path":"data/test-st-discovery-index.db"}}}
+health port=8087 http=200 body={"status":"ok","application":"db-mcp-server-web","version":"0.1.0","env_file":"tests/env-ST","checks":{"metadata_store":{"status":"ok","ok":true,"result":1},"audit_store":{"status":"ok","ok":true,"result":1},"jobs":{"status":"ok","backend":"sql"},"search":{"status":"ok","path":"data/test-st-discovery-index.db"}}}
+health port=8088 http=200 body={"status":"ok","application":"db-mcp-server-mcp","version":"0.1.0","env_file":"tests/env-ST","checks":{"metadata_store":{"status":"ok","ok":true,"result":1},"audit_store":{"status":"ok","ok":true,"result":1},"jobs":{"status":"ok","backend":"sql"},"search":{"status":"ok","path":"data/test-st-discovery-index.db"}}}
+health port=8089 http=200 body={"status":"ok","application":"db-mcp-server-a2a","version":"0.1.0","env_file":"tests/env-ST","checks":{"metadata_store":{"status":"ok","ok":true,"result":1},"audit_store":{"status":"ok","ok":true,"result":1},"jobs":{"status":"ok","backend":"sql"},"search":{"status":"ok","path":"data/test-st-discovery-index.db"}}}
+G2 PASS

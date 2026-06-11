@@ -1,0 +1,7 @@
+TWO_ANCHOR_TAGS 2026-06-11T12:57:54+01:00
+491c6226c0f6384e77d498d37aa25440aa3eb998	refs/tags/W28A-732-R5-evidence
+86ab9f5192dfe39fd7ac9f3d6c3be94010e01dfb	refs/tags/W28A-732-R5-evidence^{}
+c0c639c188a28ce6c31adf6659e2897ba027d779	refs/tags/W28A-732-R5-final-proof
+86ab9f5192dfe39fd7ac9f3d6c3be94010e01dfb	refs/tags/W28A-732-R5-final-proof^{}
+W28A-732-R5-evidence 86ab9f5192dfe39fd7ac9f3d6c3be94010e01dfb ANCESTOR_OF origin/main
+W28A-732-R5-final-proof 86ab9f5192dfe39fd7ac9f3d6c3be94010e01dfb ANCESTOR_OF origin/main

@@ -1,0 +1,23 @@
+flat_key_hashes {"admin": "4fe34010162a44343fa2c527f207f217cfa268a5c5e1aec52596b0d40f30f837", "read-only": "e6e14266f2e46a3a3f6c12c74b39085012f836d7af23a9cb93cc8df4131d9332", "read-write": "42d5022e70694ad3586887be9f48c86f00da52edd106a5e2205787eb5d9ba988"}
+anon_login_box {"inputs": 1, "screenshot": "working/w28a-732-r5/g8-screenshots/g8_anon_login_box.png", "status": 200}
+admin_auth_me {"roles": ["admin"], "screenshot": "working/w28a-732-r5/g8-screenshots/g8_admin_dashboard.png", "status": 200}
+admin_user_create {"ok": true, "status": 200, "user_id": "ad88f7de-7a33-46fd-af23-87d82b17d771"}
+admin_user_get {"ok": true, "status": 200, "user_id": "ad88f7de-7a33-46fd-af23-87d82b17d771"}
+admin_user_update {"ok": true, "status": 200, "user_id": "ad88f7de-7a33-46fd-af23-87d82b17d771"}
+admin_profile_create {"ok": true, "profile_id": "e5222d8d-bef1-4cdc-8b67-156b39d5a9af", "status": 200}
+read-write_auth_me {"roles": ["read-write"], "screenshot": "working/w28a-732-r5/g8-screenshots/g8_read_write_dashboard.png", "status": 200}
+read_write_data_create {"ok": true, "status": 200}
+read_write_data_read {"ok": true, "status": 200}
+read_write_data_update {"modified_count": 1, "ok": true, "status": 200}
+read_write_data_delete {"deleted_count": 1, "ok": true, "status": 200}
+read-only_auth_me {"roles": ["read-only"], "screenshot": "working/w28a-732-r5/g8-screenshots/g8_read_only_dashboard.png", "status": 200}
+read_only_data_create_denied {"ok": false, "status": 403}
+read_only_403_inline_screenshot {"screenshot": "working/w28a-732-r5/g8-screenshots/g8_read_only_403_inline.png"}
+admin-cleanup_auth_me {"roles": ["admin"], "screenshot": "working/w28a-732-r5/g8-screenshots/g8_admin_cleanup_dashboard.png", "status": 200}
+admin_user_delete {"deleted": true, "ok": true, "status": 200, "user_id": "ad88f7de-7a33-46fd-af23-87d82b17d771"}
+admin_profile_delete {"deleted": true, "ok": true, "profile_id": "e5222d8d-bef1-4cdc-8b67-156b39d5a9af", "status": 200}
+sentinel_browser_smoke {"host": "chatclient0", "screenshot": "working/w28a-732-r5/g8-screenshots/g8_sentinel_chatclient0.png", "status": 200}
+sentinel_browser_smoke {"host": "expertagent0", "screenshot": "working/w28a-732-r5/g8-screenshots/g8_sentinel_expertagent0.png", "status": 200}
+sentinel_browser_smoke {"host": "notificationagent0", "screenshot": "working/w28a-732-r5/g8-screenshots/g8_sentinel_notificationagent0.png", "status": 200}
+sentinel_browser_smoke {"host": "filemcpserver0", "screenshot": "working/w28a-732-r5/g8-screenshots/g8_sentinel_filemcpserver0.png", "status": 200}
+G8 {"result": "PASS", "timestamp": "2026-06-11T12:57:00+0100"}

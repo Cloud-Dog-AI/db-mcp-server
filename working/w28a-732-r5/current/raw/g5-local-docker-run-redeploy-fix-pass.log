@@ -1,0 +1,35 @@
+G5 REDEPLOY-FIX START 2026-06-11T12:50:01+01:00
+0a9418e068c26520e984a397c2167001f784e76e3539a982f2e2a227ee134824
+container_started
+curl: (7) Failed to connect to 127.0.0.1 port 19086: Connection refused
+health_try=1 code=000
+curl: (7) Failed to connect to 127.0.0.1 port 19086: Connection refused
+health_try=2 code=000
+curl: (7) Failed to connect to 127.0.0.1 port 19086: Connection refused
+health_try=3 code=000
+curl: (7) Failed to connect to 127.0.0.1 port 19086: Connection refused
+health_try=4 code=000
+health_try=5 code=200
+{"status":"ok","application":"db-mcp-server-api","version":"0.1.0","env_file":"/app/env","checks":{"metadata_store":{"status":"ok","ok":true,"result":1},"audit_store":{"status":"ok","ok":true,"result":1},"jobs":{"status":"ok","backend":"sql"},"search":{"status":"ok","path":"data/test-st-discovery-index.db"}}}
+final_health_code=200
+{"status":"ok","application":"db-mcp-server-api","version":"0.1.0","env_file":"/app/env","checks":{"metadata_store":{"status":"ok","ok":true,"result":1},"audit_store":{"status":"ok","ok":true,"result":1},"jobs":{"status":"ok","backend":"sql"},"search":{"status":"ok","path":"data/test-st-discovery-index.db"}}}
+pip_show_versions_start
+Name: db-mcp-server
+Version: 0.1.1rc1
+Name: cloud-dog-api-kit
+Version: 0.13.0
+Name: cloud-dog-config
+Version: 0.3.2
+Name: cloud_dog_db
+Version: 0.3.0
+Name: cloud-dog-idam
+Version: 0.5.0
+Name: cloud-dog-jobs
+Version: 0.4.1
+Name: cloud-dog-logging
+Version: 0.4.0
+Name: cloud_dog_storage
+Version: 0.1.4
+pip_show_versions_end
+container=/w28a-732-dbmcpserver image_id=sha256:21fe6bc351db3e16ef1eb072b63b90513131319a7f43c2f4da49b94606e89435 health=starting status=running
+G5 PASS 2026-06-11T12:50:12+01:00

@@ -1,0 +1,13 @@
+G7 HEALTH START 2026-06-11T12:51:03+01:00
+name=dbmcpserver0.app.vpc0.cloud-dog.net image=21fe6bc351db status=Up 19 seconds (healthy) id=6a4ed32a7634
+remote_container_health
+container=/dbmcpserver0.app.vpc0.cloud-dog.net image_id=sha256:21fe6bc351db3e16ef1eb072b63b90513131319a7f43c2f4da49b94606e89435 health=healthy status=running started=2026-06-11T11:50:44.432854207Z
+external_api_health_first
+code=200 url=https://dbmcpserver0.cloud-dog.net/api/health
+{"status":"ok","application":"db-mcp-server-api","version":"0.1.0","env_file":"/app/env","checks":{"metadata_store":{"status":"ok","ok":true,"result":1},"audit_store":{"status":"ok","ok":true,"result":1},"jobs":{"status":"ok","backend":"sql"},"search":{"status":"ok","path":"data/discovery-index.db"}}}
+sleep_60_start 2026-06-11T12:51:03+01:00
+external_api_health_second
+code=200 url=https://dbmcpserver0.cloud-dog.net/api/health
+{"status":"ok","application":"db-mcp-server-api","version":"0.1.0","env_file":"/app/env","checks":{"metadata_store":{"status":"ok","ok":true,"result":1},"audit_store":{"status":"ok","ok":true,"result":1},"jobs":{"status":"ok","backend":"sql"},"search":{"status":"ok","path":"data/discovery-index.db"}}}
+container=/dbmcpserver0.app.vpc0.cloud-dog.net image_id=sha256:21fe6bc351db3e16ef1eb072b63b90513131319a7f43c2f4da49b94606e89435 health=healthy status=running
+G7 PASS 2026-06-11T12:52:03+01:00

@@ -1,0 +1,46 @@
+G6 REDEPLOY-FIX IMAGE PUSH START 2026-06-11T12:50:21+01:00
+local_image_id=sha256:21fe6bc351db3e16ef1eb072b63b90513131319a7f43c2f4da49b94606e89435 repo_tags=["cloud-dog/db-mcp-server:latest"]
+The push refers to repository [registry.cloud-dog.net:443/cloud-dog/db-mcp-server]
+79ff48b8e387: Preparing
+6c43e23203fc: Preparing
+63fcf0332364: Preparing
+b20f514d70b2: Preparing
+8bc1aaa44383: Preparing
+7da565c103bd: Preparing
+8eb22b2a0742: Preparing
+9739661cad7b: Preparing
+1358c5da8b5b: Preparing
+fbbd3c75d802: Preparing
+19e40de8defb: Preparing
+6872606a6b81: Preparing
+c529e1b25539: Preparing
+ae0096d57d7f: Preparing
+219a998c6050: Preparing
+c529e1b25539: Waiting
+ae0096d57d7f: Waiting
+219a998c6050: Waiting
+fbbd3c75d802: Waiting
+8eb22b2a0742: Waiting
+9739661cad7b: Waiting
+6872606a6b81: Waiting
+1358c5da8b5b: Waiting
+19e40de8defb: Waiting
+7da565c103bd: Waiting
+b20f514d70b2: Layer already exists
+6c43e23203fc: Layer already exists
+8bc1aaa44383: Layer already exists
+7da565c103bd: Layer already exists
+63fcf0332364: Layer already exists
+79ff48b8e387: Layer already exists
+8eb22b2a0742: Layer already exists
+9739661cad7b: Layer already exists
+fbbd3c75d802: Layer already exists
+19e40de8defb: Layer already exists
+6872606a6b81: Layer already exists
+c529e1b25539: Layer already exists
+1358c5da8b5b: Layer already exists
+219a998c6050: Layer already exists
+ae0096d57d7f: Layer already exists
+latest: digest: sha256:6dbe97620981910af9d4871f5b98fa6d0ef37373a880194d7417a4ce0d0b137d size: 3460
+post_push_repo_digests=["registry.cloud-dog.net:443/cloud-dog/db-mcp-server@sha256:6dbe97620981910af9d4871f5b98fa6d0ef37373a880194d7417a4ce0d0b137d"]
+G6 REDEPLOY-FIX IMAGE PUSH DONE 2026-06-11T12:50:22+01:00
