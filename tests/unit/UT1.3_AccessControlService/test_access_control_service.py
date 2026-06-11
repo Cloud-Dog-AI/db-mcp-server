@@ -32,8 +32,9 @@ pytestmark = pytest.mark.unit
 
 
 @pytest.fixture()
-def access_control(tmp_path: Path) -> AccessControlService:
+def access_control(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> AccessControlService:
     """Create an isolated access-control service bound to a temp SQLite store."""
+    monkeypatch.setenv("CLOUD_DOG__FLAT_LOGIN__DEMO_KEYS_DIR", str(tmp_path / "flat_role_keys"))
     setup_logging(
         {
             "service_name": "db-mcp-server",
@@ -45,6 +46,10 @@ def access_control(tmp_path: Path) -> AccessControlService:
     config = load_runtime_config(["tests/env-UT"])
     engine = create_engine(f"sqlite:///{tmp_path / 'metadata.db'}")
     return AccessControlService(config=config, engine=engine, audit_logger=get_audit_logger())
+
+
+def _demo_key(tmp_path: Path, role: str) -> str:
+    return (tmp_path / "flat_role_keys" / f"{role}.key").read_text(encoding="utf-8").strip()
 
 
 def test_profile_masking_enforces_exclusions_and_masks(access_control: AccessControlService) -> None:
@@ -68,6 +73,26 @@ def test_profile_masking_enforces_exclusions_and_masks(access_control: AccessCon
     )
 
     assert masked == {"salary": "***MASKED***", "department": "ops"}
+
+
+def test_internal_profile_lookup_preserves_connection_secret(access_control: AccessControlService) -> None:
+    """Internal connector resolution needs the real DB credential, unlike API views."""
+    created = access_control.create_profile(
+        {
+            "name": "finance-profile",
+            "source_type": "mongodb",
+            "source_connection": "mongodb://admin:mongo-test-p4ssw0rd@mongo0.example.net:27017/db?authSource=admin",
+            "allowed_permissions": ["data.read"],
+        },
+        actor_user_id="bootstrap-admin",
+        actor_roles=["admin"],
+    )
+
+    external = access_control.get_profile(created["profile_id"])
+    internal = access_control.get_profile_internal(created["profile_id"])
+
+    assert "mongo-test-p4ssw0rd" not in external["source_connection"]
+    assert "mongo-test-p4ssw0rd" in internal["source_connection"]
 
 
 def test_verify_api_key_applies_role_permissions_and_key_scopes(access_control: AccessControlService) -> None:
@@ -136,3 +161,19 @@ def test_group_role_assignments_contribute_to_effective_permissions(access_contr
 
     assert "developer" in updated_user["effective_roles"]
     assert "schema.change" in updated_user["effective_permissions"]
+
+
+def test_flat_demo_keys_resolve_to_three_flat_roles(access_control: AccessControlService, tmp_path: Path) -> None:
+    """The api-key login lane seeds admin, read-write, and read-only demo keys."""
+    admin = access_control.verify_api_key(_demo_key(tmp_path, "admin"))
+    read_write = access_control.verify_api_key(_demo_key(tmp_path, "read-write"))
+    read_only = access_control.verify_api_key(_demo_key(tmp_path, "read-only"))
+
+    assert admin is not None and admin.roles == ["admin"] and "*" in admin.permissions
+    assert read_write is not None and read_write.roles == ["read-write"]
+    assert "data.create" in read_write.permissions
+    assert "profile.manage" in read_write.permissions
+    assert read_only is not None and read_only.roles == ["read-only"]
+    assert "data.read" in read_only.permissions
+    assert "data.create" not in read_only.permissions
+    assert "profile.manage" not in read_only.permissions

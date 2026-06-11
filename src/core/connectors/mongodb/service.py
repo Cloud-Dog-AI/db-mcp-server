@@ -83,7 +83,7 @@ class MongoDBConnectorService:
         return resolve_mongodb_uri(self._runtime.config, profile)
 
     def for_profile(self, profile_id: str) -> MongoProfileSession:
-        profile = self._runtime.access_control.get_profile(profile_id)
+        profile = self._runtime.access_control.get_profile_internal(profile_id)
         if profile["source_type"] != "mongodb":
             raise ValidationError(message=f"Profile {profile_id} is not a MongoDB profile")
         connector = MongoDBConnector(

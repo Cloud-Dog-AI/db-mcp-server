@@ -110,10 +110,45 @@ AccessUser = DbMcpUser
 AccessGroup = DbMcpGroup
 AccessApiKey = DbMcpApiKey
 
-ROLE_NAMES = ["admin", "data_steward", "developer", "analyst", "auditor"]
+ROLE_NAMES = ["admin", "read-write", "read-only", "data_steward", "developer", "analyst", "auditor"]
+
+SHARED_USER_BASELINE_PERMISSIONS = {
+    "a2a.access",
+    "apikeys.manage_own",
+    "apikeys.read_own",
+    "apidocs.access",
+    "config.read",
+    "idam.users.read",
+    "logs.read",
+    "mcp.access",
+    "profiles.read",
+    "resources:read",
+    "webui.access",
+}
+
+DB_READ_PERMISSIONS = {
+    "catalog.read",
+    "schema.read",
+    "relationship.read",
+    "content.search",
+    "data.read",
+    "audit.read",
+}
+
+DB_WRITE_PERMISSIONS = {
+    "schema.change",
+    "relationship.change",
+    "data.create",
+    "data.update",
+    "data.delete",
+    "index.manage",
+    "profile.manage",
+}
 
 DEFAULT_ROLE_PERMISSIONS: dict[str, set[str]] = {
     "admin": {"*"},
+    "read-write": SHARED_USER_BASELINE_PERMISSIONS | DB_READ_PERMISSIONS | DB_WRITE_PERMISSIONS,
+    "read-only": SHARED_USER_BASELINE_PERMISSIONS | DB_READ_PERMISSIONS,
     "data_steward": {
         "catalog.read",
         "schema.read",

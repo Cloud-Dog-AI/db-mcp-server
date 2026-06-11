@@ -18,6 +18,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 import pytest
 from starlette.websockets import WebSocketDisconnect
@@ -28,9 +30,16 @@ pytestmark = pytest.mark.unit
 
 
 @pytest.fixture()
-def a2a_client() -> TestClient:
+def a2a_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     """Return a test client for the A2A surface."""
-    return TestClient(create_a2a_app(["tests/env-UT"]))
+    monkeypatch.setenv("CLOUD_DOG__FLAT_LOGIN__DEMO_KEYS_DIR", str(tmp_path / "flat_role_keys"))
+    client = TestClient(create_a2a_app(["tests/env-UT"]))
+    client.flat_key_dir = tmp_path / "flat_role_keys"  # type: ignore[attr-defined]
+    return client
+
+
+def _flat_key(a2a_client: TestClient, role: str) -> str:
+    return (a2a_client.flat_key_dir / f"{role}.key").read_text(encoding="utf-8").strip()  # type: ignore[attr-defined]
 
 
 def test_a2a_root_reports_websocket_path(a2a_client: TestClient) -> None:
@@ -62,3 +71,21 @@ def test_a2a_websocket_rejects_missing_api_key(a2a_client: TestClient) -> None:
         with a2a_client.websocket_connect("/a2a/ws"):
             pass
     assert exc_info.value.code == 4401
+
+
+def test_a2a_task_rejects_missing_api_key(a2a_client: TestClient) -> None:
+    """A2A task submission must not be anonymous."""
+    response = a2a_client.post("/a2a/tasks", json={"id": "anon", "skill_id": "health", "input": {"text": ""}})
+
+    assert response.status_code == 401
+
+
+def test_a2a_read_only_key_is_forbidden_on_write_task(a2a_client: TestClient) -> None:
+    """A read-only key must not be promoted to the A2A synthetic admin."""
+    response = a2a_client.post(
+        "/a2a/tasks",
+        headers={"X-API-Key": _flat_key(a2a_client, "read-only")},
+        json={"id": "ro-write", "skill_id": "data_update", "input": {"text": "{}"}},
+    )
+
+    assert response.status_code == 403

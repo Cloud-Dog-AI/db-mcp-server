@@ -156,6 +156,16 @@ def create_web_app(explicit_env_files: list[str] | None = None):
             "X-Request-User": str(sess.get("idam_username") or sess.get("user") or ""),
         }
 
+    def _request_api_key(request: Request) -> str:
+        """Extract an API key from the configured browser auth headers."""
+        api_key = request.headers.get("X-API-Key", "").strip()
+        if api_key:
+            return api_key
+        authorisation = request.headers.get("Authorization", "").strip()
+        if authorisation.lower().startswith("bearer "):
+            return authorisation[7:].strip()
+        return ""
+
     @app.post(join_route(web_base_path, "/auth/login"))
     async def auth_login(request: Request) -> JSONResponse:
         body = await request.json()
@@ -183,6 +193,11 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     async def auth_me(request: Request) -> JSONResponse:
         sess = _get_session(request)
         if not sess:
+            api_key = _request_api_key(request)
+            if api_key:
+                principal = runtime.access_control.verify_api_key(api_key)
+                if principal is not None:
+                    return JSONResponse({"user": runtime.access_control.principal_summary(principal)})
             raise HTTPException(status_code=401, detail="Not authenticated")
         return JSONResponse({"user": {"id": sess["user_id"], "displayName": sess["user"], "email": None, "roles": [sess["role"]], "permissions": ["*"]}})
 

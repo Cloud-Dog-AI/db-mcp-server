@@ -39,6 +39,9 @@ class DummyAccessControl:
     def get_profile(self, _profile_id: str) -> dict[str, object]:
         return dict(self._profile)
 
+    def get_profile_internal(self, _profile_id: str) -> dict[str, object]:
+        return dict(self._profile)
+
 
 class DummyRuntime:
     def __init__(self, config: DummyConfig, profile: dict[str, object]) -> None:

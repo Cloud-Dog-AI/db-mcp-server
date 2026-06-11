@@ -62,7 +62,7 @@ class ConnectorManager:
         self._runtime = runtime
 
     def for_profile(self, profile_id: str) -> ConnectorSession:
-        profile = self._runtime.access_control.get_profile(profile_id)
+        profile = self._runtime.access_control.get_profile_internal(profile_id)
         source_type = str(profile.get("source_type", "")).strip().lower()
         if source_type == "mongodb":
             return ConnectorSession(

@@ -23,6 +23,49 @@ access_control:
   roles:
     admin:
       - "*"
+    read-write:
+      - "a2a.access"
+      - "apikeys.manage_own"
+      - "apikeys.read_own"
+      - "apidocs.access"
+      - "config.read"
+      - "idam.users.read"
+      - "logs.read"
+      - "mcp.access"
+      - "profiles.read"
+      - "resources:read"
+      - "webui.access"
+      - "catalog.read"
+      - "schema.read"
+      - "relationship.read"
+      - "content.search"
+      - "data.read"
+      - "audit.read"
+      - "schema.change"
+      - "relationship.change"
+      - "data.create"
+      - "data.update"
+      - "data.delete"
+      - "index.manage"
+      - "profile.manage"
+    read-only:
+      - "a2a.access"
+      - "apikeys.manage_own"
+      - "apikeys.read_own"
+      - "apidocs.access"
+      - "config.read"
+      - "idam.users.read"
+      - "logs.read"
+      - "mcp.access"
+      - "profiles.read"
+      - "resources:read"
+      - "webui.access"
+      - "catalog.read"
+      - "schema.read"
+      - "relationship.read"
+      - "content.search"
+      - "data.read"
+      - "audit.read"
     data_steward:
       - "catalog.read"
       - "schema.read"
@@ -78,6 +121,9 @@ web_server:
 web_login:
   username: "${CLOUD_DOG_WEB_LOGIN_USERNAME:admin}"
   password: "${CLOUD_DOG_WEB_LOGIN_PASSWORD || ''}"
+
+flat_login:
+  demo_keys_dir: "data/flat_role_keys"
 
 mcp_server:
   enabled: true

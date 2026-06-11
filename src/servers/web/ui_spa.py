@@ -115,6 +115,8 @@ def serve_spa_asset(relative_path: str) -> Response:
 def serve_runtime_config(runtime, request: Request) -> Response:
     """Return runtime-config.js for the SPA bootstrap contract."""
     environment = str(runtime.config.get("environment", "dev"))
+    configured_auth_mode = str(runtime.config.get("auth.mode", "api_key_only")).strip().lower()
+    spa_auth_mode = "cookie" if configured_auth_mode in {"cookie", "session"} else "api_key"
     app_version = _application_release()
     body = (
         "const __origin = window.location.origin;\n"
@@ -123,7 +125,7 @@ def serve_runtime_config(runtime, request: Request) -> Response:
         '  "API_BASE_URL": __origin,\n'
         '  "MCP_BASE_URL": __origin,\n'
         '  "A2A_BASE_URL": __origin,\n'
-        '  "AUTH_MODE": "cookie",\n'
+        f'  "AUTH_MODE": "{spa_auth_mode}",\n'
         '  "API_KEY_HEADER": "X-API-Key",\n'
         f'  "APP_VERSION": "{app_version}"\n'
         "};\n"

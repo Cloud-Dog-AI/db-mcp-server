@@ -28,6 +28,7 @@ from fastapi.responses import JSONResponse
 
 from cloud_dog_api_kit import create_app
 from cloud_dog_api_kit.a2a.card import A2ASkill
+from cloud_dog_api_kit.errors import UnauthorisedError
 
 from src.common.base_paths import configured_base_path, exempt_paths_for_surface, join_route
 from src.common.http import APIKeyAuthMiddleware
@@ -68,19 +69,10 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
     app.include_router(build_health_router(runtime, "db-mcp-server-a2a"))
     if a2a_base_path:
         app.include_router(build_health_router(runtime, "db-mcp-server-a2a"), prefix=a2a_base_path)
-    exempt_paths = exempt_paths_for_surface(a2a_base_path)
-    exempt_paths.update(
-        {
-            "/.well-known/agent.json",
-            "/tasks",
-            join_route(a2a_base_path, "/.well-known/agent.json"),
-            join_route(a2a_base_path, "/tasks"),
-        }
-    )
     app.add_middleware(
         APIKeyAuthMiddleware,
         verify_api_key=runtime.auth.verify_api_key,
-        exempt_paths=exempt_paths,
+        exempt_paths=exempt_paths_for_surface(a2a_base_path),
     )
 
     @app.get("/")
@@ -146,34 +138,9 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
         default_profile = profiles[0] if profiles else "default"
         return {"query": text, "profile_id": default_profile, "namespace": default_profile, "entity": ""} if text else {}
 
-    def _make_a2a_request():
-        """Create a minimal synthetic request with an A2A service principal.
-
-        The MCP tool handlers require a Request object with state.principal
-        for access control.  The A2A surface uses a privileged service
-        principal so that callers authenticated at the A2A transport layer
-        are not blocked by per-request profile checks.
-        """
+    def _make_a2a_request(principal):
+        """Create a minimal synthetic request carrying the caller principal."""
         from starlette.requests import Request as StarletteRequest
-        from src.core.access_control.service import PrincipalContext
-        # Collect all profile IDs so the A2A service principal has full access.
-        all_profile_ids = []
-        try:
-            for p in runtime.access_control.list_profiles():
-                pid = p.get("id") or p.get("profile_id")
-                if pid:
-                    all_profile_ids.append(str(pid))
-        except Exception:  # noqa: BLE001
-            pass
-        principal = PrincipalContext(
-            user_id="a2a-service",
-            username="a2a-service",
-            roles=["admin"],
-            permissions=["*"],
-            api_key_id=None,
-            profile_ids=all_profile_ids,
-            scopes=["*"],
-        )
         scope = {
             "type": "http",
             "method": "POST",
@@ -184,37 +151,43 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
         }
         return StarletteRequest(scope)
 
-    async def _handle_data_create(text: str) -> Any:
+    async def _handle_data_create(text: str, principal) -> Any:
         """Create records in the database via the MCP content tool."""
         payload = _parse_a2a_input(text)
         try:
             handler = _content_tools["data.create"].handler
-            result = await handler(payload, _make_a2a_request())
+            result = await handler(payload, _make_a2a_request(principal))
             return result
+        except UnauthorisedError:
+            raise
         except Exception as exc:
             return f"data.create error: {exc}"
 
-    async def _handle_data_query(text: str) -> Any:
+    async def _handle_data_query(text: str, principal) -> Any:
         """Query data from the database via the MCP content tool."""
         payload = _parse_a2a_input(text)
         try:
             handler = _content_tools["data.read"].handler
-            result = await handler(payload, _make_a2a_request())
+            result = await handler(payload, _make_a2a_request(principal))
             return result
+        except UnauthorisedError:
+            raise
         except Exception as exc:
             return f"data.read error: {exc}"
 
-    async def _handle_data_update(text: str) -> Any:
+    async def _handle_data_update(text: str, principal) -> Any:
         """Update records in the database via the MCP content tool."""
         payload = _parse_a2a_input(text)
         try:
             handler = _content_tools["data.update"].handler
-            result = await handler(payload, _make_a2a_request())
+            result = await handler(payload, _make_a2a_request(principal))
             return result
+        except UnauthorisedError:
+            raise
         except Exception as exc:
             return f"data.update error: {exc}"
 
-    async def _handle_schema_list(text: str) -> Any:
+    async def _handle_schema_list(text: str, _principal) -> Any:
         """List database schemas — returns available namespaces from configured backends.
 
         Bypasses per-profile RBAC by querying the connector layer directly,
@@ -251,6 +224,12 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
         A2ASkill(id="schema_list", name="Schema List", description="List database schemas and table structures", handler=_handle_schema_list),
     ]
     _skill_map: dict[str, A2ASkill] = {skill.id: skill for skill in _a2a_skills}
+    _skill_permissions = {
+        "data_create": "data.create",
+        "data_query": "data.read",
+        "data_update": "data.update",
+        "schema_list": "schema.read",
+    }
     _card = {
         "name": "db-mcp",
         "description": "Database MCP A2A server for data operations and schema management",
@@ -273,6 +252,7 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
     @app.post("/tasks")
     async def submit_task(request: Request) -> JSONResponse:
         """Accept an A2A task submission and dispatch to the matching skill."""
+        principal = runtime.access_control.principal_from_request(request)
         body = await request.json()
         task_id = body.get("id", "")
         skill_id = body.get("skill_id", "")
@@ -297,13 +277,27 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
             )
 
         try:
+            required_permission = _skill_permissions.get(skill_id)
+            if required_permission is not None:
+                runtime.access_control.ensure_permission(
+                    principal,
+                    permission=required_permission,
+                    audit_resource_type="a2a_task",
+                    audit_resource_id=skill_id,
+                )
             if skill.handler is not None:
-                result = skill.handler(input_text)
+                result = skill.handler(input_text, principal)
                 if hasattr(result, "__await__"):
                     result = await result
                 result_text = str(result)
             else:
                 result_text = f"Skill '{skill_id}' acknowledged (no handler configured)"
+        except UnauthorisedError as exc:
+            return JSONResponse({
+                "id": task_id,
+                "status": "failed",
+                "error": str(exc),
+            }, status_code=403)
         except Exception as exc:
             return JSONResponse({
                 "id": task_id,

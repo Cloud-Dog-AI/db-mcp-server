@@ -114,6 +114,14 @@ def read_text_file(path: str, *, encoding: str = "utf-8") -> str:
     return storage.read_bytes(key).decode(encoding)
 
 
+def write_text_file(path: str, content: str, *, encoding: str = "utf-8", mode: int | None = None) -> None:
+    """Write a UTF-8 text file via LocalStorage."""
+    storage, key = storage_for_path(path)
+    storage.write_bytes(key, content.encode(encoding))
+    if mode is not None:
+        storage.chmod_path(key, mode)
+
+
 def find_project_root(start_file: str, marker: str = "pyproject.toml") -> str:
     """Walk upward from a module file until the project marker is found."""
     candidate = parent_fs_path(start_file)

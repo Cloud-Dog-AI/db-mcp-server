@@ -20,6 +20,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import re
 import secrets
 from dataclasses import asdict, dataclass
@@ -63,6 +65,14 @@ from src.core.access_control.models import (
     utcnow,
 )
 from src.core.access_control.repository import AccessControlRepository
+from src.common.storage_paths import ensure_directory, join_fs_path, write_text_file
+
+
+FLAT_DEMO_ROLES: tuple[tuple[str, str, str, str], ...] = (
+    ("flat-admin", "flat-admin", "Flat Admin", "admin"),
+    ("flat-read-write", "flat-read-write", "Flat Read Write", "read-write"),
+    ("flat-read-only", "flat-read-only", "Flat Read Only", "read-only"),
+)
 
 
 def _mask_connection_secret(value: Any) -> Any:
@@ -116,10 +126,11 @@ class AccessControlService:
         )
         self._role_session_factory = sessionmaker(bind=engine, expire_on_commit=False)
         configured_permissions = config.get("access_control.roles", {}) or {}
-        role_permissions = {
+        role_permissions = {role: set(values) for role, values in DEFAULT_ROLE_PERMISSIONS.items()}
+        role_permissions.update({
             role: set(values)
             for role, values in configured_permissions.items()
-        } or DEFAULT_ROLE_PERMISSIONS
+        })
         self._role_permissions = role_permissions
         self._rbac = RBACEngine(role_permissions=self._role_permissions)
         self._bootstrap_user_id = str(config.get("access_control.bootstrap_admin.user_id", "bootstrap-admin"))
@@ -135,6 +146,7 @@ class AccessControlService:
         self._bootstrap_api_key = str(config.get("auth.api_key", "") or "")
         self._bootstrap_role = str(config.get("auth.default_role", "admin") or "admin")
         self._seed_bootstrap_admin()
+        self._seed_flat_demo_keys()
         self.ensure_roles_seed()
         self._seed_default_group()
 
@@ -190,6 +202,59 @@ class AccessControlService:
             profile_ids=["*"],
         )
         self._repository.upsert_api_key(bootstrap_key, is_bootstrap=True)
+
+    def _derive_flat_demo_keys(self) -> dict[str, str]:
+        """Derive stable raw demo keys from the configured service API key."""
+        seed = (self._bootstrap_api_key.strip() or "db-mcp-flat-demo-seed").encode("utf-8")
+        keys: dict[str, str] = {}
+        for _user_id, _username, _display_name, role in FLAT_DEMO_ROLES:
+            digest = hmac.new(seed, role.encode("utf-8"), hashlib.sha256).hexdigest()
+            keys[role] = f"flatk-db-mcp-{role}-{digest[:32]}"
+        return keys
+
+    def _seed_flat_demo_keys(self) -> None:
+        """Seed the three flat-login demo users and API keys idempotently."""
+        keys = self._derive_flat_demo_keys()
+        for user_id, username, display_name, role in FLAT_DEMO_ROLES:
+            user = self._repository.get_user(user_id)
+            if user is None:
+                user = AccessUser(
+                    user_id=user_id,
+                    username=username,
+                    display_name=display_name,
+                    email="",
+                    roles=[role],
+                    status="active",
+                )
+            else:
+                user.username = username
+                user.display_name = display_name
+                user.roles = [role]
+                user.status = "active"
+                user.updated_at = utcnow()
+            self._repository.upsert_user(user)
+
+            raw_key = keys[role]
+            demo_key = AccessApiKey(
+                api_key_id=f"flat-demo-{role}",
+                owner_user_id=user_id,
+                name=f"flat-demo-{role}",
+                key_prefix=raw_key[:12],
+                key_hash=hash_api_key(raw_key),
+                status="active",
+                scopes=["*"],
+                profile_ids=["*"],
+            )
+            self._repository.upsert_api_key(demo_key, is_bootstrap=True)
+
+        self._write_flat_demo_key_files(keys)
+
+    def _write_flat_demo_key_files(self, keys: dict[str, str]) -> None:
+        """Write raw demo keys to an ignored runtime path for operators/tests."""
+        keys_dir = str(self._config.get("flat_login.demo_keys_dir", "data/flat_role_keys") or "data/flat_role_keys")
+        ensure_directory(keys_dir)
+        for role, raw_key in keys.items():
+            write_text_file(join_fs_path(keys_dir, f"{role}.key"), f"{raw_key}\n", mode=0o600)
 
     def _rebuild_rbac(self) -> None:
         self._rbac = RBACEngine(role_permissions=self._role_permissions)
@@ -271,6 +336,13 @@ class AccessControlService:
         if profile is None:
             raise NotFoundError(message=f"Profile not found: {profile_id}")
         return self._profile_view(profile)
+
+    def get_profile_internal(self, profile_id: str) -> dict[str, Any]:
+        """Return an internal profile payload with connection secrets intact."""
+        profile = self._repository.get_profile(profile_id)
+        if profile is None:
+            raise NotFoundError(message=f"Profile not found: {profile_id}")
+        return self._profile_payload(profile)
 
     def create_profile(self, payload: dict[str, Any], *, actor_user_id: str | None, actor_roles: list[str] | None) -> dict[str, Any]:
         ensure_known_permissions(list(payload.get("allowed_permissions", [])))
@@ -706,6 +778,20 @@ class AccessControlService:
             tenant_id=user.tenant_id,
         )
 
+    def principal_summary(self, principal: PrincipalContext) -> dict[str, Any]:
+        """Return a JSON-safe summary of the authenticated principal."""
+        return {
+            "user_id": principal.user_id,
+            "username": principal.username,
+            "displayName": principal.username,
+            "roles": principal.roles,
+            "permissions": principal.permissions,
+            "api_key_id": principal.api_key_id,
+            "profile_ids": principal.profile_ids,
+            "scopes": principal.scopes,
+            "tenant_id": principal.tenant_id,
+        }
+
     def ensure_permission(
         self,
         principal: PrincipalContext,
@@ -801,12 +887,17 @@ class AccessControlService:
         }
 
     def _profile_view(self, profile: Profile) -> dict[str, Any]:
-        payload = asdict(profile)
-        payload["created_at"] = profile.created_at.isoformat()
-        payload["updated_at"] = profile.updated_at.isoformat()
+        payload = self._profile_payload(profile)
         # W28A-889-B-R2 / W28A-890: never expose the DB-connection password on read.
         if payload.get("source_connection"):
             payload["source_connection"] = _mask_connection_secret(payload["source_connection"])
+        return payload
+
+    @staticmethod
+    def _profile_payload(profile: Profile) -> dict[str, Any]:
+        payload = asdict(profile)
+        payload["created_at"] = profile.created_at.isoformat()
+        payload["updated_at"] = profile.updated_at.isoformat()
         return payload
 
     def _user_view(self, user: AccessUser) -> dict[str, Any]:

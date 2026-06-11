@@ -27,7 +27,7 @@ from collections.abc import Mapping
 from datetime import datetime, timezone
 from types import MappingProxyType
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from cloud_dog_api_kit import create_app, success_envelope
 from cloud_dog_logging.middleware.audit import AuditMiddleware
@@ -212,6 +212,12 @@ def create_api_app(explicit_env_files: list[str] | None = None):
             }
         )
 
+    @router.get("/auth/me")
+    async def auth_me(request: Request) -> dict:
+        """Return the authenticated API-key principal."""
+        principal = runtime.access_control.principal_from_request(request)
+        return success_envelope(runtime.access_control.principal_summary(principal))
+
     @router.get("/jobs/status")
     async def jobs_status() -> dict:
         """Return queue status counters from the configured platform backend."""
@@ -263,8 +269,14 @@ def create_api_app(explicit_env_files: list[str] | None = None):
         return success_envelope(_serialise_job(job) if job else {})
 
     @router.post("/jobs/{job_id}/cancel")
-    async def cancel_job(job_id: str) -> dict:
+    async def cancel_job(job_id: str, request: Request) -> dict:
         """Cancel a running or queued platform job."""
+        runtime.access_control.require_request_permission(
+            request,
+            permission="index.manage",
+            audit_resource_type="job",
+            audit_resource_id=job_id,
+        )
         return success_envelope({"cancelled": runtime.job_queue.cancel(job_id), "job_id": job_id})
 
     app.include_router(router)
@@ -273,10 +285,10 @@ def create_api_app(explicit_env_files: list[str] | None = None):
     # shared @cloud-dog/idam pages (which call /v1/admin/<entity> via the web
     # /webapi cookie bridge) resolve against the same handlers + auth.
     app.include_router(create_access_control_router(runtime, (api_base_path or "") + "/admin"))
-    # W28A-876: mount the canonical SHARED cloud_dog_idam /idam/v1 router (resource-registry +
-    # rbac-bindings) so the shared @cloud-dog/idam RBAC page resolves /v1/idam/v1/*. ONE
-    # implementation for the whole estate (cloud_dog_idam>=0.4.1); bound to this service's engine.
-    from cloud_dog_idam.api.fastapi.router import idam_v1_router, set_idam_v1_engine
-    set_idam_v1_engine(runtime.metadata_engine)
+    # W28A-876: mount the canonical SHARED cloud_dog_idam /idam/v1 router
+    # (resource-registry + rbac-bindings) so the shared @cloud-dog/idam RBAC
+    # page resolves /v1/idam/v1/*.
+    from cloud_dog_idam.api.fastapi.router import idam_v1_router
+
     app.include_router(idam_v1_router, prefix=api_base_path or "")
     return app

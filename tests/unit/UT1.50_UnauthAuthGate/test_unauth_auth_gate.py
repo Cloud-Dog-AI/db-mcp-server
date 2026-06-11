@@ -54,7 +54,7 @@ _COOKIE_NAME = "db_web_session"
 
 
 @pytest.fixture()
-def web_app(monkeypatch):
+def web_app(monkeypatch, tmp_path):
     """Build the db-mcp web app with a NON-EMPTY service api-key configured.
 
     A non-empty ``auth.api_key`` makes the keyless-for-anon assertion meaningful:
@@ -62,11 +62,13 @@ def web_app(monkeypatch):
     EMPTY key proves the keyless proxy was selected (no injection).
     """
     monkeypatch.setenv("CLOUD_DOG__AUTH__API_KEY", SENTINEL_SERVICE_KEY)
+    monkeypatch.setenv("CLOUD_DOG__FLAT_LOGIN__DEMO_KEYS_DIR", str(tmp_path / "flat_role_keys"))
     from src.servers.web.app import create_web_app
 
     app = create_web_app(["tests/env-UT"])
     # Non-vacuity guard: prove the sentinel actually plumbed into config.
     assert str(app.state.runtime.config.get("auth.api_key", "")) == SENTINEL_SERVICE_KEY
+    app.state.flat_key_dir = tmp_path / "flat_role_keys"
     return app
 
 
@@ -108,3 +110,17 @@ def test_forged_session_cookie_does_not_bypass(web_app) -> None:
     client.cookies.set(_COOKIE_NAME, "forged-not-a-real-session-token")
     resp = client.get(PRINCIPAL_PATH)
     assert resp.status_code == 401, f"forged cookie must not authenticate: {resp.status_code} {resp.text[:200]}"
+
+
+def test_auth_me_resolves_managed_api_key(web_app) -> None:
+    read_only_key = (web_app.state.flat_key_dir / "read-only.key").read_text(encoding="utf-8").strip()
+    client = TestClient(web_app, raise_server_exceptions=False)
+
+    resp = client.get(PRINCIPAL_PATH, headers={"X-API-Key": read_only_key})
+
+    assert resp.status_code == 200, resp.text
+    user = resp.json()["user"]
+    assert user["username"] == "flat-read-only"
+    assert user["roles"] == ["read-only"]
+    assert "data.read" in user["permissions"]
+    assert "data.create" not in user["permissions"]
