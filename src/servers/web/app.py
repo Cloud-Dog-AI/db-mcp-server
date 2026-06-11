@@ -23,6 +23,7 @@ from __future__ import annotations
 import secrets
 import time
 from collections.abc import Iterable
+from pathlib import Path
 
 import httpx
 from fastapi import HTTPException, Request, Response
@@ -148,6 +149,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         _ro_username: (_ro_password, _READ_ONLY_ROLE, "flat-read-only"),
     }
     _user_ids = {_ADMIN_ROLE: "1", _READ_WRITE_ROLE: "2", _READ_ONLY_ROLE: "3"}
+    _flat_key_dir = str(runtime.config.get("flat_login.demo_keys_dir", "data/flat_role_keys") or "data/flat_role_keys")
     _cookie_name = "db_web_session"
     api_base = _server_base(runtime.config.get("api_server.host"), runtime.config.get("api_server.port"))
     mcp_base = _server_base(runtime.config.get("mcp_server.host"), runtime.config.get("mcp_server.port"))
@@ -191,6 +193,30 @@ def create_web_app(explicit_env_files: list[str] | None = None):
             return ["*"]
         perms = runtime.config.get(f"access_control.roles.{role}", [])
         return list(perms) if isinstance(perms, (list, tuple)) else []
+
+    def _session_downstream_key(sess: dict | None) -> str:
+        """Forward the session role's seeded flat demo api-key to the MCP/A2A tiers
+        so they enforce per-role RBAC natively (read-only write tools -> 403).
+
+        W28A-732-R5: those tiers authorise by the api-key's ROLE (they do not
+        resolve the webui-trusted X-Request-User the API tier honours). A cookie
+        session carries no key, so the web tier injects the role's flat demo key
+        (``<flat_login.demo_keys_dir>/<role>.key``, seeded by access_control).
+        admin/read-write fall back to the service key if their key file is absent;
+        read-only NEVER falls back to a write-capable key — a missing read-only key
+        yields an empty key (downstream 401), fail-closed, so the read-only write
+        contract can never silently regress on the MCP/A2A surfaces.
+        """
+        if not sess:
+            return ""
+        role = str(sess.get("role") or "")
+        try:
+            key = Path(_flat_key_dir, f"{role}.key").read_text(encoding="utf-8").strip()
+        except OSError:
+            key = ""
+        if key:
+            return key
+        return "" if role == _READ_ONLY_ROLE else _service_api_key
 
     def _read_only_write_block(sess: dict | None, request: Request) -> JSONResponse | None:
         """W28A-732-R5: web-tier read-only write-gate (defence in depth).
@@ -355,7 +381,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
             request,
             target_base=mcp_base,
             strip_prefix=web_base_path,
-            session_api_key=_service_api_key if _get_session(request) else "",
+            session_api_key=_session_downstream_key(_get_session(request)),
         )
 
     @app.api_route(webmcp_prefix, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
@@ -371,7 +397,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
             target_base=mcp_base,
             strip_prefix=webmcp_prefix,
             rewrite_prefix=mcp_base_path,
-            session_api_key=_service_api_key if _get_session(request) else "",
+            session_api_key=_session_downstream_key(_get_session(request)),
         )
 
     @app.api_route(weba2a_prefix, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
@@ -383,7 +409,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
             target_base=a2a_base,
             strip_prefix=weba2a_prefix,
             rewrite_prefix=a2a_base_path,
-            session_api_key=_service_api_key if _get_session(request) else "",
+            session_api_key=_session_downstream_key(_get_session(request)),
         )
 
     @app.get(join_route(web_base_path, "/"))

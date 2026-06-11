@@ -154,6 +154,48 @@ def test_read_write_can_write_and_forwards_role_principal(web_app, monkeypatch: 
     assert captured["headers"].get("x-request-source") == "webui"
 
 
+@pytest.mark.parametrize(
+    ("creds", "role"),
+    [
+        (ADMIN_CREDS, "admin"),
+        (READ_WRITE_CREDS, "read-write"),
+        (READ_ONLY_CREDS, "read-only"),
+    ],
+)
+def test_mcp_proxy_forwards_session_role_key(tmp_path, monkeypatch, creds, role) -> None:
+    """Each cookie session injects its OWN seeded flat role key on /webmcp so the MCP
+    tier enforces per-role RBAC (it authorises by api-key role, not X-Request-User).
+    The service api-key is a distinct sentinel so a read-only session can be proven
+    NOT to inherit it."""
+    import httpx
+
+    ui_dist = tmp_path / "ui" / "dist"
+    ui_dist.mkdir(parents=True)
+    (ui_dist / "index.html").write_text("<html></html>", encoding="utf-8")
+    key_dir = tmp_path / "flat_role_keys"
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("CLOUD_DOG__FLAT_LOGIN__DEMO_KEYS_DIR", str(key_dir))
+    monkeypatch.setenv("CLOUD_DOG__AUTH__API_KEY", "service-sentinel-key")
+
+    seen: dict = {}
+
+    async def fake_request(self, method, url, *, content=None, headers=None, **kwargs):
+        seen["x-api-key"] = dict(headers or {}).get("x-api-key")
+        return httpx.Response(200, json={"ok": True}, request=httpx.Request(method, str(url), headers=headers, content=content))
+
+    monkeypatch.setattr(httpx.AsyncClient, "request", fake_request)
+    # create_web_app builds access_control, which SEEDS the flat demo keys into
+    # key_dir; the forwarded key must be that seeded role key.
+    client = TestClient(create_web_app([ENV_UT]), raise_server_exceptions=False)
+    seeded_key = (key_dir / f"{role}.key").read_text(encoding="utf-8").strip()
+    assert seeded_key and seeded_key != "service-sentinel-key"
+    assert _login(client, *creds).status_code == 200
+
+    assert client.get("/webmcp/tools").status_code == 200
+    assert seen["x-api-key"] == seeded_key
+    assert seen["x-api-key"] != "service-sentinel-key", "MCP forward must be the role key, not the service key"
+
+
 def test_anon_write_is_unauthorized(web_app, monkeypatch: pytest.MonkeyPatch) -> None:
     """An anonymous write selects the KEYLESS proxy (no service key injected)."""
     captured: dict = {}

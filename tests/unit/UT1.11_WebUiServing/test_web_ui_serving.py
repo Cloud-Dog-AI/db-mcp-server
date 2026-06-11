@@ -71,15 +71,20 @@ def test_dist_assets_are_served_from_ui_dist(web_client: TestClient) -> None:
     assert "console.log('ok');" in response.text
 
 
-def test_cookie_authenticated_browser_proxies_inject_api_key(
+def test_cookie_authenticated_browser_proxies_inject_role_key(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """W28A-732-R5: a cookie session injects the session ROLE's flat demo key on the
+    MCP/A2A proxies (not the blanket service key), so those tiers — which authorise
+    by api-key role — enforce per-role RBAC (read-only writes -> 403)."""
     ui_dist = tmp_path / "ui" / "dist"
     ui_dist.mkdir(parents=True)
     (ui_dist / "index.html").write_text("<html><body><div id='root'>db-mcp-webui</div></body></html>", encoding="utf-8")
+    key_dir = tmp_path / "flat_role_keys"
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("CLOUD_DOG_WEB_LOGIN_PASSWORD", "test-password")
+    monkeypatch.setenv("CLOUD_DOG__FLAT_LOGIN__DEMO_KEYS_DIR", str(key_dir))
 
     captured: list[dict[str, object]] = []
 
@@ -94,7 +99,10 @@ def test_cookie_authenticated_browser_proxies_inject_api_key(
 
     monkeypatch.setattr(httpx.AsyncClient, "request", fake_request)
 
+    # create_web_app builds access_control, which SEEDS the flat demo keys into
+    # key_dir; the admin session must forward its seeded admin role key downstream.
     client = TestClient(create_web_app([str(PROJECT_ROOT / "tests" / "env-UT")]))
+    admin_key = (key_dir / "admin.key").read_text(encoding="utf-8").strip()
     login = client.post("/auth/login", json={"username": "admin", "password": "test-password"})
     assert login.status_code == 200
 
@@ -109,10 +117,11 @@ def test_cookie_authenticated_browser_proxies_inject_api_key(
         f"{service_base_url('mcp', PROJECT_ROOT / 'tests' / 'env-UT', default_tier='UT')}/mcp/tools",
         f"{service_base_url('a2a', PROJECT_ROOT / 'tests' / 'env-UT', default_tier='UT')}/a2a/health",
     ]
+    assert admin_key and admin_key != "test-api-key"
     for item in captured:
         headers = item["headers"]
-        assert headers["x-api-key"] == "test-api-key"
-        assert headers["authorization"] == "Bearer test-api-key"
+        assert headers["x-api-key"] == admin_key
+        assert headers["authorization"] == f"Bearer {admin_key}"
         assert "db_web_session=" in headers["cookie"]
 
 
