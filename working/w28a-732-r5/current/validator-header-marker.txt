@@ -1,0 +1,1 @@
+Requirement | Raw artefact | Raw value observed | Verification command | Pass
