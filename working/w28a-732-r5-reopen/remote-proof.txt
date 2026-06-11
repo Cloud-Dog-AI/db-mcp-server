@@ -1,0 +1,9 @@
+W28A-732-R5 reopen — remote proof  2026-06-11T19:34:12Z
+git rev-parse HEAD: 993e6989f31264828a78353bd6bc5373bb928c7f
+git ls-remote origin refs/heads/main:
+993e6989f31264828a78353bd6bc5373bb928c7f	refs/heads/main
+EVIDENCE_TAG: W28A-732-R5-reopen-evidence
+FINAL_PROOF_TAG: W28A-732-R5-reopen-final-proof
+git ls-remote origin tags:
+993e6989f31264828a78353bd6bc5373bb928c7f	refs/tags/W28A-732-R5-reopen-evidence
+993e6989f31264828a78353bd6bc5373bb928c7f	refs/tags/W28A-732-R5-reopen-final-proof

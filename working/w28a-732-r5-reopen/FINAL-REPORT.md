@@ -35,3 +35,20 @@ in-code demo passwords).
 
 HAVE_ALL_REQUIREMENTS_BEEN_MET: YES
 WAIVER_COUNT=0
+
+## Evidence Matrix
+
+| Requirement | Raw artefact | Raw value observed | Verification command | Pass |
+|---|---|---|---|---|
+| runtime-config cookie not api_key | g8-live.log | runtime_config_auth_mode cookie=true api_key=false | grep runtime_config_auth_mode g8-live.log | PASS |
+| anon username/password login form | g8-screenshots/g8_anon_login_box.png; g8-live.log | anon_login_box inputs=2 password_inputs=1 | grep anon_login_box g8-live.log | PASS |
+| admin/read-write/read-only login live | g8-live.log | *_auth_me status=200 roles correct | grep auth_me g8-live.log | PASS |
+| read-only write 403 (/webapi + /webmcp) | g8-live.log | read_only_webapi_write_denied=403; read_only_webmcp_write_denied=403 | grep read_only_.*_denied g8-live.log | PASS |
+| anon protected 401 | g8-live.log | anon_auth_me_denied status=401 | grep anon_auth_me_denied g8-live.log | PASS |
+| live digest == origin/main image | g7-deploy-live-proof.txt | sha256:8d06acbc... ; origin/main 8455944 | docker inspect repo-digest | PASS |
+
+## CLOSE GATE
+W28A-732-R5 reopen close gate: live dbmcpserver0 serves cookie username/password login for
+admin/read-write/read-only; API-key WebUI mode gone; read-only write 403; anon 401; live
+digest matches origin/main; browser G8 PASS; validator/checksums/tags complete.
+HAVE_ALL_REQUIREMENTS_BEEN_MET: YES
