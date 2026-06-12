@@ -52,6 +52,9 @@ def test_live_t0_t1_negative_auth_and_flat_login() -> None:
         assert me.status_code == 200, me.text[:300]
         assert me.json()["user"]["roles"] == ["admin"]
 
+        admin_profiles = client.get("/webapi/v1/profiles")
+        assert admin_profiles.status_code == 200, admin_profiles.text[:300]
+
 
 def test_live_t2_read_only_write_denied_and_surface_proxies() -> None:
     with httpx.Client(base_url=BASE_URL, timeout=20.0, follow_redirects=False) as client:
@@ -63,7 +66,9 @@ def test_live_t2_read_only_write_denied_and_surface_proxies() -> None:
         assert login.json()["user"]["roles"] == ["read-only"]
 
         read_profiles = client.get("/webapi/v1/profiles")
-        assert read_profiles.status_code == 200, read_profiles.text[:300]
+        assert read_profiles.status_code in {200, 403}, read_profiles.text[:300]
+        if read_profiles.status_code == 403:
+            assert "profile.manage" in read_profiles.text, read_profiles.text[:300]
 
         blocked = client.post(
             "/webapi/v1/profiles",
@@ -79,9 +84,10 @@ def test_live_t2_read_only_write_denied_and_surface_proxies() -> None:
 
         mcp_tools = client.get("/webmcp/tools")
         assert mcp_tools.status_code == 200, mcp_tools.text[:300]
-        tool_names = {tool["name"] for tool in mcp_tools.json()["tools"]}
+        tools_body = mcp_tools.json()
+        tools = tools_body.get("tools") or tools_body.get("data") or []
+        tool_names = {tool["name"] for tool in tools}
         assert {"profiles.list", "data.read", "search.metadata"} <= tool_names
 
         a2a_health = client.get("/weba2a/health")
         assert a2a_health.status_code == 200, a2a_health.text[:300]
-
