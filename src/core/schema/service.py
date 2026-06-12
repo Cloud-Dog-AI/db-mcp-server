@@ -303,6 +303,51 @@ class SchemaChangeService:
         items = [record.to_view() for record in self._repository.list(profile_id=profile_id, status=status, limit=limit)]
         return {"items": items}
 
+    def approve_plan(self, request: Request, *, plan_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        record = self._repository.get(plan_id)
+        if record is None:
+            raise NotFoundError(message=f"Schema change plan not found: {plan_id}")
+        principal = self._runtime.access_control.require_request_permission(
+            request,
+            permission="schema.change.approve",
+            profile_id=record.profile_id,
+            audit_resource_type="schema_change",
+            audit_resource_id=plan_id,
+        )
+        target_name = str(payload.get("target_name") or "").strip()
+        if target_name:
+            expected_names = {operation.entity for operation in record.plan.operations}
+            if target_name not in expected_names:
+                raise ValidationError(message="Schema change approval target_name does not match the plan entity")
+        approved_at = utcnow()
+        record.plan.approved = True
+        record.status = "approved"
+        record.approved_by = principal.user_id
+        record.approved_at = approved_at
+        record.updated_at = approved_at
+        approve_event_id = f"{record.plan_id}:approve"
+        self._emit_tool_audit(
+            principal,
+            audit_event_id=approve_event_id,
+            tool_name="schema.change.approve",
+            outcome="success",
+            profile_id=record.profile_id,
+            target_id=record.plan_id,
+            operation_types=[item.op_type for item in record.plan.operations],
+        )
+        record.audit_trail.append(
+            {
+                "audit_event_id": approve_event_id,
+                "event_type": "tool.call",
+                "action": "schema.change.approve",
+                "outcome": "success",
+                "timestamp": serialise_datetime(approved_at),
+                "approval_status": "approved",
+            }
+        )
+        self._repository.upsert(record)
+        return record.to_view()
+
     def _parse_operations(self, payload: dict[str, Any]) -> list[SchemaChangeOperation]:
         operations_payload = payload.get("operations")
         if operations_payload:

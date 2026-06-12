@@ -30,6 +30,7 @@ from types import MappingProxyType
 from fastapi import APIRouter, Request
 
 from cloud_dog_api_kit import create_app, success_envelope
+from cloud_dog_logging import Actor, Target
 from cloud_dog_logging.middleware.audit import AuditMiddleware
 
 from src.common.base_paths import configured_base_path, exempt_paths_for_surface
@@ -37,6 +38,11 @@ from src.common.http import APIKeyAuthMiddleware
 from src.common.runtime import RuntimeFactory, build_health_router
 from src.common.storage_paths import read_text_file, storage_exists, storage_for_path
 from src.servers.api.access_control import create_access_control_router
+from src.servers.api.discovery import create_discovery_router
+from src.servers.api.saved_queries import create_saved_queries_router
+from src.servers.api.schema_changes import create_schema_changes_router
+from src.servers.api.source_connections import create_source_connections_router
+from src.servers.api.test_data import create_test_data_router
 from cloud_dog_idam.rbac import RBACEngine as _RBACEngine  # PS-70 RBAC enforcement
 
 _rbac_engine = _RBACEngine()
@@ -168,6 +174,90 @@ def _mask_runtime_config(value, parent_key: str = ""):
     return str(value)
 
 
+_SECRET_KEY_FRAGMENTS = (
+    "password",
+    "secret",
+    "token",
+    "api_key",
+    "apikey",
+    "credential",
+    "private_key",
+    "key_hash",
+)
+
+
+def _is_secret_config_key(path: str) -> bool:
+    """Return True when a config path names a secret-like value."""
+    lowered = path.lower()
+    return any(fragment in lowered for fragment in _SECRET_KEY_FRAGMENTS)
+
+
+def _servers_for_config_path(path: str) -> list[str]:
+    """Return the db-mcp surface(s) that own a top-level config namespace."""
+    top_key = path.split(".", 1)[0].split("[", 1)[0]
+    return {
+        "api_server": ["api"],
+        "mcp_server": ["mcp"],
+        "a2a_server": ["a2a"],
+        "web_server": ["webui"],
+        "web_login": ["webui"],
+    }.get(top_key, ["api", "mcp", "a2a", "webui"])
+
+
+def _build_config_source_map(value, path: str = "") -> tuple[dict[str, dict[str, object]], int, int]:
+    """Build PS-73 source metadata for effective runtime config leaves."""
+    if isinstance(value, MappingProxyType):
+        value = dict(value)
+    if isinstance(value, Mapping):
+        sources: dict[str, dict[str, object]] = {}
+        total = 0
+        secret = 0
+        for key, item in value.items():
+            child_path = f"{path}.{key}" if path else str(key)
+            child_sources, child_total, child_secret = _build_config_source_map(item, child_path)
+            sources.update(child_sources)
+            total += child_total
+            secret += child_secret
+        return sources, total, secret
+    if isinstance(value, list):
+        sources: dict[str, dict[str, object]] = {}
+        total = 0
+        secret = 0
+        for index, item in enumerate(value):
+            child_sources, child_total, child_secret = _build_config_source_map(item, f"{path}[{index}]")
+            sources.update(child_sources)
+            total += child_total
+            secret += child_secret
+        return sources, total, secret
+
+    is_secret = _is_secret_config_key(path)
+    return (
+        {
+            path: {
+                "source": "runtime",
+                "secret": is_secret,
+                "servers": _servers_for_config_path(path),
+            }
+        },
+        1,
+        1 if is_secret else 0,
+    )
+
+
+def _current_principal(request: Request) -> dict[str, object]:
+    """Return the authenticated principal fields used by the WebUI."""
+    return {
+        "user_id": getattr(request.state, "user", None),
+        "username": getattr(request.state, "username", None),
+        "roles": list(getattr(request.state, "roles", []) or []),
+        "permissions": list(getattr(request.state, "permissions", []) or []),
+        "api_key_id": getattr(request.state, "api_key_id", None),
+        "profile_ids": list(getattr(request.state, "profile_ids", []) or []),
+        "scopes": list(getattr(request.state, "scopes", []) or []),
+        "tenant_id": getattr(request.state, "tenant_id", None),
+    }
+
+
 def create_api_app(explicit_env_files: list[str] | None = None):
     """Create the db-mcp-server API application."""
     runtime = RuntimeFactory.create(explicit_env_files)
@@ -228,9 +318,25 @@ def create_api_app(explicit_env_files: list[str] | None = None):
             }
         )
 
+    @router.get("/jobs/health")
+    async def jobs_health() -> dict:
+        """Return queue health using the legacy WebUI route name."""
+        return success_envelope(
+            {
+                "status": "ok",
+                "backend": runtime.job_backend_name,
+                "queue_status": runtime.job_backend.get_queue_status(),
+            }
+        )
+
     @router.get("/jobs/queue/status")
     async def jobs_queue_status() -> dict:
         """Return queue status counters for the Web UI jobs dashboard."""
+        return success_envelope(runtime.job_backend.get_queue_status())
+
+    @router.get("/jobs/queue-status")
+    async def jobs_queue_status_legacy() -> dict:
+        """Return queue status for older preprod evidence probes."""
         return success_envelope(runtime.job_backend.get_queue_status())
 
     @router.get("/metrics")
@@ -242,6 +348,46 @@ def create_api_app(explicit_env_files: list[str] | None = None):
     async def config_dump() -> dict:
         """Return the effective runtime configuration with secrets masked."""
         return success_envelope(_mask_runtime_config(runtime.config.data))
+
+    @router.get("/config/sources")
+    async def config_sources() -> dict:
+        """Return per-leaf source metadata for the effective runtime config."""
+        sources, total, secret = _build_config_source_map(runtime.config.data)
+        return success_envelope(
+            {
+                "sources": sources,
+                "counts": {
+                    "total": total,
+                    "secret": secret,
+                    "by_source": {"runtime": total},
+                },
+            }
+        )
+
+    @router.post("/config/audit-reveal")
+    async def audit_config_reveal(request: Request) -> dict:
+        """Audit an admin reveal of masked Settings secrets."""
+        principal = _current_principal(request)
+        try:
+            runtime.audit_logger.log_privileged(
+                actor=Actor(
+                    type="user",
+                    id=str(principal.get("user_id") or principal.get("username") or "unknown"),
+                    roles=list(principal.get("roles") or []),
+                ),
+                action="config.reveal",
+                target=Target(type="config", id="effective-runtime"),
+                outcome="success",
+                command_text="settings reveal secrets",
+                secret_paths=[
+                    path
+                    for path, meta in _build_config_source_map(runtime.config.data)[0].items()
+                    if bool(meta.get("secret"))
+                ],
+            )
+        except Exception:
+            pass
+        return success_envelope({"audited": True})
 
     @router.get("/logs")
     async def logs(surface: str = "api", limit: int = 200) -> dict:
@@ -291,4 +437,12 @@ def create_api_app(explicit_env_files: list[str] | None = None):
     from cloud_dog_idam.api.fastapi.router import idam_v1_router
 
     app.include_router(idam_v1_router, prefix=api_base_path or "")
+    # W28A-871-R2: register the data-admin backend routers (source connections,
+    # discovery, saved queries, schema-change approval, gated test-data seed)
+    # consumed by the W28A-871 db-mcp WebUI (apps/db-mcp api.ts).
+    app.include_router(create_discovery_router(runtime, api_base_path))
+    app.include_router(create_saved_queries_router(runtime, api_base_path))
+    app.include_router(create_schema_changes_router(runtime, api_base_path))
+    app.include_router(create_source_connections_router(runtime, api_base_path))
+    app.include_router(create_test_data_router(runtime, api_base_path))
     return app

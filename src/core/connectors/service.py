@@ -58,12 +58,22 @@ class ConnectorSession:
 class ConnectorManager:
     """Resolve connectors and execute profile-scoped operations."""
 
+    _SOURCE_TYPE_ALIASES = {
+        "postgres": "postgresql",
+        "mysql": "mariadb",
+    }
+
     def __init__(self, runtime) -> None:
         self._runtime = runtime
 
     def for_profile(self, profile_id: str) -> ConnectorSession:
         profile = self._runtime.access_control.get_profile_internal(profile_id)
+        return self.for_profile_payload(profile)
+
+    def for_profile_payload(self, profile: dict[str, Any]) -> ConnectorSession:
+        """Resolve a connector from a profile-shaped payload."""
         source_type = str(profile.get("source_type", "")).strip().lower()
+        source_type = self._SOURCE_TYPE_ALIASES.get(source_type, source_type)
         if source_type == "mongodb":
             return ConnectorSession(
                 profile=profile,
@@ -107,6 +117,29 @@ class ConnectorManager:
                 translator=RelationalFilterTranslator(),
             )
         raise ValidationError(message=f"Unsupported source type: {source_type}")
+
+    def test_source_connection(self, source_type: str, source_connection: str) -> dict[str, Any]:
+        """Build a connector from a source-connection URI and return capabilities."""
+        session = self.for_profile_payload(
+            {
+                "profile_id": "__source_connection_test__",
+                "source_type": source_type,
+                "source_connection": source_connection,
+                "namespaces": [],
+                "entities": [],
+                "enabled_tools": [],
+                "allowed_permissions": ["*"],
+            }
+        )
+        try:
+            capability_report = getattr(session.connector, "capability_report", None)
+            if callable(capability_report):
+                return dict(capability_report())
+            return {"source_type": source_type, "capabilities": []}
+        finally:
+            close = getattr(session.connector, "close", None)
+            if callable(close):
+                close()
 
     def execute(
         self,
@@ -196,7 +229,7 @@ class ConnectorManager:
     def _build_mongodb_connector(self, profile: dict[str, Any]) -> MongoDBConnector:
         if not bool(self._runtime.config.get("connectors.mongodb.enabled", True)):
             raise ValidationError(message="MongoDB connector is disabled")
-        source_connection = str(profile.get("source_connection", "") or "").strip()
+        source_connection = self._resolve_source_connection(profile)
         if source_connection and "://" in source_connection:
             uri = source_connection
         else:
@@ -213,7 +246,7 @@ class ConnectorManager:
     def _build_couchdb_connector(self, profile: dict[str, Any]) -> CouchDBConnector:
         if not bool(self._runtime.config.get("connectors.couchdb.enabled", True)):
             raise ValidationError(message="CouchDB connector is disabled")
-        source_connection = str(profile.get("source_connection", "") or "").strip()
+        source_connection = self._resolve_source_connection(profile)
         if source_connection and "://" in source_connection:
             uri = source_connection
         else:
@@ -230,7 +263,7 @@ class ConnectorManager:
     def _build_cassandra_connector(self, profile: dict[str, Any]) -> CassandraConnector:
         if not bool(self._runtime.config.get("connectors.cassandra.enabled", True)):
             raise ValidationError(message="Cassandra connector is disabled")
-        source_connection = str(profile.get("source_connection", "") or "").strip()
+        source_connection = self._resolve_source_connection(profile)
         if source_connection and "://" in source_connection:
             connector = CassandraConnector.from_uri(
                 source_connection,
@@ -252,7 +285,7 @@ class ConnectorManager:
     def _build_elasticsearch_connector(self, profile: dict[str, Any]) -> ElasticsearchConnector:
         if not bool(self._runtime.config.get("connectors.elasticsearch.enabled", True)):
             raise ValidationError(message="Elasticsearch connector is disabled")
-        source_connection = str(profile.get("source_connection", "") or "").strip()
+        source_connection = self._resolve_source_connection(profile)
         if source_connection and "://" in source_connection:
             uri = source_connection
         else:
@@ -269,7 +302,7 @@ class ConnectorManager:
     def _build_opensearch_connector(self, profile: dict[str, Any]) -> OpenSearchConnector:
         if not bool(self._runtime.config.get("connectors.opensearch.enabled", True)):
             raise ValidationError(message="OpenSearch connector is disabled")
-        source_connection = str(profile.get("source_connection", "") or "").strip()
+        source_connection = self._resolve_source_connection(profile)
         if source_connection and "://" in source_connection:
             uri = source_connection
         else:
@@ -338,7 +371,7 @@ class ConnectorManager:
         database_path: str,
         scheme: str,
     ) -> str:
-        source_connection = str(profile.get("source_connection", "") or "").strip()
+        source_connection = self._resolve_source_connection(profile)
         if source_connection and "://" in source_connection:
             return source_connection
         default_uri = str(self._runtime.config.get(default_uri_path, "") or "").strip()
@@ -355,6 +388,16 @@ class ConnectorManager:
         if uri:
             return uri
         raise ValidationError(message=f"{source_type.title()} connector URI is not configured")
+
+    def _resolve_source_connection(self, profile: dict[str, Any]) -> str:
+        value = str(profile.get("source_connection", "") or "").strip()
+        if not value or "://" in value:
+            return value
+        try:
+            connection = self._runtime.access_control.get_source_connection(value)
+        except Exception:
+            return value
+        return str(connection.get("uri_template") or "").strip()
 
     @staticmethod
     def _enforce_tool_scope(profile: dict[str, Any], audit_action: str) -> None:

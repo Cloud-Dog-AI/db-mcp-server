@@ -60,6 +60,37 @@ class Profile:
 
 
 @dataclass(slots=True)
+class SourceConnection:
+    """Named backend connection used by access profiles."""
+
+    name: str = ""
+    source_type: str = ""
+    uri_template: str = ""
+    credentials_ref: str | None = None
+    description: str = ""
+    status: str = "not_tested"
+    last_tested_at: datetime | None = None
+    last_test_result: dict[str, Any] = field(default_factory=dict)
+    created_at: datetime = field(default_factory=utcnow)
+    updated_at: datetime = field(default_factory=utcnow)
+
+
+@dataclass(slots=True)
+class SavedQuery:
+    """Saved query-builder state for data-admin pages."""
+
+    id: int | None = None
+    user_id: str = ""
+    page_key: str = ""
+    name: str = ""
+    description: str = ""
+    payload: dict[str, Any] = field(default_factory=dict)
+    shared: bool = False
+    created_at: datetime = field(default_factory=utcnow)
+    updated_at: datetime = field(default_factory=utcnow)
+
+
+@dataclass(slots=True)
 class DbMcpUser:
     """User model persisted for profile-based access control (extends IDAMUser)."""
 
@@ -145,6 +176,33 @@ DB_WRITE_PERMISSIONS = {
     "profile.manage",
 }
 
+SOURCE_CONNECTION_TYPES = {
+    "postgres",
+    "postgresql",
+    "mysql",
+    "mariadb",
+    "sqlite",
+    "mongodb",
+    "elasticsearch",
+    "opensearch",
+    "couchdb",
+    "cassandra",
+}
+
+SOURCE_CONNECTION_STATUSES = {
+    "healthy",
+    "degraded",
+    "failing",
+    "not_tested",
+    "disabled",
+}
+
+SAVED_QUERY_PAGE_PERMISSIONS = {
+    "data-browser": "data.read",
+    "search-advanced": "data.read",
+    "schema-planner": "schema.change",
+}
+
 DEFAULT_ROLE_PERMISSIONS: dict[str, set[str]] = {
     "admin": {"*"},
     "read-write": SHARED_USER_BASELINE_PERMISSIONS | DB_READ_PERMISSIONS | DB_WRITE_PERMISSIONS,
@@ -193,9 +251,12 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, set[str]] = {
 
 
 PERMISSION_DOMAINS = {
+    "admin.read",
+    "admin.write",
     "catalog.read",
     "schema.read",
     "schema.change",
+    "schema.change.approve",
     "relationship.read",
     "relationship.change",
     "content.search",

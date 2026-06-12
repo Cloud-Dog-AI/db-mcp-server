@@ -35,7 +35,6 @@ from cloud_dog_jobs import (
     FallbackPolicy,
     FallbackPolicyManager,
     JobQueue,
-    JobStatus,
     SQLQueueBackend,
 )
 from cloud_dog_jobs.observability.audit import AuditEmitter
@@ -90,9 +89,11 @@ from src.core.audit import AuditEventService
 from src.core.access_control.service import AccessControlService
 from src.core.connectors.service import ConnectorManager
 from src.core.connectors.mongodb import MongoDBConnectorService
+from src.core.discovery import DiscoveryService
 from src.core.relationships import RelationshipService
 from src.core.schema import SchemaChangeService
 from src.core.search import DiscoverySearchService
+from src.core.test_data import TestDataSeedService
 
 
 @dataclass(slots=True)
@@ -115,11 +116,13 @@ class RuntimeContext:
     job_claim_timeout_ms: int
     access_control: AccessControlService
     connectors: ConnectorManager
+    discovery: DiscoveryService
     mongodb_connectors: MongoDBConnectorService
     relationships: RelationshipService
     audit_events: AuditEventService
     schema_changes: SchemaChangeService
     search: DiscoverySearchService
+    test_data: TestDataSeedService
     env_files: list[str]
     started_at: datetime
 
@@ -254,20 +257,25 @@ class RuntimeFactory:
             job_claim_timeout_ms=job_claim_timeout_ms,
             access_control=access_control,
             connectors=None,  # type: ignore[arg-type]
+            discovery=None,  # type: ignore[arg-type]
             mongodb_connectors=None,  # type: ignore[arg-type]
             relationships=None,  # type: ignore[arg-type]
             audit_events=None,  # type: ignore[arg-type]
             schema_changes=None,  # type: ignore[arg-type]
             search=None,  # type: ignore[arg-type]
+            test_data=None,  # type: ignore[arg-type]
             env_files=env_files,
             started_at=datetime.now(timezone.utc),
         )
         runtime.connectors = ConnectorManager(runtime)
+        access_control.bind_connector_manager(runtime.connectors)
+        runtime.discovery = DiscoveryService(runtime)
         runtime.mongodb_connectors = MongoDBConnectorService(runtime)
         runtime.relationships = RelationshipService(runtime)
         runtime.audit_events = AuditEventService(runtime)
         runtime.schema_changes = SchemaChangeService(runtime)
         runtime.search = DiscoverySearchService(runtime)
+        runtime.test_data = TestDataSeedService(runtime)
 
         # Register genuine job handlers for each discovery job type (PS-75 JQ2).
         # db-mcp uses inline execution: the service method that submits the

@@ -29,6 +29,7 @@ from src.core.access_control.schemas import (
     GroupUpsertRequest,
     MaskPreviewRequest,
     ProfileUpsertRequest,
+    ProfileScopeTestRequest,
     RevokeApiKeyRequest,
     RoleCreateRequest,
     RoleUpdateRequest,
@@ -104,6 +105,20 @@ def create_access_control_router(runtime, base_path: str) -> APIRouter:
         )
         access.delete_profile(profile_id, actor_user_id=principal.user_id, actor_roles=principal.roles)
         return success_envelope({"deleted": True, "profile_id": profile_id})
+
+    @router.post("/admin/profiles/{profile_id}/test-scope")
+    async def test_profile_scope(
+        profile_id: str,
+        payload: ProfileScopeTestRequest,
+        request: Request,
+    ) -> dict:
+        return success_envelope(
+            access.test_profile_scope(
+                request,
+                profile_id=profile_id,
+                payload=payload.model_dump(),
+            )
+        )
 
     @router.post("/profiles/{profile_id}/mask-preview")
     async def mask_preview(profile_id: str, payload: MaskPreviewRequest, request: Request) -> dict:

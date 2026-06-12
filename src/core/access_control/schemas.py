@@ -41,6 +41,99 @@ class ProfileUpsertRequest(BaseModel):
     index_policy: dict[str, Any] = Field(default_factory=dict)
 
 
+class SourceConnectionCreateRequest(BaseModel):
+    """Payload for creating a named source connection."""
+
+    name: str
+    source_type: str
+    uri_template: str
+    credentials_ref: str | None = None
+    description: str = ""
+
+
+class SourceConnectionUpdateRequest(BaseModel):
+    """Payload for updating mutable source-connection fields."""
+
+    uri_template: str
+    credentials_ref: str | None = None
+    description: str = ""
+
+
+class SourceConnectionDraftTestRequest(BaseModel):
+    """Payload for testing a source-connection draft without persistence."""
+
+    source_type: str
+    uri_template: str
+    credentials_ref: str | None = None
+    description: str = ""
+
+
+class DiscoveryNamespacesRequest(BaseModel):
+    """Payload for namespace discovery."""
+
+    profile_id: str | None = None
+    connection_name: str | None = None
+    refresh: bool = False
+    ttl_seconds: int = 600
+
+
+class DiscoveryEntitiesRequest(BaseModel):
+    """Payload for entity discovery within a namespace."""
+
+    profile_id: str
+    namespace: str
+    refresh: bool = False
+    ttl_seconds: int = 600
+
+
+class DiscoveryFieldsRequest(BaseModel):
+    """Payload for field discovery within an entity."""
+
+    profile_id: str
+    namespace: str
+    entity: str
+    refresh: bool = False
+    ttl_seconds: int = 600
+
+
+class SavedQueryCreateRequest(BaseModel):
+    """Payload for creating saved query-builder state."""
+
+    page_key: str
+    name: str
+    payload: dict[str, Any]
+    description: str = ""
+    shared: bool = False
+
+
+class SavedQueryUpdateRequest(BaseModel):
+    """Payload for updating saved query-builder state."""
+
+    name: str | None = None
+    payload: dict[str, Any] | None = None
+    description: str | None = None
+    shared: bool | None = None
+
+
+class ProfileScopeTestRequest(BaseModel):
+    """Payload for dry-running a profile's connector scope."""
+
+    profile: dict[str, Any] | None = None
+
+
+class SchemaChangeApproveRequest(BaseModel):
+    """Payload for approving a planned schema change."""
+
+    target_name: str | None = None
+
+
+class TestDataSeedRequest(BaseModel):
+    """Payload for gated test-data seeding."""
+
+    dataset_id: str
+    connection_name: str
+
+
 class UserUpsertRequest(BaseModel):
     """Payload for creating or updating a user."""
 

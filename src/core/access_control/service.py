@@ -24,6 +24,8 @@ import hashlib
 import hmac
 import re
 import secrets
+import re
+import time
 from dataclasses import asdict, dataclass
 from datetime import timedelta
 from typing import Any
@@ -61,6 +63,11 @@ from src.core.access_control.models import (
     PERMISSION_DOMAINS,
     Profile,
     ROLE_NAMES,
+    SAVED_QUERY_PAGE_PERMISSIONS,
+    SOURCE_CONNECTION_STATUSES,
+    SOURCE_CONNECTION_TYPES,
+    SavedQuery,
+    SourceConnection,
     ensure_known_permissions,
     utcnow,
 )
@@ -106,6 +113,8 @@ class PrincipalContext:
 class AccessControlService:
     """Manage users, groups, profiles, keys, and permission evaluation."""
 
+    _SOURCE_CONNECTION_NAME_RE = re.compile(r"^[a-z0-9_-]{1,100}$")
+
     def __init__(self, *, config: Any, engine: Engine, audit_logger: AuditLogger) -> None:
         self._config = config
         self._engine = engine
@@ -125,6 +134,9 @@ class AccessControlService:
             ],
         )
         self._role_session_factory = sessionmaker(bind=engine, expire_on_commit=False)
+        # W28A-871-R2: connector manager wired post-construction by the runtime;
+        # used by test_profile_scope to probe namespaces/entities for a profile.
+        self._connector_manager: Any | None = None
         configured_permissions = config.get("access_control.roles", {}) or {}
         role_permissions = {role: set(values) for role, values in DEFAULT_ROLE_PERMISSIONS.items()}
         role_permissions.update({
@@ -165,6 +177,10 @@ class AccessControlService:
         )
         self._repository.upsert_group(group)
         self._rebuild_rbac()
+
+    def bind_connector_manager(self, connector_manager: Any) -> None:
+        """Attach the connector manager after runtime construction."""
+        self._connector_manager = connector_manager
 
     def _seed_bootstrap_admin(self) -> None:
         existing_user = self._repository.get_user(self._bootstrap_user_id)
@@ -328,6 +344,400 @@ class AccessControlService:
             raise ValidationError(message=f"Unknown roles: {unknown}")
         return sorted(set(roles))
 
+    def _validate_source_connection_name(self, name: str) -> str:
+        value = str(name or "").strip()
+        if not self._SOURCE_CONNECTION_NAME_RE.fullmatch(value):
+            raise ValidationError(
+                message="Source connection name must match ^[a-z0-9_-]{1,100}$"
+            )
+        return value
+
+    def _validate_source_type(self, source_type: str) -> str:
+        value = str(source_type or "").strip().lower()
+        if value not in SOURCE_CONNECTION_TYPES:
+            raise ValidationError(message=f"Unsupported source type: {source_type}")
+        return value
+
+    def _validate_source_status(self, status: str) -> str:
+        value = str(status or "").strip().lower()
+        if value not in SOURCE_CONNECTION_STATUSES:
+            raise ValidationError(message=f"Unsupported source connection status: {status}")
+        return value
+
+    def _validate_saved_query_page_key(self, page_key: str) -> str:
+        value = str(page_key or "").strip()
+        if value not in SAVED_QUERY_PAGE_PERMISSIONS:
+            raise ValidationError(message=f"Unsupported saved query page_key: {page_key}")
+        return value
+
+    @staticmethod
+    def _validate_saved_query_name(name: str) -> str:
+        value = str(name or "").strip()
+        if not value or len(value) > 120:
+            raise ValidationError(message="Saved query name must be 1-120 characters")
+        return value
+
+    @staticmethod
+    def _validate_saved_query_payload(payload: Any) -> dict[str, Any]:
+        if not isinstance(payload, dict):
+            raise ValidationError(message="Saved query payload must be an object")
+        return dict(payload)
+
+    def _get_saved_query_record(self, query_id: int) -> SavedQuery:
+        saved_query = self._repository.get_saved_query(int(query_id))
+        if saved_query is None:
+            raise NotFoundError(message=f"Saved query not found: {query_id}")
+        return saved_query
+
+    def _build_source_connection(self, payload: dict[str, Any]) -> SourceConnection:
+        name = self._validate_source_connection_name(str(payload.get("name", "")))
+        source_type = self._validate_source_type(str(payload.get("source_type", "")))
+        uri_template = str(payload.get("uri_template", "") or "").strip()
+        if not uri_template:
+            raise ValidationError(message="Source connection uri_template is required")
+        status = self._validate_source_status(str(payload.get("status", "not_tested")))
+        last_tested_at = payload.get("last_tested_at")
+        if last_tested_at is not None:
+            last_tested_at = last_tested_at if hasattr(last_tested_at, "isoformat") else None
+        return SourceConnection(
+            name=name,
+            source_type=source_type,
+            uri_template=uri_template,
+            credentials_ref=payload.get("credentials_ref"),
+            description=str(payload.get("description", "") or ""),
+            status=status,
+            last_tested_at=last_tested_at,
+            last_test_result=dict(payload.get("last_test_result", {}) or {}),
+        )
+
+    def list_source_connections(self) -> list[dict[str, Any]]:
+        return [self._source_connection_view(item) for item in self._repository.list_source_connections()]
+
+    def get_source_connection(self, name: str) -> dict[str, Any]:
+        connection = self._repository.get_source_connection(self._validate_source_connection_name(name))
+        if connection is None:
+            raise NotFoundError(message=f"Source connection not found: {name}")
+        return self._source_connection_view(connection)
+
+    def get_discovery_cache(self, *, profile_id: str, cache_key: str) -> dict[str, Any] | None:
+        return self._repository.get_discovery_cache(profile_id=profile_id, cache_key=cache_key)
+
+    def upsert_discovery_cache(
+        self,
+        *,
+        profile_id: str,
+        cache_key: str,
+        payload: list[dict[str, Any]],
+        ttl_seconds: int,
+    ) -> dict[str, Any]:
+        return self._repository.upsert_discovery_cache(
+            profile_id=profile_id,
+            cache_key=cache_key,
+            payload=payload,
+            ttl_seconds=ttl_seconds,
+        )
+
+    def list_saved_queries(self, request: Request, *, page_key: str) -> list[dict[str, Any]]:
+        page_key = self._validate_saved_query_page_key(page_key)
+        principal = self.require_request_permission(
+            request,
+            permission=SAVED_QUERY_PAGE_PERMISSIONS[page_key],
+            audit_resource_type="saved_query",
+            audit_resource_id=f"list:{page_key}",
+        )
+        return [
+            self._saved_query_view(item)
+            for item in self._repository.list_saved_queries(
+                user_id=principal.user_id,
+                page_key=page_key,
+            )
+        ]
+
+    def get_saved_query(self, request: Request, *, query_id: int) -> dict[str, Any]:
+        current = self._get_saved_query_record(query_id)
+        principal = self.require_request_permission(
+            request,
+            permission=SAVED_QUERY_PAGE_PERMISSIONS[current.page_key],
+            audit_resource_type="saved_query",
+            audit_resource_id=str(query_id),
+        )
+        if current.user_id != principal.user_id and not current.shared:
+            raise UnauthorisedError(message=f"Saved query access denied: {query_id}")
+        return self._saved_query_view(current)
+
+    def create_saved_query(self, request: Request, payload: dict[str, Any]) -> dict[str, Any]:
+        page_key = self._validate_saved_query_page_key(str(payload.get("page_key") or ""))
+        principal = self.require_request_permission(
+            request,
+            permission=SAVED_QUERY_PAGE_PERMISSIONS[page_key],
+            audit_resource_type="saved_query",
+            audit_resource_id=f"create:{page_key}",
+        )
+        name = self._validate_saved_query_name(str(payload.get("name") or ""))
+        if self._repository.get_saved_query_by_name(
+            user_id=principal.user_id,
+            page_key=page_key,
+            name=name,
+        ):
+            raise ConflictError(message=f"Saved query already exists: {page_key}/{name}")
+        saved = self._repository.create_saved_query(
+            SavedQuery(
+                user_id=principal.user_id,
+                page_key=page_key,
+                name=name,
+                description=str(payload.get("description") or ""),
+                payload=self._validate_saved_query_payload(payload.get("payload")),
+                shared=bool(payload.get("shared", False)),
+            )
+        )
+        self._audit_crud(
+            actor_user_id=principal.user_id,
+            actor_roles=principal.roles,
+            action="create",
+            resource_type="saved_query",
+            resource_id=str(saved.id),
+            outcome="success",
+            page_key=page_key,
+        )
+        return self._saved_query_view(saved)
+
+    def update_saved_query(self, request: Request, *, query_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+        current = self._get_saved_query_record(query_id)
+        principal = self.require_request_permission(
+            request,
+            permission=SAVED_QUERY_PAGE_PERMISSIONS[current.page_key],
+            audit_resource_type="saved_query",
+            audit_resource_id=str(query_id),
+        )
+        if current.user_id != principal.user_id:
+            raise UnauthorisedError(message=f"Saved query update denied: {query_id}")
+        next_name = current.name
+        if payload.get("name") is not None:
+            next_name = self._validate_saved_query_name(str(payload.get("name") or ""))
+            same_name = self._repository.get_saved_query_by_name(
+                user_id=principal.user_id,
+                page_key=current.page_key,
+                name=next_name,
+            )
+            if same_name and same_name.id != current.id:
+                raise ConflictError(message=f"Saved query already exists: {current.page_key}/{next_name}")
+        updated = SavedQuery(
+            id=current.id,
+            user_id=current.user_id,
+            page_key=current.page_key,
+            name=next_name,
+            description=(
+                str(payload.get("description") or "")
+                if payload.get("description") is not None
+                else current.description
+            ),
+            payload=(
+                self._validate_saved_query_payload(payload.get("payload"))
+                if payload.get("payload") is not None
+                else current.payload
+            ),
+            shared=bool(payload.get("shared")) if payload.get("shared") is not None else current.shared,
+            created_at=current.created_at,
+            updated_at=utcnow(),
+        )
+        saved = self._repository.update_saved_query(updated)
+        self._audit_crud(
+            actor_user_id=principal.user_id,
+            actor_roles=principal.roles,
+            action="update",
+            resource_type="saved_query",
+            resource_id=str(saved.id),
+            outcome="success",
+            page_key=saved.page_key,
+        )
+        return self._saved_query_view(saved)
+
+    def delete_saved_query(self, request: Request, *, query_id: int) -> bool:
+        current = self._get_saved_query_record(query_id)
+        principal = self.require_request_permission(
+            request,
+            permission=SAVED_QUERY_PAGE_PERMISSIONS[current.page_key],
+            audit_resource_type="saved_query",
+            audit_resource_id=str(query_id),
+        )
+        if current.user_id != principal.user_id:
+            raise UnauthorisedError(message=f"Saved query delete denied: {query_id}")
+        deleted = self._repository.delete_saved_query(query_id)
+        if not deleted:
+            raise NotFoundError(message=f"Saved query not found: {query_id}")
+        self._audit_crud(
+            actor_user_id=principal.user_id,
+            actor_roles=principal.roles,
+            action="delete",
+            resource_type="saved_query",
+            resource_id=str(query_id),
+            outcome="success",
+            page_key=current.page_key,
+        )
+        return True
+
+    def create_source_connection(
+        self,
+        payload: dict[str, Any],
+        *,
+        actor_user_id: str | None,
+        actor_roles: list[str] | None,
+    ) -> dict[str, Any]:
+        source_connection = self._build_source_connection(payload)
+        if self._repository.get_source_connection(source_connection.name) is not None:
+            raise ConflictError(message=f"Source connection already exists: {source_connection.name}")
+        saved = self._repository.upsert_source_connection(source_connection)
+        self._audit_crud(
+            actor_user_id=actor_user_id,
+            actor_roles=actor_roles,
+            action="create",
+            resource_type="source_connection",
+            resource_id=saved.name,
+            outcome="success",
+            source_type=saved.source_type,
+        )
+        return self._source_connection_view(saved)
+
+    def update_source_connection(
+        self,
+        name: str,
+        payload: dict[str, Any],
+        *,
+        actor_user_id: str | None,
+        actor_roles: list[str] | None,
+    ) -> dict[str, Any]:
+        source_name = self._validate_source_connection_name(name)
+        current = self._repository.get_source_connection(source_name)
+        if current is None:
+            raise NotFoundError(message=f"Source connection not found: {name}")
+        uri_template = str(payload.get("uri_template", "") or "").strip()
+        if not uri_template:
+            raise ValidationError(message="Source connection uri_template is required")
+        updated = SourceConnection(
+            name=current.name,
+            source_type=current.source_type,
+            uri_template=uri_template,
+            credentials_ref=payload.get("credentials_ref"),
+            description=str(payload.get("description", "") or ""),
+            status=current.status,
+            last_tested_at=current.last_tested_at,
+            last_test_result=current.last_test_result,
+            created_at=current.created_at,
+            updated_at=utcnow(),
+        )
+        saved = self._repository.upsert_source_connection(updated)
+        self._audit_crud(
+            actor_user_id=actor_user_id,
+            actor_roles=actor_roles,
+            action="update",
+            resource_type="source_connection",
+            resource_id=saved.name,
+            outcome="success",
+            source_type=saved.source_type,
+        )
+        return self._source_connection_view(saved)
+
+    def delete_source_connection(
+        self,
+        name: str,
+        *,
+        actor_user_id: str | None,
+        actor_roles: list[str] | None,
+    ) -> bool:
+        source_name = self._validate_source_connection_name(name)
+        current = self._repository.get_source_connection(source_name)
+        if current is None:
+            raise NotFoundError(message=f"Source connection not found: {name}")
+        reference_count = self._repository.count_profiles_using_source_connection(source_name)
+        if reference_count:
+            noun = "profile" if reference_count == 1 else "profiles"
+            raise ConflictError(
+                message=(
+                    f"Cannot delete source connection {source_name}: "
+                    f"unbind {reference_count} {noun} first"
+                ),
+                details={"profiles_referencing": reference_count},
+            )
+        deleted = self._repository.delete_source_connection(source_name)
+        if not deleted:
+            raise NotFoundError(message=f"Source connection not found: {name}")
+        self._audit_crud(
+            actor_user_id=actor_user_id,
+            actor_roles=actor_roles,
+            action="delete",
+            resource_type="source_connection",
+            resource_id=source_name,
+            outcome="success",
+        )
+        return True
+
+    def test_source_connection(
+        self,
+        name: str,
+        *,
+        actor_user_id: str | None,
+        actor_roles: list[str] | None,
+    ) -> dict[str, Any]:
+        source_name = self._validate_source_connection_name(name)
+        current = self._repository.get_source_connection(source_name)
+        if current is None:
+            raise NotFoundError(message=f"Source connection not found: {name}")
+        result = self._run_source_connection_test(current)
+        current.status = "healthy" if result["ok"] else "failing"
+        current.last_tested_at = utcnow()
+        current.last_test_result = result
+        current.updated_at = utcnow()
+        saved = self._repository.upsert_source_connection(current)
+        self._audit_crud(
+            actor_user_id=actor_user_id,
+            actor_roles=actor_roles,
+            action="test",
+            resource_type="source_connection",
+            resource_id=source_name,
+            outcome="success" if result["ok"] else "failure",
+        )
+        return self._source_connection_view(saved)
+
+    def test_source_connection_draft(self, payload: dict[str, Any]) -> dict[str, Any]:
+        draft = self._build_source_connection(
+            {
+                **payload,
+                "name": "__draft__",
+            }
+        )
+        return self._run_source_connection_test(draft)
+
+    def _run_source_connection_test(self, source_connection: SourceConnection) -> dict[str, Any]:
+        started = time.perf_counter()
+        if "${" in source_connection.uri_template:
+            return {
+                "ok": False,
+                "latency_ms": 0,
+                "error": "Cannot test source connection with unresolved template placeholders",
+            }
+        if self._connector_manager is None:
+            return {
+                "ok": False,
+                "latency_ms": 0,
+                "error": "Connector manager is not initialised",
+            }
+        try:
+            capability = self._connector_manager.test_source_connection(
+                source_connection.source_type,
+                source_connection.uri_template,
+            )
+        except Exception as exc:
+            return {
+                "ok": False,
+                "latency_ms": int((time.perf_counter() - started) * 1000),
+                "error": str(exc),
+            }
+        return {
+            "ok": True,
+            "latency_ms": int((time.perf_counter() - started) * 1000),
+            "capability": capability,
+        }
+
     def list_profiles(self) -> list[dict[str, Any]]:
         return [self._profile_view(item) for item in self._repository.list_profiles()]
 
@@ -343,6 +753,74 @@ class AccessControlService:
         if profile is None:
             raise NotFoundError(message=f"Profile not found: {profile_id}")
         return self._profile_payload(profile)
+
+    def test_profile_scope(self, request: Request, *, profile_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        principal = self.require_request_permission(
+            request,
+            permission="profile.manage",
+            profile_id=profile_id,
+            audit_resource_type="profile",
+            audit_resource_id=profile_id,
+        )
+        current = self._repository.get_profile(profile_id)
+        if current is None:
+            raise NotFoundError(message=f"Profile not found: {profile_id}")
+        profile_payload = self._profile_view(current)
+        profile_payload.update(dict(payload.get("profile") or {}))
+        profile_payload["profile_id"] = profile_id
+        ensure_known_permissions(list(profile_payload.get("allowed_permissions", [])))
+        if self._connector_manager is None:
+            return {
+                "ok": False,
+                "profile_id": profile_id,
+                "error": "Connector manager is not initialised",
+            }
+        started = time.perf_counter()
+        session = None
+        try:
+            session = self._connector_manager.for_profile_payload(profile_payload)
+            namespaces = self._connector_manager.filter_namespaces(
+                session.profile,
+                session.connector.list_namespaces(),
+            )
+            entities_by_namespace: dict[str, list[dict[str, Any]]] = {}
+            for namespace_item in namespaces:
+                namespace = str(namespace_item.get("name", ""))
+                entities_by_namespace[namespace] = self._connector_manager.filter_entities(
+                    session.profile,
+                    namespace,
+                    session.connector.list_entities(namespace),
+                )
+            result = {
+                "ok": True,
+                "profile_id": profile_id,
+                "latency_ms": int((time.perf_counter() - started) * 1000),
+                "namespace_count": len(namespaces),
+                "entity_count": sum(len(items) for items in entities_by_namespace.values()),
+                "namespaces": namespaces,
+                "entities_by_namespace": entities_by_namespace,
+            }
+        except Exception as exc:
+            result = {
+                "ok": False,
+                "profile_id": profile_id,
+                "latency_ms": int((time.perf_counter() - started) * 1000),
+                "error": str(exc),
+            }
+        finally:
+            if session is not None:
+                close = getattr(session.connector, "close", None)
+                if callable(close):
+                    close()
+        self._audit_crud(
+            actor_user_id=principal.user_id,
+            actor_roles=principal.roles,
+            action="test_scope",
+            resource_type="profile",
+            resource_id=profile_id,
+            outcome="success" if result["ok"] else "failure",
+        )
+        return result
 
     def create_profile(self, payload: dict[str, Any], *, actor_user_id: str | None, actor_roles: list[str] | None) -> dict[str, Any]:
         ensure_known_permissions(list(payload.get("allowed_permissions", [])))
@@ -898,6 +1376,23 @@ class AccessControlService:
         payload = asdict(profile)
         payload["created_at"] = profile.created_at.isoformat()
         payload["updated_at"] = profile.updated_at.isoformat()
+        return payload
+
+    def _source_connection_view(self, source_connection: SourceConnection) -> dict[str, Any]:
+        payload = asdict(source_connection)
+        payload["created_at"] = source_connection.created_at.isoformat()
+        payload["updated_at"] = source_connection.updated_at.isoformat()
+        payload["last_tested_at"] = (
+            source_connection.last_tested_at.isoformat()
+            if source_connection.last_tested_at
+            else None
+        )
+        return payload
+
+    def _saved_query_view(self, saved_query: SavedQuery) -> dict[str, Any]:
+        payload = asdict(saved_query)
+        payload["created_at"] = saved_query.created_at.isoformat()
+        payload["updated_at"] = saved_query.updated_at.isoformat()
         return payload
 
     def _user_view(self, user: AccessUser) -> dict[str, Any]:
