@@ -4,6 +4,7 @@
 ./FINAL-TAG-VERIFICATION.txt: OK
 ./canonical-main-ancestry.tsv: OK
 ./external-dirty-ledger.tsv: OK
+./final-evidence-validator.txt: OK
 ./preprod-console-network-errors.json: OK
 ./preprod-deployed-identity.tsv: OK
 ./preprod-deployment-target-proof.txt: OK

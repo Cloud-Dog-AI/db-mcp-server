@@ -4,6 +4,7 @@ e54366824e3cdab3cc68de06ba0fdfbd85beb372524c0c855a75ea05d5d486eb  ./FINAL-REPORT
 b5fa48197aca060dda38c989b7ab391656eb9e5c946610a8486c75ce12bafe38  ./FINAL-TAG-VERIFICATION.txt
 4d6aa8e31bfdf8e50c928d3a4f95ca396d5da97c99b7d42c0d83877fc38048c2  ./canonical-main-ancestry.tsv
 81ef58e8325a0c1cecd00de571a802a7e9cb5d9912b9d1b97fa7caf08d190162  ./external-dirty-ledger.tsv
+717cd87ab438849031d3fbfd4cc6a465b3923c68ee3b002e61590574e17f5686  ./final-evidence-validator.txt
 f97e13ee012ca54349ea99d5a446f1504823b0c2e1f972cfc3a507587ddc61a9  ./preprod-console-network-errors.json
 fc9c37987b44e47aefd34fc195e9a6443da9c9c709498f987f332f5c61188b22  ./preprod-deployed-identity.tsv
 faf26d86fcefdc7a1a67d2b5fc012e9f7b4e76d5d551d2d825d8eb532f297a3d  ./preprod-deployment-target-proof.txt
