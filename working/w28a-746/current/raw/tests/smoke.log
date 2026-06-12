@@ -1,0 +1,21 @@
+TIER_START smoke tests/smoke 2026-06-12T14:23:13Z
+..                                                                       [100%]
+=============================== warnings summary ===============================
+tests/smoke/test_w28a746_b_method_idam.py::test_t1_flat_roles_and_secret_masking
+tests/smoke/test_w28a746_b_method_idam.py::test_t2_role_rbac_and_t3_group_membership_cascade
+  /opt/iac/Development/cloud-dog-ai/db-mcp-server/src/core/access_control/service.py:147: DeprecationWarning: RBACEngine(role_permissions=...) is deprecated; pass role_overlay=... instead. The supplied dict will be MERGED with the PS-82 §7.2 BASELINE_ROLE_PERMISSIONS (per-role union), not used as a full replacement (W28A-741: D-NO-BASELINE-1).
+    self._rbac = RBACEngine(role_permissions=self._role_permissions)
+
+tests/smoke/test_w28a746_b_method_idam.py::test_t1_flat_roles_and_secret_masking
+tests/smoke/test_w28a746_b_method_idam.py::test_t2_role_rbac_and_t3_group_membership_cascade
+tests/smoke/test_w28a746_b_method_idam.py::test_t2_role_rbac_and_t3_group_membership_cascade
+tests/smoke/test_w28a746_b_method_idam.py::test_t2_role_rbac_and_t3_group_membership_cascade
+tests/smoke/test_w28a746_b_method_idam.py::test_t2_role_rbac_and_t3_group_membership_cascade
+tests/smoke/test_w28a746_b_method_idam.py::test_t2_role_rbac_and_t3_group_membership_cascade
+tests/smoke/test_w28a746_b_method_idam.py::test_t2_role_rbac_and_t3_group_membership_cascade
+tests/smoke/test_w28a746_b_method_idam.py::test_t2_role_rbac_and_t3_group_membership_cascade
+  /opt/iac/Development/cloud-dog-ai/db-mcp-server/src/core/access_control/service.py:276: DeprecationWarning: RBACEngine(role_permissions=...) is deprecated; pass role_overlay=... instead. The supplied dict will be MERGED with the PS-82 §7.2 BASELINE_ROLE_PERMISSIONS (per-role union), not used as a full replacement (W28A-741: D-NO-BASELINE-1).
+    self._rbac = RBACEngine(role_permissions=self._role_permissions)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+TIER_END smoke rc=0 2026-06-12T14:23:16Z

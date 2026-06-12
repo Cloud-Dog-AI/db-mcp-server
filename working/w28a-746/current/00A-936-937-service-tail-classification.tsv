@@ -1,0 +1,5 @@
+item	source_audit	service	prior_status	w28a746_classification	proof
+W28A-871-R2-db-mcp-ui-dist	W28A-936	db-mcp-server	branch-only/not-live at audit time	FOLDED_LIVE	origin/main HEAD 9f1e158a includes W28A-871-R2 ancestry; live container revision label equals 9f1e158a; health and WebUI smoke captured.
+W28A-732-R5-login-contract	W28A-936/W28A-937	db-mcp-server	accepted main work	PRESERVED	First-parent history includes ee59790 W28A-732-R5 tags; live login contract proved with admin/read-only flat username-password sessions.
+W28A-937-db-mcp-ui-owner-tail	W28A-937	db-mcp-server	owner-routed residual UI sweep	ROUTED_TO_OWNER_WITH_COORDINATOR_AUTHORIZATION	W28A-937 routes residual product/UI settings work to owner lanes; W28A-746 only delivered Sequence 7 b-method, deploy, and proof.
+DB-driver-adapter-imports	W28A-936/W28A-937	db-mcp-server	adapter-layer connector imports	ACCEPTED_ADAPTER_PATTERN	Drivers are installed through cloud-dog-db extras; direct imports remain isolated in connector adapter modules, not business logic.

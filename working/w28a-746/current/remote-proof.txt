@@ -1,0 +1,7 @@
+EVIDENCE_TAG: W28A-746-EVIDENCE
+FINAL_PROOF_TAG: W28A-746-FINAL-PROOF
+
+Remote proof markers:
+- git rev-parse HEAD and git ls-remote origin refs/heads/main are captured in raw/live/main-deployed-proof.log.
+- refs/tags/W28A-746-EVIDENCE and refs/tags/W28A-746-FINAL-PROOF are created after the final evidence commit and verified by final-evidence-validator.
+- Deployed source revision label: 9f1e158a1c3e37748298aa35af950972f287eff6.

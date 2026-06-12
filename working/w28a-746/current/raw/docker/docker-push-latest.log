@@ -1,0 +1,23 @@
+DOCKER_PUSH_START image=registry.cloud-dog.net:443/cloud-dog/db-mcp-server:latest local_id=sha256:a2b8daf75122a84aa603c8f6a73df053c1e94b50a04636baff3f12603e0f9835 revision=9f1e158a1c3e37748298aa35af950972f287eff6 2026-06-12T14:45:10Z
+The push refers to repository [registry.cloud-dog.net:443/cloud-dog/db-mcp-server]
+d22fa9397d6b: Preparing
+8f4bb314185d: Preparing
+3483737238fb: Preparing
+0ae5ddc2d9d6: Preparing
+6872606a6b81: Preparing
+c529e1b25539: Preparing
+ae0096d57d7f: Preparing
+219a998c6050: Preparing
+219a998c6050: Waiting
+ae0096d57d7f: Waiting
+c529e1b25539: Waiting
+0ae5ddc2d9d6: Layer already exists
+6872606a6b81: Layer already exists
+ae0096d57d7f: Layer already exists
+c529e1b25539: Layer already exists
+219a998c6050: Layer already exists
+8f4bb314185d: Pushed
+3483737238fb: Pushed
+d22fa9397d6b: Pushed
+latest: digest: sha256:891a3318f3a8b1ed61f79d8ee7b3bd36a76e65ca4957810d8e446b3d1613e132 size: 2001
+DOCKER_PUSH_END rc=0 2026-06-12T14:45:41Z

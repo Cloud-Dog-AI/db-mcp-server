@@ -1,0 +1,14 @@
+2026-06-12T13:58:46Z
+api stopped
+web stopped
+mcp stopped
+a2a stopped
+api started (pid 3376971, port 8086)
+web started (pid 3381158, port 8087)
+mcp started (pid 3382544, port 8088)
+a2a started (pid 3383539, port 8089)
+PORT_8086_HEALTH_OK {"status":"ok","application":"db-mcp-server-api","version":"0.1.0","env_file":"tests/env-ST","checks":{"metadata_store":{"status":"ok","ok":true,"result":1},"audit_store":{"status":"ok","ok":true,"result":1},"jobs":{"status":"ok","backend":"sql"},"search":{"status":"ok","path":"data/test-st-discovery-index.db"}}}PORT_8087_HEALTH_OK {"status":"ok","application":"db-mcp-server-web","version":"0.1.0","env_file":"tests/env-ST","checks":{"metadata_store":{"status":"ok","ok":true,"result":1},"audit_store":{"status":"ok","ok":true,"result":1},"jobs":{"status":"ok","backend":"sql"},"search":{"status":"ok","path":"data/test-st-discovery-index.db"}}}PORT_8088_HEALTH_OK {"status":"ok","application":"db-mcp-server-mcp","version":"0.1.0","env_file":"tests/env-ST","checks":{"metadata_store":{"status":"ok","ok":true,"result":1},"audit_store":{"status":"ok","ok":true,"result":1},"jobs":{"status":"ok","backend":"sql"},"search":{"status":"ok","path":"data/test-st-discovery-index.db"}}}PORT_8089_HEALTH_OK {"status":"ok","application":"db-mcp-server-a2a","version":"0.1.0","env_file":"tests/env-ST","checks":{"metadata_store":{"status":"ok","ok":true,"result":1},"audit_store":{"status":"ok","ok":true,"result":1},"jobs":{"status":"ok","backend":"sql"},"search":{"status":"ok","path":"data/test-st-discovery-index.db"}}}api stopped
+web stopped
+mcp stopped
+a2a stopped
+2026-06-12T14:00:16Z

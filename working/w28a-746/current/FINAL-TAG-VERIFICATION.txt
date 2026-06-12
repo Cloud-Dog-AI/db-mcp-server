@@ -1,0 +1,11 @@
+EVIDENCE_TAG: W28A-746-EVIDENCE
+FINAL_PROOF_TAG: W28A-746-FINAL-PROOF
+Required verification markers:
+- git rev-parse HEAD
+- git ls-remote origin refs/heads/main
+- git ls-remote origin refs/tags/W28A-746-EVIDENCE
+- git ls-remote origin refs/tags/W28A-746-FINAL-PROOF
+- git rev-parse W28A-746-FINAL-PROOF
+- sha256sum -c CHECKSUMS.sha256
+- git status
+- git diff

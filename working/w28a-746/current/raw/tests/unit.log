@@ -1,0 +1,34 @@
+TIER_START unit tests/unit 2026-06-12T14:00:29Z
+........................................................................ [ 76%]
+......................                                                   [100%]
+=============================== warnings summary ===============================
+tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py: 5 warnings
+tests/unit/UT1.15_A2AServer/test_a2a_server.py: 6 warnings
+tests/unit/UT1.1_ConfigLoading/test_config_loading.py: 1 warning
+tests/unit/UT1.20_DiscoveryApi/test_discovery_api.py: 1 warning
+tests/unit/UT1.20_McpServer/test_mcp_server.py: 1 warning
+tests/unit/UT1.21_ProfileScopeAndSchemaApproval/test_profile_scope_schema_approval.py: 2 warnings
+tests/unit/UT1.22_TestDataSeed/test_test_data_seed_api.py: 4 warnings
+tests/unit/UT1.2_AuthMiddleware/test_auth_middleware.py: 6 warnings
+tests/unit/UT1.3_AccessControlService/test_access_control_service.py: 5 warnings
+tests/unit/UT1.50_UnauthAuthGate/test_unauth_auth_gate.py: 4 warnings
+tests/unit/UT1.51_AuthedNonAdminGate/test_authed_non_admin_gate.py: 4 warnings
+tests/unit/UT1.52_FlatLoginContract/test_flat_login_contract.py: 13 warnings
+  /opt/iac/Development/cloud-dog-ai/db-mcp-server/src/core/access_control/service.py:147: DeprecationWarning: RBACEngine(role_permissions=...) is deprecated; pass role_overlay=... instead. The supplied dict will be MERGED with the PS-82 §7.2 BASELINE_ROLE_PERMISSIONS (per-role union), not used as a full replacement (W28A-741: D-NO-BASELINE-1).
+    self._rbac = RBACEngine(role_permissions=self._role_permissions)
+
+tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py: 4 warnings
+tests/unit/UT1.15_A2AServer/test_a2a_server.py: 4 warnings
+tests/unit/UT1.20_DiscoveryApi/test_discovery_api.py: 9 warnings
+tests/unit/UT1.21_ProfileScopeAndSchemaApproval/test_profile_scope_schema_approval.py: 7 warnings
+tests/unit/UT1.22_TestDataSeed/test_test_data_seed_api.py: 9 warnings
+tests/unit/UT1.2_AuthMiddleware/test_auth_middleware.py: 4 warnings
+tests/unit/UT1.3_AccessControlService/test_access_control_service.py: 12 warnings
+tests/unit/UT1.50_UnauthAuthGate/test_unauth_auth_gate.py: 1 warning
+tests/unit/UT1.51_AuthedNonAdminGate/test_authed_non_admin_gate.py: 7 warnings
+tests/unit/UT1.52_FlatLoginContract/test_flat_login_contract.py: 13 warnings
+  /opt/iac/Development/cloud-dog-ai/db-mcp-server/src/core/access_control/service.py:276: DeprecationWarning: RBACEngine(role_permissions=...) is deprecated; pass role_overlay=... instead. The supplied dict will be MERGED with the PS-82 §7.2 BASELINE_ROLE_PERMISSIONS (per-role union), not used as a full replacement (W28A-741: D-NO-BASELINE-1).
+    self._rbac = RBACEngine(role_permissions=self._role_permissions)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+TIER_END unit rc=0 2026-06-12T14:00:52Z

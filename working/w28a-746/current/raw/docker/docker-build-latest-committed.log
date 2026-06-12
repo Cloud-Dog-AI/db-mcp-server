@@ -1,0 +1,434 @@
+DOCKER_BUILD_COMMITTED_START commit=9f1e158a1c3e37748298aa35af950972f287eff6 2026-06-12T14:43:15Z
+==========================================
+Docker Build: cloud-dog/db-mcp-server:latest (variant=dev, dockerfile=Dockerfile)
+==========================================
+pip.conf: dev variant, authenticated mirror access (pypi.cloud-dog.net).
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.52kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.6s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
+#3 CACHED
+
+#4 [internal] load metadata for docker.io/library/python:3.12-slim
+#4 DONE 0.0s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 398B done
+#5 DONE 0.0s
+
+#6 [stage-0 1/5] FROM docker.io/library/python:3.12-slim
+#6 DONE 0.0s
+
+#7 [stage-0 2/5] WORKDIR /app
+#7 CACHED
+
+#8 [internal] load build context
+#8 transferring context: 90.78kB 0.1s done
+#8 DONE 0.1s
+
+#9 [stage-0 3/5] RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf     apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* &&     pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir       --trusted-host pypi.cloud-dog.net       --trusted-host files.pythonhosted.org       cloud-dog-config       cloud-dog-logging       cloud-dog-api-kit==0.12.4       cloud-dog-idam>=0.4.3       cloud-dog-db       cloud-dog-jobs
+#9 0.231 Hit:1 http://deb.debian.org/debian trixie InRelease
+#9 0.231 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+#9 0.236 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+#9 0.278 Get:4 http://deb.debian.org/debian trixie/main amd64 Packages [9671 kB]
+#9 0.406 Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages [5412 B]
+#9 0.415 Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [215 kB]
+#9 1.575 Fetched 9982 kB in 1s (7155 kB/s)
+#9 1.575 Reading package lists...
+#9 2.410 Reading package lists...
+#9 3.173 Building dependency tree...
+#9 3.328 Reading state information...
+#9 3.512 The following additional packages will be installed:
+#9 3.512   libbrotli1 libcom-err2 libcurl4t64 libgnutls30t64 libgssapi-krb5-2 libidn2-0
+#9 3.512   libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libldap2 libnghttp2-14
+#9 3.513   libnghttp3-9 libp11-kit0 libpsl5t64 librtmp1 libsasl2-2 libsasl2-modules-db
+#9 3.513   libssh2-1t64 libtasn1-6 libunistring5
+#9 3.514 Suggested packages:
+#9 3.514   gnutls-bin krb5-doc krb5-user
+#9 3.514 Recommended packages:
+#9 3.514   bash-completion krb5-locales libldap-common publicsuffix libsasl2-modules
+#9 3.658 The following NEW packages will be installed:
+#9 3.658   curl libbrotli1 libcom-err2 libcurl4t64 libgnutls30t64 libgssapi-krb5-2
+#9 3.658   libidn2-0 libk5crypto3 libkeyutils1 libkrb5-3 libkrb5support0 libldap2
+#9 3.659   libnghttp2-14 libnghttp3-9 libp11-kit0 libpsl5t64 librtmp1 libsasl2-2
+#9 3.659   libsasl2-modules-db libssh2-1t64 libtasn1-6 libunistring5
+#9 3.692 0 upgraded, 22 newly installed, 0 to remove and 3 not upgraded.
+#9 3.692 Need to get 4886 kB of archives.
+#9 3.692 After this operation, 14.7 MB of additional disk space will be used.
+#9 3.692 Get:1 http://deb.debian.org/debian trixie/main amd64 libbrotli1 amd64 1.1.0-2+b7 [307 kB]
+#9 3.699 Get:2 http://deb.debian.org/debian-security trixie-security/main amd64 libkrb5support0 amd64 1.21.3-5+deb13u1 [33.1 kB]
+#9 3.700 Get:3 http://deb.debian.org/debian trixie/main amd64 libcom-err2 amd64 1.47.2-3+b11 [25.0 kB]
+#9 3.701 Get:4 http://deb.debian.org/debian-security trixie-security/main amd64 libk5crypto3 amd64 1.21.3-5+deb13u1 [81.2 kB]
+#9 3.703 Get:5 http://deb.debian.org/debian trixie/main amd64 libkeyutils1 amd64 1.6.3-6 [9456 B]
+#9 3.704 Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 libkrb5-3 amd64 1.21.3-5+deb13u1 [326 kB]
+#9 3.714 Get:7 http://deb.debian.org/debian-security trixie-security/main amd64 libgssapi-krb5-2 amd64 1.21.3-5+deb13u1 [138 kB]
+#9 3.716 Get:8 http://deb.debian.org/debian trixie/main amd64 libunistring5 amd64 1.3-2 [477 kB]
+#9 3.721 Get:9 http://deb.debian.org/debian trixie/main amd64 libidn2-0 amd64 2.3.8-2 [109 kB]
+#9 3.722 Get:10 http://deb.debian.org/debian trixie/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-9 [19.8 kB]
+#9 3.722 Get:11 http://deb.debian.org/debian trixie/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-9 [57.5 kB]
+#9 3.723 Get:12 http://deb.debian.org/debian trixie/main amd64 libldap2 amd64 2.6.10+dfsg-1 [194 kB]
+#9 3.725 Get:13 http://deb.debian.org/debian-security trixie-security/main amd64 libnghttp2-14 amd64 1.64.0-1.1+deb13u1 [76.2 kB]
+#9 3.726 Get:14 http://deb.debian.org/debian trixie/main amd64 libnghttp3-9 amd64 1.8.0-1 [67.7 kB]
+#9 3.726 Get:15 http://deb.debian.org/debian trixie/main amd64 libpsl5t64 amd64 0.21.2-1.1+b1 [57.2 kB]
+#9 3.727 Get:16 http://deb.debian.org/debian trixie/main amd64 libp11-kit0 amd64 0.25.5-3 [425 kB]
+#9 3.733 Get:17 http://deb.debian.org/debian trixie/main amd64 libtasn1-6 amd64 4.20.0-2 [49.9 kB]
+#9 3.734 Get:18 http://deb.debian.org/debian-security trixie-security/main amd64 libgnutls30t64 amd64 3.8.9-3+deb13u4 [1469 kB]
+#9 3.743 Get:19 http://deb.debian.org/debian trixie/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2+b5 [58.8 kB]
+#9 3.744 Get:20 http://deb.debian.org/debian trixie/main amd64 libssh2-1t64 amd64 1.11.1-1 [245 kB]
+#9 3.746 Get:21 http://deb.debian.org/debian trixie/main amd64 libcurl4t64 amd64 8.14.1-2+deb13u3 [391 kB]
+#9 3.750 Get:22 http://deb.debian.org/debian trixie/main amd64 curl amd64 8.14.1-2+deb13u3 [270 kB]
+#9 3.954 debconf: unable to initialize frontend: Dialog
+#9 3.954 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#9 3.954 debconf: falling back to frontend: Readline
+#9 3.954 debconf: unable to initialize frontend: Readline
+#9 3.954 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 22.)
+#9 3.954 debconf: falling back to frontend: Teletype
+#9 3.961 debconf: unable to initialize frontend: Teletype
+#9 3.961 debconf: (This frontend requires a controlling tty.)
+#9 3.961 debconf: falling back to frontend: Noninteractive
+#9 4.871 Fetched 4886 kB in 0s (61.7 MB/s)
+#9 4.904 Selecting previously unselected package libbrotli1:amd64.
+#9 4.904 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5645 files and directories currently installed.)
+#9 4.914 Preparing to unpack .../00-libbrotli1_1.1.0-2+b7_amd64.deb ...
+#9 4.920 Unpacking libbrotli1:amd64 (1.1.0-2+b7) ...
+#9 4.985 Selecting previously unselected package libkrb5support0:amd64.
+#9 4.987 Preparing to unpack .../01-libkrb5support0_1.21.3-5+deb13u1_amd64.deb ...
+#9 4.990 Unpacking libkrb5support0:amd64 (1.21.3-5+deb13u1) ...
+#9 5.029 Selecting previously unselected package libcom-err2:amd64.
+#9 5.030 Preparing to unpack .../02-libcom-err2_1.47.2-3+b11_amd64.deb ...
+#9 5.033 Unpacking libcom-err2:amd64 (1.47.2-3+b11) ...
+#9 5.068 Selecting previously unselected package libk5crypto3:amd64.
+#9 5.069 Preparing to unpack .../03-libk5crypto3_1.21.3-5+deb13u1_amd64.deb ...
+#9 5.072 Unpacking libk5crypto3:amd64 (1.21.3-5+deb13u1) ...
+#9 5.113 Selecting previously unselected package libkeyutils1:amd64.
+#9 5.115 Preparing to unpack .../04-libkeyutils1_1.6.3-6_amd64.deb ...
+#9 5.118 Unpacking libkeyutils1:amd64 (1.6.3-6) ...
+#9 5.156 Selecting previously unselected package libkrb5-3:amd64.
+#9 5.157 Preparing to unpack .../05-libkrb5-3_1.21.3-5+deb13u1_amd64.deb ...
+#9 5.160 Unpacking libkrb5-3:amd64 (1.21.3-5+deb13u1) ...
+#9 5.230 Selecting previously unselected package libgssapi-krb5-2:amd64.
+#9 5.231 Preparing to unpack .../06-libgssapi-krb5-2_1.21.3-5+deb13u1_amd64.deb ...
+#9 5.234 Unpacking libgssapi-krb5-2:amd64 (1.21.3-5+deb13u1) ...
+#9 5.278 Selecting previously unselected package libunistring5:amd64.
+#9 5.280 Preparing to unpack .../07-libunistring5_1.3-2_amd64.deb ...
+#9 5.283 Unpacking libunistring5:amd64 (1.3-2) ...
+#9 5.357 Selecting previously unselected package libidn2-0:amd64.
+#9 5.358 Preparing to unpack .../08-libidn2-0_2.3.8-2_amd64.deb ...
+#9 5.361 Unpacking libidn2-0:amd64 (2.3.8-2) ...
+#9 5.401 Selecting previously unselected package libsasl2-modules-db:amd64.
+#9 5.402 Preparing to unpack .../09-libsasl2-modules-db_2.1.28+dfsg1-9_amd64.deb ...
+#9 5.406 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-9) ...
+#9 5.440 Selecting previously unselected package libsasl2-2:amd64.
+#9 5.441 Preparing to unpack .../10-libsasl2-2_2.1.28+dfsg1-9_amd64.deb ...
+#9 5.444 Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-9) ...
+#9 5.484 Selecting previously unselected package libldap2:amd64.
+#9 5.486 Preparing to unpack .../11-libldap2_2.6.10+dfsg-1_amd64.deb ...
+#9 5.489 Unpacking libldap2:amd64 (2.6.10+dfsg-1) ...
+#9 5.538 Selecting previously unselected package libnghttp2-14:amd64.
+#9 5.539 Preparing to unpack .../12-libnghttp2-14_1.64.0-1.1+deb13u1_amd64.deb ...
+#9 5.542 Unpacking libnghttp2-14:amd64 (1.64.0-1.1+deb13u1) ...
+#9 5.580 Selecting previously unselected package libnghttp3-9:amd64.
+#9 5.582 Preparing to unpack .../13-libnghttp3-9_1.8.0-1_amd64.deb ...
+#9 5.585 Unpacking libnghttp3-9:amd64 (1.8.0-1) ...
+#9 5.631 Selecting previously unselected package libpsl5t64:amd64.
+#9 5.633 Preparing to unpack .../14-libpsl5t64_0.21.2-1.1+b1_amd64.deb ...
+#9 5.635 Unpacking libpsl5t64:amd64 (0.21.2-1.1+b1) ...
+#9 5.679 Selecting previously unselected package libp11-kit0:amd64.
+#9 5.680 Preparing to unpack .../15-libp11-kit0_0.25.5-3_amd64.deb ...
+#9 5.684 Unpacking libp11-kit0:amd64 (0.25.5-3) ...
+#9 5.746 Selecting previously unselected package libtasn1-6:amd64.
+#9 5.747 Preparing to unpack .../16-libtasn1-6_4.20.0-2_amd64.deb ...
+#9 5.751 Unpacking libtasn1-6:amd64 (4.20.0-2) ...
+#9 5.797 Selecting previously unselected package libgnutls30t64:amd64.
+#9 5.798 Preparing to unpack .../17-libgnutls30t64_3.8.9-3+deb13u4_amd64.deb ...
+#9 5.801 Unpacking libgnutls30t64:amd64 (3.8.9-3+deb13u4) ...
+#9 5.910 Selecting previously unselected package librtmp1:amd64.
+#9 5.912 Preparing to unpack .../18-librtmp1_2.4+20151223.gitfa8646d.1-2+b5_amd64.deb ...
+#9 5.915 Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b5) ...
+#9 5.964 Selecting previously unselected package libssh2-1t64:amd64.
+#9 5.966 Preparing to unpack .../19-libssh2-1t64_1.11.1-1_amd64.deb ...
+#9 5.969 Unpacking libssh2-1t64:amd64 (1.11.1-1) ...
+#9 6.019 Selecting previously unselected package libcurl4t64:amd64.
+#9 6.021 Preparing to unpack .../20-libcurl4t64_8.14.1-2+deb13u3_amd64.deb ...
+#9 6.024 Unpacking libcurl4t64:amd64 (8.14.1-2+deb13u3) ...
+#9 6.081 Selecting previously unselected package curl.
+#9 6.083 Preparing to unpack .../21-curl_8.14.1-2+deb13u3_amd64.deb ...
+#9 6.086 Unpacking curl (8.14.1-2+deb13u3) ...
+#9 6.144 Setting up libkeyutils1:amd64 (1.6.3-6) ...
+#9 6.153 Setting up libbrotli1:amd64 (1.1.0-2+b7) ...
+#9 6.165 Setting up libnghttp2-14:amd64 (1.64.0-1.1+deb13u1) ...
+#9 6.174 Setting up libcom-err2:amd64 (1.47.2-3+b11) ...
+#9 6.183 Setting up libkrb5support0:amd64 (1.21.3-5+deb13u1) ...
+#9 6.199 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg1-9) ...
+#9 6.208 Setting up libp11-kit0:amd64 (0.25.5-3) ...
+#9 6.216 Setting up libunistring5:amd64 (1.3-2) ...
+#9 6.229 Setting up libk5crypto3:amd64 (1.21.3-5+deb13u1) ...
+#9 6.240 Setting up libsasl2-2:amd64 (2.1.28+dfsg1-9) ...
+#9 6.249 Setting up libnghttp3-9:amd64 (1.8.0-1) ...
+#9 6.258 Setting up libtasn1-6:amd64 (4.20.0-2) ...
+#9 6.269 Setting up libkrb5-3:amd64 (1.21.3-5+deb13u1) ...
+#9 6.278 Setting up libssh2-1t64:amd64 (1.11.1-1) ...
+#9 6.287 Setting up libldap2:amd64 (2.6.10+dfsg-1) ...
+#9 6.296 Setting up libidn2-0:amd64 (2.3.8-2) ...
+#9 6.308 Setting up libgssapi-krb5-2:amd64 (1.21.3-5+deb13u1) ...
+#9 6.324 Setting up libgnutls30t64:amd64 (3.8.9-3+deb13u4) ...
+#9 6.333 Setting up libpsl5t64:amd64 (0.21.2-1.1+b1) ...
+#9 6.342 Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b5) ...
+#9 6.350 Setting up libcurl4t64:amd64 (8.14.1-2+deb13u3) ...
+#9 6.365 Setting up curl (8.14.1-2+deb13u3) ...
+#9 6.376 Processing triggers for libc-bin (2.41-12+deb13u3) ...
+#9 8.718 Looking in indexes: https://pypi.org/simple, https://admin:****@pypi.cloud-dog.net/simple
+#9 8.719 Requirement already satisfied: pip in /usr/local/lib/python3.12/site-packages (25.0.1)
+#9 8.960 Collecting pip
+#9 8.989   Downloading pip-26.1.2-py3-none-any.whl.metadata (4.6 kB)
+#9 9.001 Downloading pip-26.1.2-py3-none-any.whl (1.8 MB)
+#9 9.298    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 6.5 MB/s eta 0:00:00
+#9 9.328 Installing collected packages: pip
+#9 9.329   Attempting uninstall: pip
+#9 9.333     Found existing installation: pip 25.0.1
+#9 9.407     Uninstalling pip-25.0.1:
+#9 9.655       Successfully uninstalled pip-25.0.1
+#9 11.11 Successfully installed pip-26.1.2
+#9 11.11 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 29.34 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#9 DONE 29.8s
+
+#10 [stage-0 4/5] COPY . /app
+#10 DONE 0.2s
+
+#11 [stage-0 5/5] RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf       pip install --no-cache-dir       --trusted-host pypi.cloud-dog.net       --trusted-host files.pythonhosted.org       -e ".[dev]"
+#11 0.887 Looking in indexes: https://pypi.org/simple, https://admin:****@pypi.cloud-dog.net/simple
+#11 0.887 Obtaining file:///app
+#11 0.890   Installing build dependencies: started
+#11 2.608   Installing build dependencies: finished with status 'done'
+#11 2.609   Checking if build backend supports build_editable: started
+#11 2.674   Checking if build backend supports build_editable: finished with status 'done'
+#11 2.675   Getting requirements to build editable: started
+#11 2.945   Getting requirements to build editable: finished with status 'done'
+#11 2.948   Installing backend dependencies: started
+#11 3.831   Installing backend dependencies: finished with status 'done'
+#11 3.832   Preparing editable metadata (pyproject.toml): started
+#11 4.143   Preparing editable metadata (pyproject.toml): finished with status 'done'
+#11 4.153 Requirement already satisfied: alembic>=1.13.0 in /usr/local/lib/python3.12/site-packages (from db-mcp-server==0.1.1rc1) (1.18.4)
+#11 4.154 Requirement already satisfied: argon2-cffi>=23.1.0 in /usr/local/lib/python3.12/site-packages (from db-mcp-server==0.1.1rc1) (25.1.0)
+#11 4.335 Collecting cloud-dog-api-kit==0.13.0 (from db-mcp-server==0.1.1rc1)
+#11 4.414   Downloading cloud_dog_api_kit-0.13.0-py3-none-any.whl (168 kB)
+#11 4.422 Requirement already satisfied: cloud-dog-config>=0.3.1 in /usr/local/lib/python3.12/site-packages (from db-mcp-server==0.1.1rc1) (0.3.2)
+#11 4.423 Requirement already satisfied: cloud-dog-db>=0.3.0 in /usr/local/lib/python3.12/site-packages (from cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1) (0.3.0)
+#11 4.520 Collecting cloud-dog-idam<0.5,>=0.4.3 (from db-mcp-server==0.1.1rc1)
+#11 4.605   Downloading cloud_dog_idam-0.4.3-py3-none-any.whl (110 kB)
+#11 4.612 Requirement already satisfied: cloud-dog-jobs>=0.3.0 in /usr/local/lib/python3.12/site-packages (from db-mcp-server==0.1.1rc1) (0.4.1)
+#11 4.613 Requirement already satisfied: cloud-dog-logging>=0.3.3 in /usr/local/lib/python3.12/site-packages (from db-mcp-server==0.1.1rc1) (0.4.0)
+#11 4.885 Collecting cloud-dog-storage==0.1.4 (from db-mcp-server==0.1.1rc1)
+#11 4.968   Downloading cloud_dog_storage-0.1.4-py3-none-any.whl (48 kB)
+#11 4.974 Requirement already satisfied: cryptography>=42.0.0 in /usr/local/lib/python3.12/site-packages (from db-mcp-server==0.1.1rc1) (48.0.1)
+#11 4.974 Requirement already satisfied: fastapi>=0.110.0 in /usr/local/lib/python3.12/site-packages (from db-mcp-server==0.1.1rc1) (0.136.3)
+#11 4.975 Requirement already satisfied: httpx>=0.27.0 in /usr/local/lib/python3.12/site-packages (from db-mcp-server==0.1.1rc1) (0.28.1)
+#11 5.097 Collecting hvac>=2.0 (from db-mcp-server==0.1.1rc1)
+#11 5.133   Downloading hvac-2.4.0-py3-none-any.whl.metadata (3.3 kB)
+#11 5.136 Requirement already satisfied: pydantic>=2.6.0 in /usr/local/lib/python3.12/site-packages (from db-mcp-server==0.1.1rc1) (2.13.4)
+#11 5.137 Requirement already satisfied: pyjwt>=2.8.0 in /usr/local/lib/python3.12/site-packages (from db-mcp-server==0.1.1rc1) (2.13.0)
+#11 5.138 Requirement already satisfied: pyyaml>=6.0.1 in /usr/local/lib/python3.12/site-packages (from db-mcp-server==0.1.1rc1) (6.0.3)
+#11 5.139 Requirement already satisfied: redis>=5.0.0 in /usr/local/lib/python3.12/site-packages (from db-mcp-server==0.1.1rc1) (8.0.0)
+#11 5.280 Collecting uvicorn>=0.29.0 (from db-mcp-server==0.1.1rc1)
+#11 5.287   Downloading uvicorn-0.49.0-py3-none-any.whl.metadata (6.7 kB)
+#11 5.622 Collecting websockets>=12.0 (from db-mcp-server==0.1.1rc1)
+#11 5.630   Downloading websockets-16.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.8 kB)
+#11 6.005 Collecting mypy>=1.8.0 (from db-mcp-server==0.1.1rc1)
+#11 6.012   Downloading mypy-2.1.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.3 kB)
+#11 6.189 Collecting playwright>=1.44.0 (from db-mcp-server==0.1.1rc1)
+#11 6.196   Downloading playwright-1.60.0-py3-none-manylinux1_x86_64.whl.metadata (3.5 kB)
+#11 6.324 Collecting pytest-asyncio>=0.23.0 (from db-mcp-server==0.1.1rc1)
+#11 6.331   Downloading pytest_asyncio-1.4.0-py3-none-any.whl.metadata (4.1 kB)
+#11 6.445 Collecting pytest-cov>=4.1.0 (from db-mcp-server==0.1.1rc1)
+#11 6.452   Downloading pytest_cov-7.1.0-py3-none-any.whl.metadata (32 kB)
+#11 6.566 Collecting pytest-timeout>=2.3.0 (from db-mcp-server==0.1.1rc1)
+#11 6.573   Downloading pytest_timeout-2.4.0-py3-none-any.whl.metadata (20 kB)
+#11 6.734 Collecting pytest>=8.0.0 (from db-mcp-server==0.1.1rc1)
+#11 6.740   Downloading pytest-9.0.3-py3-none-any.whl.metadata (7.6 kB)
+#11 7.909 Collecting ruff>=0.3.0 (from db-mcp-server==0.1.1rc1)
+#11 7.915   Downloading ruff-0.15.17-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (26 kB)
+#11 7.924 Requirement already satisfied: starlette>=0.36 in /usr/local/lib/python3.12/site-packages (from cloud-dog-api-kit==0.13.0->db-mcp-server==0.1.1rc1) (1.3.1)
+#11 7.928 Requirement already satisfied: pyotp>=2.9 in /usr/local/lib/python3.12/site-packages (from cloud-dog-idam<0.5,>=0.4.3->db-mcp-server==0.1.1rc1) (2.9.0)
+#11 7.928 Requirement already satisfied: sqlalchemy>=2.0 in /usr/local/lib/python3.12/site-packages (from cloud-dog-idam<0.5,>=0.4.3->db-mcp-server==0.1.1rc1) (2.0.50)
+#11 7.931 Requirement already satisfied: Mako in /usr/local/lib/python3.12/site-packages (from alembic>=1.13.0->db-mcp-server==0.1.1rc1) (1.3.12)
+#11 7.932 Requirement already satisfied: typing-extensions>=4.12 in /usr/local/lib/python3.12/site-packages (from alembic>=1.13.0->db-mcp-server==0.1.1rc1) (4.15.0)
+#11 7.936 Requirement already satisfied: argon2-cffi-bindings in /usr/local/lib/python3.12/site-packages (from argon2-cffi>=23.1.0->db-mcp-server==0.1.1rc1) (25.1.0)
+#11 7.950 Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.12/site-packages (from pydantic>=2.6.0->db-mcp-server==0.1.1rc1) (0.7.0)
+#11 7.951 Requirement already satisfied: pydantic-core==2.46.4 in /usr/local/lib/python3.12/site-packages (from pydantic>=2.6.0->db-mcp-server==0.1.1rc1) (2.46.4)
+#11 7.951 Requirement already satisfied: typing-inspection>=0.4.2 in /usr/local/lib/python3.12/site-packages (from pydantic>=2.6.0->db-mcp-server==0.1.1rc1) (0.4.2)
+#11 7.956 Requirement already satisfied: greenlet>=1 in /usr/local/lib/python3.12/site-packages (from sqlalchemy>=2.0->cloud-dog-idam<0.5,>=0.4.3->db-mcp-server==0.1.1rc1) (3.5.1)
+#11 8.120 Collecting cassandra-driver<4.0,>=3.28 (from cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 8.127   Downloading cassandra_driver-3.30.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (6.8 kB)
+#11 8.519 Collecting couchbase<5.0,>=4.1 (from cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 8.527   Downloading couchbase-4.6.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (24 kB)
+#11 8.643 Collecting couchdb<2.0,>=1.2 (from cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 8.650   Downloading CouchDB-1.2-py2.py3-none-any.whl.metadata (930 bytes)
+#11 8.807 Collecting elasticsearch<9.0,>=8.0 (from cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 8.813   Downloading elasticsearch-8.19.3-py3-none-any.whl.metadata (9.1 kB)
+#11 8.934 Collecting opensearch-py<4.0,>=2.4 (from cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 8.941   Downloading opensearch_py-3.2.0-py3-none-any.whl.metadata (7.2 kB)
+#11 9.059 Collecting pgvector>=0.2 (from cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 9.066   Downloading pgvector-0.4.2-py3-none-any.whl.metadata (19 kB)
+#11 9.188 Collecting psycopg>=3.2 (from psycopg[binary]>=3.2; extra == "nosql"->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 9.194   Downloading psycopg-3.3.4-py3-none-any.whl.metadata (4.3 kB)
+#11 10.19 Collecting pymongo<5.0,>=4.6 (from cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 10.19   Downloading pymongo-4.17.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (10 kB)
+#11 10.33 Collecting requests>=2.31 (from cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 10.33   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+#11 10.44 Collecting pymysql>=1.1 (from cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 10.45   Downloading pymysql-1.2.0-py3-none-any.whl.metadata (4.3 kB)
+#11 10.55 Collecting geomet>=1.1 (from cassandra-driver<4.0,>=3.28->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 10.56   Downloading geomet-1.1.0-py3-none-any.whl.metadata (11 kB)
+#11 10.67 Collecting Deprecated>=1.3.1 (from cassandra-driver<4.0,>=3.28->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 10.67   Downloading deprecated-1.3.1-py2.py3-none-any.whl.metadata (5.9 kB)
+#11 10.79 Collecting elastic-transport<9,>=8.15.1 (from elasticsearch<9.0,>=8.0->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 10.79   Downloading elastic_transport-8.17.1-py3-none-any.whl.metadata (3.8 kB)
+#11 10.91 Collecting python-dateutil (from elasticsearch<9.0,>=8.0->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 10.92   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+#11 11.04 Collecting urllib3<3,>=1.26.2 (from elastic-transport<9,>=8.15.1->elasticsearch<9.0,>=8.0->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 11.05   Downloading urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+#11 11.06 Requirement already satisfied: certifi in /usr/local/lib/python3.12/site-packages (from elastic-transport<9,>=8.15.1->elasticsearch<9.0,>=8.0->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1) (2026.5.20)
+#11 11.17 Collecting Events (from opensearch-py<4.0,>=2.4->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 11.17   Downloading Events-0.5-py3-none-any.whl.metadata (3.9 kB)
+#11 11.27 Collecting opensearch-protobufs==1.2.0 (from opensearch-py<4.0,>=2.4->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 11.28   Downloading opensearch_protobufs-1.2.0-py3-none-any.whl.metadata (677 bytes)
+#11 11.88 Collecting protobuf>=3.25.8 (from opensearch-protobufs==1.2.0->opensearch-py<4.0,>=2.4->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 11.89   Downloading protobuf-7.35.1-cp310-abi3-manylinux2014_x86_64.whl.metadata (595 bytes)
+#11 13.67 Collecting grpcio>=1.70.0 (from opensearch-protobufs==1.2.0->opensearch-py<4.0,>=2.4->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 13.68   Downloading grpcio-1.81.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.7 kB)
+#11 13.80 Collecting dnspython<3.0.0,>=2.6.1 (from pymongo<5.0,>=4.6->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 13.81   Downloading dnspython-2.8.0-py3-none-any.whl.metadata (5.7 kB)
+#11 14.19 Collecting charset_normalizer<4,>=2 (from requests>=2.31->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 14.20   Downloading charset_normalizer-3.4.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+#11 14.20 Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.12/site-packages (from requests>=2.31->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1) (3.18)
+#11 14.22 Requirement already satisfied: cffi>=2.0.0 in /usr/local/lib/python3.12/site-packages (from cryptography>=42.0.0->db-mcp-server==0.1.1rc1) (2.0.0)
+#11 14.23 Requirement already satisfied: pycparser in /usr/local/lib/python3.12/site-packages (from cffi>=2.0.0->cryptography>=42.0.0->db-mcp-server==0.1.1rc1) (3.0)
+#11 15.04 Collecting wrapt<3,>=1.10 (from Deprecated>=1.3.1->cassandra-driver<4.0,>=3.28->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 15.05   Downloading wrapt-2.2.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (7.4 kB)
+#11 15.05 Requirement already satisfied: annotated-doc>=0.0.2 in /usr/local/lib/python3.12/site-packages (from fastapi>=0.110.0->db-mcp-server==0.1.1rc1) (0.0.4)
+#11 15.17 Collecting click (from geomet>=1.1->cassandra-driver<4.0,>=3.28->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 15.18   Downloading click-8.4.1-py3-none-any.whl.metadata (2.6 kB)
+#11 15.19 Requirement already satisfied: anyio in /usr/local/lib/python3.12/site-packages (from httpx>=0.27.0->db-mcp-server==0.1.1rc1) (4.13.0)
+#11 15.19 Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.12/site-packages (from httpx>=0.27.0->db-mcp-server==0.1.1rc1) (1.0.9)
+#11 15.19 Requirement already satisfied: h11>=0.16 in /usr/local/lib/python3.12/site-packages (from httpcore==1.*->httpx>=0.27.0->db-mcp-server==0.1.1rc1) (0.16.0)
+#11 15.29 Collecting mypy_extensions>=1.0.0 (from mypy>=1.8.0->db-mcp-server==0.1.1rc1)
+#11 15.30   Downloading mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+#11 15.40 Collecting pathspec>=1.0.0 (from mypy>=1.8.0->db-mcp-server==0.1.1rc1)
+#11 15.41   Downloading pathspec-1.1.1-py3-none-any.whl.metadata (14 kB)
+#11 15.78 Collecting librt>=0.11.0 (from mypy>=1.8.0->db-mcp-server==0.1.1rc1)
+#11 15.78   Downloading librt-0.11.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (1.3 kB)
+#11 15.92 Collecting ast-serialize<1.0.0,>=0.3.0 (from mypy>=1.8.0->db-mcp-server==0.1.1rc1)
+#11 15.93   Downloading ast_serialize-0.5.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (1.3 kB)
+#11 16.59 Collecting numpy (from pgvector>=0.2->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 16.59   Downloading numpy-2.4.6-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+#11 16.71 Collecting pyee<14,>=13 (from playwright>=1.44.0->db-mcp-server==0.1.1rc1)
+#11 16.72   Downloading pyee-13.0.1-py3-none-any.whl.metadata (3.0 kB)
+#11 17.27 Collecting psycopg-binary==3.3.4 (from psycopg[binary]>=3.2; extra == "nosql"->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 17.28   Downloading psycopg_binary-3.3.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.7 kB)
+#11 17.39 Collecting iniconfig>=1.0.1 (from pytest>=8.0.0->db-mcp-server==0.1.1rc1)
+#11 17.40   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+#11 17.52 Collecting packaging>=22 (from pytest>=8.0.0->db-mcp-server==0.1.1rc1)
+#11 17.53   Downloading packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
+#11 17.65 Collecting pluggy<2,>=1.5 (from pytest>=8.0.0->db-mcp-server==0.1.1rc1)
+#11 17.65   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+#11 17.78 Collecting pygments>=2.7.2 (from pytest>=8.0.0->db-mcp-server==0.1.1rc1)
+#11 17.78   Downloading pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+#11 19.08 Collecting coverage>=7.10.6 (from coverage[toml]>=7.10.6->pytest-cov>=4.1.0->db-mcp-server==0.1.1rc1)
+#11 19.08   Downloading coverage-7.14.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (8.6 kB)
+#11 19.14 Requirement already satisfied: MarkupSafe>=0.9.2 in /usr/local/lib/python3.12/site-packages (from Mako->alembic>=1.13.0->db-mcp-server==0.1.1rc1) (3.0.3)
+#11 19.24 Collecting six>=1.5 (from python-dateutil->elasticsearch<9.0,>=8.0->cloud-dog-db[nosql,sql]>=0.3.0->db-mcp-server==0.1.1rc1)
+#11 19.25   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+#11 19.26 Downloading cassandra_driver-3.30.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (7.6 MB)
+#11 19.36    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.6/7.6 MB 88.7 MB/s  0:00:00
+#11 19.37 Downloading couchbase-4.6.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.9 MB)
+#11 19.44    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.9/5.9 MB 84.5 MB/s  0:00:00
+#11 19.44 Downloading CouchDB-1.2-py2.py3-none-any.whl (67 kB)
+#11 19.45 Downloading elasticsearch-8.19.3-py3-none-any.whl (952 kB)
+#11 19.47    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 952.8/952.8 kB 106.1 MB/s  0:00:00
+#11 19.47 Downloading elastic_transport-8.17.1-py3-none-any.whl (64 kB)
+#11 19.48 Downloading opensearch_py-3.2.0-py3-none-any.whl (387 kB)
+#11 19.49 Downloading opensearch_protobufs-1.2.0-py3-none-any.whl (54 kB)
+#11 19.50 Downloading pymongo-4.17.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.8 MB)
+#11 19.52    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 87.1 MB/s  0:00:00
+#11 19.53 Downloading dnspython-2.8.0-py3-none-any.whl (331 kB)
+#11 19.53 Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+#11 19.54 Downloading charset_normalizer-3.4.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (216 kB)
+#11 19.55 Downloading urllib3-2.7.0-py3-none-any.whl (131 kB)
+#11 19.56 Downloading deprecated-1.3.1-py2.py3-none-any.whl (11 kB)
+#11 19.56 Downloading wrapt-2.2.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (169 kB)
+#11 19.58 Downloading geomet-1.1.0-py3-none-any.whl (31 kB)
+#11 19.58 Downloading grpcio-1.81.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (6.8 MB)
+#11 19.67    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.8/6.8 MB 85.5 MB/s  0:00:00
+#11 19.68 Downloading hvac-2.4.0-py3-none-any.whl (155 kB)
+#11 19.68 Downloading mypy-2.1.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (15.1 MB)
+#11 20.05    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 15.1/15.1 MB 42.2 MB/s  0:00:00
+#11 20.05 Downloading ast_serialize-0.5.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (1.3 MB)
+#11 20.07    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 85.1 MB/s  0:00:00
+#11 20.08 Downloading librt-0.11.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (513 kB)
+#11 20.09 Downloading mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+#11 20.10 Downloading pathspec-1.1.1-py3-none-any.whl (57 kB)
+#11 20.11 Downloading pgvector-0.4.2-py3-none-any.whl (27 kB)
+#11 20.12 Downloading playwright-1.60.0-py3-none-manylinux1_x86_64.whl (47.5 MB)
+#11 21.00    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 47.5/47.5 MB 54.1 MB/s  0:00:00
+#11 21.00 Downloading pyee-13.0.1-py3-none-any.whl (15 kB)
+#11 21.01 Downloading protobuf-7.35.1-cp310-abi3-manylinux2014_x86_64.whl (327 kB)
+#11 21.02 Downloading psycopg-3.3.4-py3-none-any.whl (213 kB)
+#11 21.03 Downloading psycopg_binary-3.3.4-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.2 MB)
+#11 21.09    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.2/5.2 MB 91.5 MB/s  0:00:00
+#11 21.10 Downloading pymysql-1.2.0-py3-none-any.whl (45 kB)
+#11 21.10 Downloading pytest-9.0.3-py3-none-any.whl (375 kB)
+#11 21.11 Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+#11 21.12 Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+#11 21.12 Downloading packaging-26.2-py3-none-any.whl (100 kB)
+#11 21.13 Downloading pygments-2.20.0-py3-none-any.whl (1.2 MB)
+#11 21.15    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 152.0 MB/s  0:00:00
+#11 21.15 Downloading pytest_asyncio-1.4.0-py3-none-any.whl (16 kB)
+#11 21.16 Downloading pytest_cov-7.1.0-py3-none-any.whl (22 kB)
+#11 21.17 Downloading coverage-7.14.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (254 kB)
+#11 21.17 Downloading pytest_timeout-2.4.0-py3-none-any.whl (14 kB)
+#11 21.18 Downloading ruff-0.15.17-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (11.6 MB)
+#11 21.32    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.6/11.6 MB 85.9 MB/s  0:00:00
+#11 21.32 Downloading uvicorn-0.49.0-py3-none-any.whl (71 kB)
+#11 21.33 Downloading click-8.4.1-py3-none-any.whl (116 kB)
+#11 21.34 Downloading websockets-16.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (184 kB)
+#11 21.34 Downloading Events-0.5-py3-none-any.whl (6.8 kB)
+#11 21.35 Downloading numpy-2.4.6-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.6 MB)
+#11 21.54    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.6/16.6 MB 86.4 MB/s  0:00:00
+#11 21.55 Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+#11 21.56 Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+#11 22.09 Building wheels for collected packages: db-mcp-server
+#11 22.09   Building editable for db-mcp-server (pyproject.toml): started
+#11 22.16   Building editable for db-mcp-server (pyproject.toml): finished with status 'done'
+#11 22.16   Created wheel for db-mcp-server: filename=db_mcp_server-0.1.1rc1-py3-none-any.whl size=3480 sha256=bf60be6132f2778d570ea2e0a8fddef5787c2b2f065e8533e2159193f287d91c
+#11 22.16   Stored in directory: /tmp/pip-ephem-wheel-cache-s2nr3nms/wheels/54/1b/b7/aa63e25c8f14f4f2ae7b04e6097bdecb770e455c5c1ee0a600
+#11 22.17 Successfully built db-mcp-server
+#11 22.36 Installing collected packages: Events, couchdb, wrapt, websockets, urllib3, six, ruff, pymysql, pygments, pyee, psycopg-binary, psycopg, protobuf, pluggy, pathspec, packaging, numpy, mypy_extensions, librt, iniconfig, grpcio, dnspython, coverage, couchbase, click, charset_normalizer, ast-serialize, uvicorn, requests, python-dateutil, pytest, pymongo, playwright, pgvector, opensearch-protobufs, mypy, geomet, elastic-transport, Deprecated, pytest-timeout, pytest-cov, pytest-asyncio, opensearch-py, hvac, elasticsearch, cloud-dog-storage, cassandra-driver, cloud-dog-idam, cloud-dog-api-kit, db-mcp-server
+#11 39.52   Attempting uninstall: cloud-dog-idam
+#11 39.52     Found existing installation: cloud-dog-idam 0.5.2
+#11 39.54     Uninstalling cloud-dog-idam-0.5.2:
+#11 39.60       Successfully uninstalled cloud-dog-idam-0.5.2
+#11 39.77   Attempting uninstall: cloud-dog-api-kit
+#11 39.78     Found existing installation: cloud-dog-api-kit 0.12.4
+#11 39.79     Uninstalling cloud-dog-api-kit-0.12.4:
+#11 39.86       Successfully uninstalled cloud-dog-api-kit-0.12.4
+#11 40.10 
+#11 40.11 Successfully installed Deprecated-1.3.1 Events-0.5 ast-serialize-0.5.0 cassandra-driver-3.30.0 charset_normalizer-3.4.7 click-8.4.1 cloud-dog-api-kit-0.13.0 cloud-dog-idam-0.4.3 cloud-dog-storage-0.1.4 couchbase-4.6.1 couchdb-1.2 coverage-7.14.1 db-mcp-server-0.1.1rc1 dnspython-2.8.0 elastic-transport-8.17.1 elasticsearch-8.19.3 geomet-1.1.0 grpcio-1.81.1 hvac-2.4.0 iniconfig-2.3.0 librt-0.11.0 mypy-2.1.0 mypy_extensions-1.1.0 numpy-2.4.6 opensearch-protobufs-1.2.0 opensearch-py-3.2.0 packaging-26.2 pathspec-1.1.1 pgvector-0.4.2 playwright-1.60.0 pluggy-1.6.0 protobuf-7.35.1 psycopg-3.3.4 psycopg-binary-3.3.4 pyee-13.0.1 pygments-2.20.0 pymongo-4.17.0 pymysql-1.2.0 pytest-9.0.3 pytest-asyncio-1.4.0 pytest-cov-7.1.0 pytest-timeout-2.4.0 python-dateutil-2.9.0.post0 requests-2.34.2 ruff-0.15.17 six-1.17.0 urllib3-2.7.0 uvicorn-0.49.0 websockets-16.0 wrapt-2.2.1
+#11 40.11 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#11 DONE 43.7s
+
+#12 exporting to image
+#12 exporting layers
+#12 exporting layers 4.1s done
+#12 writing image sha256:a2b8daf75122a84aa603c8f6a73df053c1e94b50a04636baff3f12603e0f9835 done
+#12 naming to docker.io/cloud-dog/db-mcp-server:latest done
+#12 DONE 4.2s
+Build OK: cloud-dog/db-mcp-server:latest (variant=dev)
+Tagged: registry.cloud-dog.net:443/cloud-dog/db-mcp-server:latest
+DOCKER_BUILD_COMMITTED_END rc=0 commit=9f1e158a1c3e37748298aa35af950972f287eff6 2026-06-12T14:44:34Z

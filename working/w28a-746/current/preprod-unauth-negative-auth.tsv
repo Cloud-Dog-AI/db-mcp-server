@@ -1,0 +1,4 @@
+check	result	raw_artifact
+unauth_auth_me	PASS	raw/live/live-e2e-pytest-rerun2.log
+unauth_api_profiles	PASS	raw/live/live-e2e-pytest-rerun2.log
+read_only_profile_create_denied	PASS	raw/live/live-e2e-pytest-rerun2.log
