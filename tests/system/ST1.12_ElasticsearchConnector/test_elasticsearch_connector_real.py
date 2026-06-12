@@ -53,6 +53,9 @@ def _authed_request(base_url: str, method: str, path: str, **kwargs) -> requests
     if parsed.username:
         kwargs.setdefault("auth", (parsed.username, parsed.password or ""))
     return requests.request(method, clean, **kwargs)
+@pytest.mark.ST
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_elasticsearch_adapter_against_real_runtime() -> None:

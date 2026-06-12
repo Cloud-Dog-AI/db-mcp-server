@@ -42,6 +42,9 @@ def web_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     (assets / "app.js").write_text("console.log('ok');", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
     return TestClient(create_web_app([str(PROJECT_ROOT / "tests" / "env-UT")]))
+@pytest.mark.UT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_runtime_config_is_served_for_spa_bootstrap(web_client: TestClient) -> None:
@@ -56,6 +59,9 @@ def test_runtime_config_is_served_for_spa_bootstrap(web_client: TestClient) -> N
     assert '"AUTH_MODE": "api_key"' not in response.text
     assert '"API_KEY_HEADER": "X-API-Key"' in response.text
     assert '"A2A_BASE_URL": __origin' in response.text
+@pytest.mark.UT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_history_routes_resolve_to_index_html(web_client: TestClient) -> None:
@@ -63,12 +69,18 @@ def test_history_routes_resolve_to_index_html(web_client: TestClient) -> None:
         response = web_client.get(path)
         assert response.status_code == 200
         assert "db-mcp-webui" in response.text
+@pytest.mark.UT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_dist_assets_are_served_from_ui_dist(web_client: TestClient) -> None:
     response = web_client.get("/assets/app.js")
     assert response.status_code == 200
     assert "console.log('ok');" in response.text
+@pytest.mark.UT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_cookie_authenticated_browser_proxies_inject_role_key(
@@ -123,6 +135,9 @@ def test_cookie_authenticated_browser_proxies_inject_role_key(
         assert headers["x-api-key"] == admin_key
         assert headers["authorization"] == f"Bearer {admin_key}"
         assert "db_web_session=" in headers["cookie"]
+@pytest.mark.UT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_web_surface_raises_request_timeout_budget() -> None:

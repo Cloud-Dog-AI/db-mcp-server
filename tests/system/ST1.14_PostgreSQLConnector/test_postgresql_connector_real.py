@@ -44,6 +44,9 @@ def _connector():
     )
     manager = ConnectorManager(DummyRuntime(config))
     return manager._build_postgresql_connector({"source_connection": "default"})
+@pytest.mark.ST
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_postgresql_connector_against_real_runtime() -> None:

@@ -47,6 +47,9 @@ def access_control(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> AccessCon
     config = load_runtime_config(["tests/env-UT"])
     engine = create_engine(f"sqlite:///{tmp_path / 'metadata.db'}")
     return AccessControlService(config=config, engine=engine, audit_logger=get_audit_logger())
+@pytest.mark.QT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t1_flat_roles_and_secret_masking(access_control: AccessControlService) -> None:
@@ -73,6 +76,9 @@ def test_t1_flat_roles_and_secret_masking(access_control: AccessControlService) 
 
     roles = {role["name"] for role in access_control.list_roles()}
     assert {"admin", "user", "group-admin", "restricted", "job-control", "audit-log"} <= roles
+@pytest.mark.QT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t2_role_rbac_and_t3_group_membership_cascade(access_control: AccessControlService) -> None:

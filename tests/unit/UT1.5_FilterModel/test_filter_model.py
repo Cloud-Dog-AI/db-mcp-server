@@ -25,6 +25,9 @@ from cloud_dog_api_kit.errors import ValidationError
 from src.core.filters import FilterCondition, FilterGroup, MongoDBFilterTranslator, parse_filter
 
 pytestmark = [pytest.mark.unit]
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_parse_filter_accepts_legacy_mapping_and_nested_groups() -> None:
@@ -50,6 +53,9 @@ def test_parse_filter_accepts_legacy_mapping_and_nested_groups() -> None:
     assert isinstance(nested, FilterGroup)
     assert nested.op == "and"
     assert isinstance(nested.conditions[0], FilterCondition)
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_translate_filter_to_mongodb_query() -> None:
@@ -77,6 +83,9 @@ def test_translate_filter_to_mongodb_query() -> None:
             {"$or": [{"country": "UK"}, {"country": {"$regex": "^U"}}]},
         ]
     }
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_filter_parser_rejects_invalid_input() -> None:

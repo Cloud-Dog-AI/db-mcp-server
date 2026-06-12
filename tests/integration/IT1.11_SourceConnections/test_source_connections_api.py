@@ -52,6 +52,9 @@ def _env_file(tmp_path: Path) -> Path:
 
 def _client(tmp_path: Path) -> TestClient:
     return TestClient(create_api_app([str(_env_file(tmp_path))]))
+@pytest.mark.IT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_source_connections_crud_and_referenced_delete_conflict(tmp_path: Path) -> None:

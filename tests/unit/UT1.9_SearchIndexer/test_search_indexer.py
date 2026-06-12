@@ -22,6 +22,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from src.core.search import DiscoveryIndexer, build_fts5_query, normalise_search_terms
+import pytest
 
 
 class _FakeConnector:
@@ -120,11 +121,17 @@ def _build_runtime():
         access_control=_FakeAccessControl(),
         connectors=_FakeConnectors(),
     )
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_v1_9_1_query_normalisation_and_fts_building() -> None:
     assert normalise_search_terms("Customer email fields") == ["customer", "email", "fields"]
     assert build_fts5_query("Customer email fields") == "customer* AND email* AND fields*"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_v1_9_2_sync_profile_builds_metadata_relationship_and_content_documents() -> None:

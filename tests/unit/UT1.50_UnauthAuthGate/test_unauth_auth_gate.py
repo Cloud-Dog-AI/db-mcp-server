@@ -70,6 +70,9 @@ def web_app(monkeypatch, tmp_path):
     assert str(app.state.runtime.config.get("auth.api_key", "")) == SENTINEL_SERVICE_KEY
     app.state.flat_key_dir = tmp_path / "flat_role_keys"
     return app
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_unauth_principal_denied(web_app) -> None:
@@ -77,6 +80,9 @@ def test_unauth_principal_denied(web_app) -> None:
     resp = client.get(PRINCIPAL_PATH)
     assert resp.status_code == 401, f"anon {PRINCIPAL_PATH} must be 401: {resp.status_code} {resp.text[:200]}"
     assert '"roles"' not in resp.text and '"permissions"' not in resp.text, resp.text
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_anon_proxy_request_is_keyless(web_app, monkeypatch) -> None:
@@ -103,6 +109,9 @@ def test_anon_proxy_request_is_keyless(web_app, monkeypatch) -> None:
         "injected for an unauthenticated caller"
     )
     assert captured["api_key"] != SENTINEL_SERVICE_KEY
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_forged_session_cookie_does_not_bypass(web_app) -> None:
@@ -110,6 +119,9 @@ def test_forged_session_cookie_does_not_bypass(web_app) -> None:
     client.cookies.set(_COOKIE_NAME, "forged-not-a-real-session-token")
     resp = client.get(PRINCIPAL_PATH)
     assert resp.status_code == 401, f"forged cookie must not authenticate: {resp.status_code} {resp.text[:200]}"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_auth_me_resolves_managed_api_key(web_app) -> None:

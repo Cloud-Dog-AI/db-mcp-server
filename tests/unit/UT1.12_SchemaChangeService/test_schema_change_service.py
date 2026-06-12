@@ -136,6 +136,9 @@ class FakeRuntime:
         self.connectors = FakeConnectors()
         self.search = FakeSearch()
         self.audit_logger = FakeAuditLogger()
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_schema_change_service_requires_approval_and_tracks_history() -> None:
@@ -161,6 +164,9 @@ def test_schema_change_service_requires_approval_and_tracks_history() -> None:
     history = service.history(object(), profile_id="profile-1")
     assert history["items"][0]["plan_id"] == plan["plan_id"]
     assert history["items"][0]["audit_trail"][0]["action"] == "schema.change.plan"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_schema_change_service_applies_plan_and_refreshes_index() -> None:

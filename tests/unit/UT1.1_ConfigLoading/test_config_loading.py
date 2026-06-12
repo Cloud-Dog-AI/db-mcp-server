@@ -27,6 +27,9 @@ from src.servers.web.app import create_web_app
 from tests.helpers.server_runtime import service_port
 
 pytestmark = pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_load_runtime_config_reads_ports_and_auth_key() -> None:
@@ -35,6 +38,9 @@ def test_load_runtime_config_reads_ports_and_auth_key() -> None:
     assert config.get("api_server.port") == service_port("api", "tests/env-UT", default_tier="UT")
     assert config.get("web_server.port") == service_port("web", "tests/env-UT", default_tier="UT")
     assert config.get("auth.api_key") == "test-api-key"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_runtime_config_js_exposes_web_settings() -> None:

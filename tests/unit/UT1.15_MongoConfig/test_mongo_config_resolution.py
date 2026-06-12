@@ -35,6 +35,9 @@ class DummyConfig:
 
     def get(self, path: str, default: object = None) -> object:
         return self._values.get(path, default)
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_resolve_mongodb_uri_prefers_profile_uri() -> None:
@@ -42,6 +45,9 @@ def test_resolve_mongodb_uri_prefers_profile_uri() -> None:
     config = DummyConfig({"connectors.mongodb.default_uri": "mongodb://ignored"})
     profile = {"source_connection": "mongodb://profile-uri"}
     assert resolve_mongodb_uri(config, profile) == "mongodb://profile-uri"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_resolve_mongodb_uri_uses_configured_default_uri() -> None:
@@ -49,6 +55,9 @@ def test_resolve_mongodb_uri_uses_configured_default_uri() -> None:
     config = DummyConfig({"connectors.mongodb.default_uri": "mongodb://default-uri"})
     profile = {"source_connection": "default"}
     assert resolve_mongodb_uri(config, profile) == "mongodb://default-uri"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_resolve_mongodb_uri_builds_uri_from_structured_defaults() -> None:
@@ -69,6 +78,9 @@ def test_resolve_mongodb_uri_builds_uri_from_structured_defaults() -> None:
         resolve_mongodb_uri(config, profile)
         == "mongodb://root%40example.com:p%40ss+word@mongo1.db.example.com:27017/admin?ssl=false"
     )
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_resolve_mongodb_uri_rejects_missing_settings() -> None:

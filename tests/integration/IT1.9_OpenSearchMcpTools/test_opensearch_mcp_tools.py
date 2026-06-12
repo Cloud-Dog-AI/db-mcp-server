@@ -52,6 +52,9 @@ def _wait(url: str) -> None:
             pass
         time.sleep(1)
     pytest.fail(f"Timed out waiting for {url}")
+@pytest.mark.IT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_opensearch_mcp_tools_crud_lifecycle() -> None:

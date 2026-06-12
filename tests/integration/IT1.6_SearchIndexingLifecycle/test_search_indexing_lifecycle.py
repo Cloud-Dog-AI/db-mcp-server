@@ -21,6 +21,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from tests.helpers.core_tools_runtime import (
+import pytest
     API_BASE_URL,
     call_tool,
     create_profile,
@@ -31,6 +32,9 @@ from tests.helpers.core_tools_runtime import (
     wait_for,
 )
 from tests.helpers.server_runtime import active_env_file
+@pytest.mark.IT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_v1_6_full_search_indexing_pipeline() -> None:

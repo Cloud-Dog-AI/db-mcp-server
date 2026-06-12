@@ -23,6 +23,7 @@ from types import SimpleNamespace
 
 from src.core.search import DiscoveryDocument, DiscoverySearchService
 from src.core.search.models import EntityIndexStatus, ProfileIndexStatus
+import pytest
 
 
 class _FakeJob:
@@ -54,6 +55,9 @@ def _build_runtime(tmp_path):
         job_backend=_FakeBackend(),
         access_control=SimpleNamespace(list_profiles=lambda: []),
     )
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_v1_10_1_repository_search_and_explain_match(tmp_path) -> None:
@@ -133,6 +137,9 @@ def test_v1_10_1_repository_search_and_explain_match(tmp_path) -> None:
     )
     assert any(item["field"] == "title" for item in explanation["matched_components"])
     assert any(item["field"] == "keywords" for item in explanation["matched_components"])
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_v1_10_2_index_status_includes_queue_and_entity_status(tmp_path) -> None:

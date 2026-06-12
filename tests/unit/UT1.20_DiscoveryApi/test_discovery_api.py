@@ -169,6 +169,9 @@ def _client(tmp_path: Path) -> tuple[TestClient, _FakeConnectorManager]:
     app.state.runtime.connectors = fake_connectors
     app.state.runtime.access_control.bind_connector_manager(fake_connectors)
     return TestClient(app), fake_connectors
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_discovery_routes_cache_profile_results_and_discover_connection_namespaces(tmp_path: Path) -> None:

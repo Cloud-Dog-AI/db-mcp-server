@@ -76,12 +76,18 @@ def _make_nonadmin(access: AccessControlService, username: str = "nonadmin1") ->
         actor_roles=["admin"],
     )
     return username
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_principal_for_admin_has_wildcard(access: AccessControlService) -> None:
     principal = access.principal_for_username("bootstrap-admin")
     assert principal is not None
     assert "*" in principal.permissions
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_principal_for_nonadmin_is_denied_profile_manage(access: AccessControlService) -> None:
@@ -96,11 +102,17 @@ def test_principal_for_nonadmin_is_denied_profile_manage(access: AccessControlSe
             audit_resource_type="profile",
             audit_resource_id="list",
         )
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_principal_for_unknown_user_is_none(access: AccessControlService) -> None:
     assert access.principal_for_username("ghost-user-not-real") is None
     assert access.principal_for_username("") is None
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_profile_view_masks_connection_password(access: AccessControlService) -> None:
@@ -117,6 +129,9 @@ def test_profile_view_masks_connection_password(access: AccessControlService) ->
     assert created["source_connection"] == "postgresql://dbuser:****@db2.app.vpc0:5432/app"
     listed = access.list_profiles()
     assert all("SuperSecretPw" not in str(p.get("source_connection")) for p in listed)
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_mask_connection_secret_forms() -> None:
@@ -171,12 +186,18 @@ def mw_client() -> TestClient:
         resolve_web_user=resolve_web_user,
     )
     return TestClient(app)
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_service_key_only_is_admin_unchanged(mw_client: TestClient) -> None:
     r = mw_client.get("/protected", headers={"X-API-Key": "service-key"})
     assert r.status_code == 200
     assert r.json()["permissions"] == ["*"]
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_webui_forwarded_nonadmin_is_reresolved_not_admin(mw_client: TestClient) -> None:
@@ -186,6 +207,9 @@ def test_webui_forwarded_nonadmin_is_reresolved_not_admin(mw_client: TestClient)
     )
     assert r.status_code == 200
     assert r.json()["permissions"] == ["data.read"]  # forwarded user's OWN RBAC, not "*"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_webui_forwarded_unknown_user_denied(mw_client: TestClient) -> None:
@@ -194,6 +218,9 @@ def test_webui_forwarded_unknown_user_denied(mw_client: TestClient) -> None:
         headers={"X-API-Key": "service-key", "X-Request-Source": "webui", "X-Request-User": "ghost"},
     )
     assert r.status_code == 401
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_nonadmin_key_cannot_escalate_via_webui_header(mw_client: TestClient) -> None:

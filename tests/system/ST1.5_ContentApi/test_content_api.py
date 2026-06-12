@@ -30,6 +30,9 @@ from tests.helpers.mongo_runtime import cleanup_database, ensure_real_mongodb
 from src.core.connectors.mongodb.adapter import MongoDBConnector
 
 pytestmark = [pytest.mark.system, pytest.mark.db, pytest.mark.mcp, pytest.mark.timeout(240)]
+@pytest.mark.ST
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_content_tools_apply_structured_filters_and_masks() -> None:
@@ -115,6 +118,9 @@ def test_content_tools_apply_structured_filters_and_masks() -> None:
     finally:
         stop_servers(root, env_file)
         cleanup_database(db_name)
+@pytest.mark.ST
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_content_tools_support_all_documented_filter_operators() -> None:
@@ -248,6 +254,9 @@ def test_content_tools_support_all_documented_filter_operators() -> None:
     finally:
         stop_servers(root, env_file)
         cleanup_database(db_name)
+@pytest.mark.ST
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_content_tools_round_trip_binary_fields() -> None:

@@ -31,6 +31,9 @@ ADMIN_USERNAME = os.environ.get("E2E_WEB_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("E2E_WEB_PASSWORD", "OrangeRiverTable")
 READ_ONLY_USERNAME = os.environ.get("E2E_READ_ONLY_USERNAME", "read-only")
 READ_ONLY_PASSWORD = os.environ.get("E2E_READ_ONLY_PASSWORD", "GreenRiverDesk")
+@pytest.mark.AT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_live_t0_t1_negative_auth_and_flat_login() -> None:
@@ -54,6 +57,9 @@ def test_live_t0_t1_negative_auth_and_flat_login() -> None:
 
         admin_profiles = client.get("/webapi/v1/profiles")
         assert admin_profiles.status_code == 200, admin_profiles.text[:300]
+@pytest.mark.AT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_live_t2_read_only_write_denied_and_surface_proxies() -> None:

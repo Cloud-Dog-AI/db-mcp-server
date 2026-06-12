@@ -256,6 +256,9 @@ def fake_elasticsearch(monkeypatch):
         "src.core.connectors.elasticsearch.adapter.Elasticsearch",
         FakeElasticsearch,
     )
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_adapter_capabilities_and_catalogue_calls() -> None:
@@ -267,6 +270,9 @@ def test_adapter_capabilities_and_catalogue_calls() -> None:
     assert connector.list_namespaces() == [{"name": "test-cluster", "type": "cluster"}]
     entities = connector.list_entities("test-cluster")
     assert {item["name"] for item in entities} >= {"widgets", "widgets_current"}
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_adapter_data_and_schema_operations() -> None:

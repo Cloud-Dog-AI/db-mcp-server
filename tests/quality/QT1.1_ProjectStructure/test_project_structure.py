@@ -45,6 +45,9 @@ REQUIRED_FILES = [
     "src/servers/mcp/app.py",
     "src/servers/a2a/app.py",
 ]
+@pytest.mark.QT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_required_runtime_files_exist() -> None:
@@ -52,6 +55,9 @@ def test_required_runtime_files_exist() -> None:
     root = Path(__file__).resolve().parents[3]
     missing = [path for path in REQUIRED_FILES if not (root / path).exists()]
     assert not missing, f"Missing required files: {missing}"
+@pytest.mark.QT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_required_platform_package_declarations_are_present() -> None:
@@ -79,6 +85,9 @@ def test_required_platform_package_declarations_are_present() -> None:
     }
 
     assert expected <= dependency_names
+@pytest.mark.QT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_active_source_uses_platform_logging_only() -> None:
@@ -99,6 +108,9 @@ def test_active_source_uses_platform_logging_only() -> None:
                 findings.append(f"{path.relative_to(root)} contains {pattern}")
 
     assert not findings, "Raw stdlib logging bypasses cloud_dog_logging: " + "; ".join(findings)
+@pytest.mark.QT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_w28a_118c_docs_map_packages_to_ui_and_tests() -> None:

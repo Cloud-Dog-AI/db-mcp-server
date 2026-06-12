@@ -26,6 +26,9 @@ from tests.helpers.core_tools_runtime import API_BASE_URL, MCP_BASE_URL, call_to
 from tests.helpers.server_runtime import active_env_file
 
 pytestmark = [pytest.mark.integration, pytest.mark.db, pytest.mark.mcp, pytest.mark.timeout(300)]
+@pytest.mark.IT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_full_discovery_flow_via_api_and_mcp() -> None:

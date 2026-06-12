@@ -317,6 +317,9 @@ def authenticated_page(page):
 # ===========================================================================
 # T1: Admin Login
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t1_login_page_renders(page):
@@ -338,6 +341,9 @@ def test_t1_login_page_renders(page):
         "Login page should have a Sign in button"
 
     _screenshot(page, "t1a_login_page")
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t1_login_with_credentials(authenticated_page):
@@ -361,6 +367,9 @@ def test_t1_login_with_credentials(authenticated_page):
 # ===========================================================================
 # T2: Dashboard — widgets, status cards, health indicators
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t2_dashboard_widgets(authenticated_page):
@@ -393,6 +402,9 @@ def test_t2_dashboard_widgets(authenticated_page):
 # ===========================================================================
 # T3: Database Connections — Profile CRUD
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t3_profile_crud(authenticated_page, tracker):
@@ -452,6 +464,9 @@ def test_t3_profile_crud(authenticated_page, tracker):
 # ===========================================================================
 # T4: Query Execution — Data Browser
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t4_data_browser(authenticated_page):
@@ -497,6 +512,9 @@ def test_t4_data_browser(authenticated_page):
 # ===========================================================================
 # T5: Schema Browser — Schema Change Planner
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t5_schema_browser(authenticated_page):
@@ -532,6 +550,9 @@ def test_t5_schema_browser(authenticated_page):
 # ===========================================================================
 # T6: User CRUD
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t6_user_crud(authenticated_page, tracker):
@@ -585,6 +606,9 @@ def test_t6_user_crud(authenticated_page, tracker):
 # ===========================================================================
 # T7: Group CRUD
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t7_group_crud(authenticated_page, tracker):
@@ -640,6 +664,9 @@ def test_t7_group_crud(authenticated_page, tracker):
 # ===========================================================================
 # T8: API Key CRUD
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t8_api_key_crud(authenticated_page, tracker):
@@ -710,6 +737,9 @@ def test_t8_api_key_crud(authenticated_page, tracker):
 # ===========================================================================
 # T9: RBAC — unauthenticated access denied
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t9_rbac_unauthenticated(page):
@@ -727,6 +757,9 @@ def test_t9_rbac_unauthenticated(page):
 # ===========================================================================
 # T10: Settings / Config
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t10_settings(authenticated_page):
@@ -755,6 +788,9 @@ def test_t10_settings(authenticated_page):
 # ===========================================================================
 # T11: Audit Log
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t11_audit_log(authenticated_page):
@@ -784,6 +820,9 @@ def test_t11_audit_log(authenticated_page):
 # ===========================================================================
 # T12: System Health
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t12_system_health(page):
@@ -823,6 +862,9 @@ def test_t12_system_health(page):
 # ===========================================================================
 # T13: Catalogue Browse
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t13_catalogue_browse(authenticated_page):
@@ -848,6 +890,9 @@ def test_t13_catalogue_browse(authenticated_page):
 # ===========================================================================
 # T14: Discovery Search
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t14_search(authenticated_page):
@@ -880,6 +925,9 @@ def test_t14_search(authenticated_page):
 # ===========================================================================
 # T15: Relationship Explorer
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t15_relationships(authenticated_page):
@@ -908,6 +956,9 @@ def test_t15_relationships(authenticated_page):
 # ===========================================================================
 # T16: Entity Detail
 # ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_t16_entity_detail(authenticated_page):

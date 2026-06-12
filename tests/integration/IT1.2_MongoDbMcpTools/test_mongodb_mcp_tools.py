@@ -64,6 +64,9 @@ def _resolve_mongodb_uri(env_file: Path) -> str:
             return m.group(1).strip()
     # Fallback to local test container
     return ensure_real_mongodb()
+@pytest.mark.IT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_mongodb_mcp_tools_crud_lifecycle() -> None:

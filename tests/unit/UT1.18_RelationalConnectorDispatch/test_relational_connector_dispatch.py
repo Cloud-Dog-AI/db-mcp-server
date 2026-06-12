@@ -47,6 +47,9 @@ class DummyRuntime:
     def __init__(self, config: DummyConfig, profile: dict[str, object]) -> None:
         self.config = config
         self.access_control = DummyAccessControl(profile)
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_connector_manager_supports_postgresql_source_type(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -64,6 +67,9 @@ def test_connector_manager_supports_postgresql_source_type(monkeypatch: pytest.M
 
     assert session.profile["source_type"] == "postgresql"
     assert session.connector.uri.startswith("postgresql+psycopg://db-user:db-pass@db2.db.example.com:5432/")
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_connector_manager_supports_mariadb_source_type(monkeypatch: pytest.MonkeyPatch) -> None:

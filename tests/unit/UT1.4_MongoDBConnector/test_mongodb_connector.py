@@ -166,6 +166,9 @@ def fake_mongo(monkeypatch):
     monkeypatch.setattr("src.core.connectors.mongodb.adapter.MongoClient", FakeMongoClient)
     FakeMongoClient.list_database_names_calls = 0
     MongoDBConnector._namespace_cache.clear()
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_adapter_capabilities_and_catalogue_calls() -> None:
@@ -174,6 +177,9 @@ def test_adapter_capabilities_and_catalogue_calls() -> None:
     assert connector.validate_profile()["ok"] is True
     assert connector.list_namespaces() == [{"name": "testdb", "type": "database"}]
     assert connector.list_entities("testdb") == [{"name": "widgets", "type": "collection"}]
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_adapter_caches_namespace_listing_per_uri() -> None:
@@ -182,6 +188,9 @@ def test_adapter_caches_namespace_listing_per_uri() -> None:
     assert connector.list_namespaces() == [{"name": "testdb", "type": "database"}]
     assert connector.list_namespaces() == [{"name": "testdb", "type": "database"}]
     assert FakeMongoClient.list_database_names_calls == 1
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_adapter_data_and_schema_operations() -> None:
@@ -201,6 +210,9 @@ def test_adapter_data_and_schema_operations() -> None:
     applied = connector.schema_change_apply(plan)
     assert applied["applied"] is True
     assert connector.extract_relationships("testdb", "widgets")[0]["relationship_type"] == "reference_candidate"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_adapter_plans_and_applies_entity_lifecycle() -> None:
@@ -218,6 +230,9 @@ def test_adapter_plans_and_applies_entity_lifecycle() -> None:
     assert drop_plan["before_state"]["entity_exists"] is True
     dropped = connector.schema_change_apply(drop_plan)
     assert dropped["entity_dropped"] is True
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_adapter_normalises_binary_fields_and_preserves_binary_schema_type() -> None:

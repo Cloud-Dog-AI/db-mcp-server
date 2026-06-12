@@ -53,6 +53,9 @@ def _submit(queue: JobQueue, job_type: str = "discovery.sync_profile") -> str:
 
 
 # ── Path 1: create → queue → run → succeed ──────────────────────────
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_lifecycle_queue_run_succeed(job_env):
@@ -80,6 +83,9 @@ def test_lifecycle_queue_run_succeed(job_env):
 
 
 # ── Path 2: create → queue → run → fail → retry_wait ────────────────
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_lifecycle_queue_run_fail_retry(job_env):
@@ -98,6 +104,9 @@ def test_lifecycle_queue_run_fail_retry(job_env):
 
 
 # ── Path 3: create → queue → cancel ─────────────────────────────────
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_lifecycle_queue_cancel(job_env):
@@ -116,6 +125,9 @@ def test_lifecycle_queue_cancel(job_env):
 
 
 # ── Path 4: create → queue → run → timeout ──────────────────────────
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_lifecycle_queue_run_timeout(job_env):

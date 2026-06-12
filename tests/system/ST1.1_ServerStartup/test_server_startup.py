@@ -30,6 +30,9 @@ import pytest
 from tests.helpers.server_runtime import service_base_url
 
 pytestmark = [pytest.mark.system, pytest.mark.timeout(120)]
+@pytest.mark.ST
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_all_servers_start_and_report_health() -> None:

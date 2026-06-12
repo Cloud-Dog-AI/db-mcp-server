@@ -1,3 +1,18 @@
+---
+template-id: T-TST
+template-version: 1.1
+applies-to: docs/TESTS.md
+project: db-mcp-server
+doc-last-updated: 2026-06-12T16:36:39Z
+doc-git-commit: de6c3ed78039fcf91204a0f860096008551f7018
+doc-git-branch: main
+doc-age-policy: 90d
+doc-conformance-stamp: 2026-06-12T16:36:39Z
+req-trace-version: 1.0
+total-tests: 0
+coverage-percent: 0
+---
+
 # Tests
 
 ## Service Scope
@@ -87,3 +102,10 @@ Current package classification:
 - W28A-746 adds `tests/smoke/test_w28a746_b_method_idam.py` for T0-T3 local IDAM/profile/cascade proof and `tests/e2e/test_w28a746_live_preprod_contract.py` for live API/MCP/A2A/WebUI contract proof on `dbmcpserver0`.
 - Connector-specific real-runtime overlays are published for MongoDB, CouchDB, OpenSearch, Elasticsearch, Cassandra, PostgreSQL, and MariaDB.
 - The current application test module exposes test cases `T1` through `T16`; there is no source-verified Playwright coverage yet for Jobs, API Docs, MCP Console, or A2A Console.
+
+## 2. Coverage map
+
+Mandatory 10-column schema per PS-REQ-TEST-TRACE v1.0 §4.2. The per-test catalogue below will be populated by operator-driven Instruction 4 work that binds @pytest.mark.req() decorators to specific REQ-IDs. Until then, all tests carry @pytest.mark.probe (KEEP-AS-PROBE disposition per PS-REQ-TEST-TRACE §7).
+
+| Test ID | Tier | Use case | Requirement | Surface | Scenario | Variants | Env files | Known issue | Last run commit |
+|---|---|---|---|---|---|---|---|---|---|

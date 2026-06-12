@@ -53,6 +53,9 @@ def seeded_mongodb() -> MongoClient:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_seed_counts_match_canonical_dataset(seeded_mongodb: MongoClient) -> None:
@@ -60,6 +63,9 @@ def test_seed_counts_match_canonical_dataset(seeded_mongodb: MongoClient) -> Non
     database = seeded_mongodb[db_name]
     for entity, expected_count in dataset_counts().items():
         assert database[entity].count_documents({}) == expected_count
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_cross_collection_references_resolve(seeded_mongodb: MongoClient) -> None:
@@ -86,6 +92,9 @@ def test_cross_collection_references_resolve(seeded_mongodb: MongoClient) -> Non
 
     for product in database.products.find({}, {"supplier_id": 1}):
         assert product["supplier_id"] in supplier_ids
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_field_types_and_nullability_are_preserved(seeded_mongodb: MongoClient) -> None:

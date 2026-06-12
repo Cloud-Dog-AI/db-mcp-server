@@ -59,6 +59,9 @@ def web_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 def _login(client: TestClient, username: str, password: str):
     return client.post("/auth/login", json={"username": username, "password": password})
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_runtime_config_advertises_cookie_not_api_key(web_app) -> None:
@@ -78,6 +81,9 @@ def test_runtime_config_advertises_cookie_not_api_key(web_app) -> None:
         (READ_ONLY_CREDS, "read-only"),
     ],
 )
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 def test_three_flat_roles_login_by_username_password(web_app, creds, role) -> None:
     """admin / read-write / read-only all authenticate by username+password (200)."""
     client = TestClient(web_app, raise_server_exceptions=False)
@@ -91,6 +97,9 @@ def test_three_flat_roles_login_by_username_password(web_app, creds, role) -> No
     me = client.get("/auth/me")
     assert me.status_code == 200
     assert me.json()["user"]["roles"] == [role]
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_bad_password_is_unauthorized(web_app) -> None:
@@ -98,12 +107,18 @@ def test_bad_password_is_unauthorized(web_app) -> None:
     assert _login(client, "admin", "wrong-password").status_code == 401
     assert _login(client, "read-only", "BlueRiverChair").status_code == 401
     assert _login(client, "ghost", "GreenRiverDesk").status_code == 401
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_missing_credentials_is_bad_request(web_app) -> None:
     client = TestClient(web_app, raise_server_exceptions=False)
     assert _login(client, "", "").status_code == 400
     assert _login(client, "admin", "").status_code == 400
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_read_only_write_is_forbidden(web_app) -> None:
@@ -115,6 +130,9 @@ def test_read_only_write_is_forbidden(web_app) -> None:
         resp = client.request(method, WRITE_PATH, json={"name": "x"})
         assert resp.status_code == 403, f"{method} must be 403 for read-only: {resp.status_code} {resp.text[:200]}"
         assert resp.json()["role"] == "read-only"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_read_only_can_read(web_app, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -132,6 +150,9 @@ def test_read_only_can_read(web_app, monkeypatch: pytest.MonkeyPatch) -> None:
     resp = client.get(WRITE_PATH)
     assert resp.status_code == 200, resp.text
     assert captured["method"] == "GET"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_read_write_can_write_and_forwards_role_principal(web_app, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -162,6 +183,9 @@ def test_read_write_can_write_and_forwards_role_principal(web_app, monkeypatch: 
         (READ_ONLY_CREDS, "read-only"),
     ],
 )
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 def test_mcp_proxy_forwards_session_role_key(tmp_path, monkeypatch, creds, role) -> None:
     """Each cookie session injects its OWN seeded flat role key on /webmcp so the MCP
     tier enforces per-role RBAC (it authorises by api-key role, not X-Request-User).
@@ -194,6 +218,9 @@ def test_mcp_proxy_forwards_session_role_key(tmp_path, monkeypatch, creds, role)
     assert client.get("/webmcp/tools").status_code == 200
     assert seen["x-api-key"] == seeded_key
     assert seen["x-api-key"] != "service-sentinel-key", "MCP forward must be the role key, not the service key"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_anon_write_is_unauthorized(web_app, monkeypatch: pytest.MonkeyPatch) -> None:

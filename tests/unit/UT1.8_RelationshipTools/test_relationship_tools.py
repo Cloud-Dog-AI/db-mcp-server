@@ -45,6 +45,9 @@ class _FakeRelationships:
 
     def delete(self, request, relationship_id):
         return {"deleted": True, "relationship_id": relationship_id}
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 async def test_relationship_tools_cover_crud_and_inference() -> None:

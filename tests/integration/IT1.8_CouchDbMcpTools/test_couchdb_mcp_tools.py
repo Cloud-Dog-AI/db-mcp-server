@@ -70,6 +70,9 @@ def _public_url(uri: str) -> str:
     if parsed.port:
         netloc = f"{netloc}:{parsed.port}"
     return urlunparse((parsed.scheme, netloc, parsed.path, "", "", "")).rstrip("/")
+@pytest.mark.IT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_couchdb_mcp_tools_crud_lifecycle() -> None:

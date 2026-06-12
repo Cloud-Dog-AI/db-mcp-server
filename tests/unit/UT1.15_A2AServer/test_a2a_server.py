@@ -40,6 +40,9 @@ def a2a_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
 
 def _flat_key(a2a_client: TestClient, role: str) -> str:
     return (a2a_client.flat_key_dir / f"{role}.key").read_text(encoding="utf-8").strip()  # type: ignore[attr-defined]
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_a2a_root_reports_websocket_path(a2a_client: TestClient) -> None:
@@ -49,6 +52,9 @@ def test_a2a_root_reports_websocket_path(a2a_client: TestClient) -> None:
     payload = response.json()
     assert payload["surface"] == "a2a"
     assert payload["websocket_path"] == "/a2a/ws"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_a2a_websocket_accepts_valid_api_key_and_replies_to_health(a2a_client: TestClient) -> None:
@@ -56,6 +62,9 @@ def test_a2a_websocket_accepts_valid_api_key_and_replies_to_health(a2a_client: T
     with a2a_client.websocket_connect("/a2a/ws?api_key=test-api-key") as websocket:
         websocket.send_text("health")
         assert websocket.receive_json() == {"topic": "health", "status": "ok", "surface": "a2a"}
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_a2a_websocket_proxy_alias_accepts_valid_api_key(a2a_client: TestClient) -> None:
@@ -63,6 +72,9 @@ def test_a2a_websocket_proxy_alias_accepts_valid_api_key(a2a_client: TestClient)
     with a2a_client.websocket_connect("/ws?api_key=test-api-key") as websocket:
         websocket.send_text("health")
         assert websocket.receive_json() == {"topic": "health", "status": "ok", "surface": "a2a"}
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_a2a_websocket_rejects_missing_api_key(a2a_client: TestClient) -> None:
@@ -71,6 +83,9 @@ def test_a2a_websocket_rejects_missing_api_key(a2a_client: TestClient) -> None:
         with a2a_client.websocket_connect("/a2a/ws"):
             pass
     assert exc_info.value.code == 4401
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_a2a_task_rejects_missing_api_key(a2a_client: TestClient) -> None:
@@ -78,6 +93,9 @@ def test_a2a_task_rejects_missing_api_key(a2a_client: TestClient) -> None:
     response = a2a_client.post("/a2a/tasks", json={"id": "anon", "skill_id": "health", "input": {"text": ""}})
 
     assert response.status_code == 401
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_a2a_read_only_key_is_forbidden_on_write_task(a2a_client: TestClient) -> None:

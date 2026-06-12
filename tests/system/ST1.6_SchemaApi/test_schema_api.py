@@ -28,6 +28,9 @@ from tests.helpers.core_tools_runtime import API_BASE_URL, MCP_BASE_URL, call_to
 from tests.helpers.mongo_runtime import cleanup_database, ensure_real_mongodb
 
 pytestmark = [pytest.mark.system, pytest.mark.db, pytest.mark.mcp, pytest.mark.timeout(240)]
+@pytest.mark.ST
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_schema_tools_plan_apply_history_and_refresh() -> None:

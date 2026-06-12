@@ -57,6 +57,9 @@ class _FakeConnectors:
 
     def ensure_entity_allowed(self, _profile, _namespace, _entity):
         return None
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 async def test_catalog_tools_list_and_search() -> None:

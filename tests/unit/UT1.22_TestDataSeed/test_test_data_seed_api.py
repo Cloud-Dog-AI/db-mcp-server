@@ -54,6 +54,9 @@ def _env_file(tmp_path: Path) -> Path:
 
 def _client(tmp_path: Path) -> TestClient:
     return TestClient(create_api_app([str(_env_file(tmp_path))]))
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_test_data_seed_is_forbidden_outside_allowed_runtime_profiles(
@@ -72,6 +75,9 @@ def test_test_data_seed_is_forbidden_outside_allowed_runtime_profiles(
     )
     assert response.status_code == 403, response.text
     assert "RUNTIME_PROFILE=preprod" in response.json()["error"]["message"]
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_test_data_seed_runs_sqlite_fixture_when_runtime_profile_is_allowed(
@@ -112,6 +118,9 @@ def test_test_data_seed_runs_sqlite_fixture_when_runtime_profile_is_allowed(
     with sqlite3.connect(target_db) as connection:
         assert connection.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 5
         assert connection.execute("SELECT COUNT(*) FROM orders").fetchone()[0] == 7
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_test_data_seed_rejects_unknown_dataset(
@@ -131,6 +140,9 @@ def test_test_data_seed_rejects_unknown_dataset(
     )
     assert response.status_code == 422, response.text
     assert "Unknown dataset_id" in response.json()["error"]["message"]
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_test_data_seed_rejects_unknown_connection(

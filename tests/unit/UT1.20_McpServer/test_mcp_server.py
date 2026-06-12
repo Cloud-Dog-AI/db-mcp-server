@@ -24,6 +24,9 @@ from cloud_dog_api_kit.middleware import TimeoutMiddleware
 from src.servers.mcp.app import create_mcp_app
 
 pytestmark = pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_mcp_surface_raises_request_timeout_budget() -> None:

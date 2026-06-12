@@ -45,6 +45,9 @@ def _ensure_cassandra() -> CassandraConnector:
         return connector
     except Exception as exc:
         pytest.fail(f"Cassandra not available at {CASSANDRA_HOST}:{CASSANDRA_PORT}: {exc}")
+@pytest.mark.ST
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_cassandra_adapter_against_real_runtime() -> None:

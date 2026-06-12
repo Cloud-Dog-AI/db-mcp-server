@@ -22,6 +22,7 @@ import os
 from pathlib import Path
 
 from tests.helpers.core_tools_runtime import (
+import pytest
     API_BASE_URL,
     call_tool,
     create_profile,
@@ -31,6 +32,9 @@ from tests.helpers.core_tools_runtime import (
     unique_db_name,
     wait_for,
 )
+@pytest.mark.ST
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_v1_7_search_metadata_finds_customer_email_field() -> None:

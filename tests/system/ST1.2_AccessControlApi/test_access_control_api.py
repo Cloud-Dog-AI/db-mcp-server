@@ -53,6 +53,9 @@ def _wait_for_api() -> None:
             pass
         time.sleep(1)
     pytest.fail("Timed out waiting for API health endpoint")
+@pytest.mark.ST
+@pytest.mark.mcp
+@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
 
 
 def test_access_control_api_crud_and_audit() -> None:
