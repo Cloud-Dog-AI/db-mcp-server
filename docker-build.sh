@@ -86,6 +86,9 @@ echo "=========================================="
 echo "Docker Build: ${FOLDER}/${CONTAINER}:${EFFECTIVE_TAG} (variant=${VARIANT}, dockerfile=${DOCKERFILE})"
 echo "=========================================="
 
+VCS_REF="$(git -C "${SCRIPT_DIR}" rev-parse HEAD 2>/dev/null || printf 'unknown')"
+BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
 # ── PyPI Configuration ───────────────────────────────────────────
 # Default index depends on variant:
 #   public → public PyPI (single index, no extra-index-url; PS-97 §3.3 / §4).
@@ -162,6 +165,8 @@ DOCKER_BUILDKIT=1 docker buildx build \
   --build-arg http_proxy="${http_proxy:-}" \
   --build-arg https_proxy="${https_proxy:-}" \
   --build-arg no_proxy="${no_proxy:-}" \
+  --build-arg VCS_REF="${VCS_REF}" \
+  --build-arg BUILD_DATE="${BUILD_DATE}" \
   -t "${FOLDER}/${CONTAINER}:${EFFECTIVE_TAG}" \
   "${SCRIPT_DIR}" 2>&1 | tee "${SCRIPT_DIR}/docker-build.log"
 

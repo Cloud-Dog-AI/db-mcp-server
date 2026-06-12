@@ -58,6 +58,8 @@ markers = [
   "system: ST tier",
   "integration: IT tier",
   "application: AT tier",
+  "security: security and RBAC regression checks",
+  "fast: fast local regression checks",
   "db: requires live database/search backend",
   "mcp: requires live MCP runtime",
 ]

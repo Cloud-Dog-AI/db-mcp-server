@@ -21,7 +21,6 @@
 from __future__ import annotations
 
 import json
-import os
 import sqlite3
 from dataclasses import dataclass
 from typing import Any
@@ -153,8 +152,7 @@ class TestDataSeedService:
 
     def _runtime_profile(self) -> str:
         return (
-            os.getenv("RUNTIME_PROFILE")
-            or str(self._runtime.config.get("runtime.profile", "") or "")
+            str(self._runtime.config.get("runtime.profile", "") or "")
             or str(self._runtime.config.get("runtime_profile", "") or "")
         ).strip()
 

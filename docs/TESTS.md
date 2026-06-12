@@ -84,5 +84,6 @@ Current package classification:
 ## Notes
 
 - Top-level test directories present: `application`, `fixtures`, `helpers`, `integration`, `quality`, `system`, `unit`.
+- W28A-746 adds `tests/smoke/test_w28a746_b_method_idam.py` for T0-T3 local IDAM/profile/cascade proof and `tests/e2e/test_w28a746_live_preprod_contract.py` for live API/MCP/A2A/WebUI contract proof on `dbmcpserver0`.
 - Connector-specific real-runtime overlays are published for MongoDB, CouchDB, OpenSearch, Elasticsearch, Cassandra, PostgreSQL, and MariaDB.
 - The current application test module exposes test cases `T1` through `T16`; there is no source-verified Playwright coverage yet for Jobs, API Docs, MCP Console, or A2A Console.

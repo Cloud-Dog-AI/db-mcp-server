@@ -204,6 +204,7 @@ log:
     compress: true
 
 runtime:
+  profile: "${RUNTIME_PROFILE || ''}"
   request_timeout_seconds: 120
   health_exempt_paths:
     - "/health"
