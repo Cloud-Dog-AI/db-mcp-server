@@ -21,7 +21,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from tests.helpers.core_tools_runtime import (
-import pytest
     API_BASE_URL,
     call_tool,
     create_profile,
@@ -32,6 +31,7 @@ import pytest
     wait_for,
 )
 from tests.helpers.server_runtime import active_env_file
+import pytest
 @pytest.mark.IT
 @pytest.mark.mcp
 @pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
