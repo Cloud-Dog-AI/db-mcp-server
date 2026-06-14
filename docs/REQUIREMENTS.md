@@ -379,3 +379,40 @@ Mandatory schema per PS-REQ-TEST-TRACE v1.0 §3.4. Every project covers anon-den
 | `CS-002` | read-only attempts write | `api`, `mcp` | `read-only` | `403` | (to be bound in Instruction 4 by operator) |
 | `CS-003` | Missing required param | `api` | `admin` | `422` | (to be bound in Instruction 4 by operator) |
 | `CS-004` | Wrong-role privileged op | `mcp` | `read-write` | `403` | (to be bound in Instruction 4 by operator) |
+
+
+<!-- W28C-1710b design-delta additions (2026-06-14T18:01:23Z); SHA chain in working/W28C-1710b/KNOWLEDGE-PRESERVATION-DELTA.md -->
+
+## PS-REQ-TEST-TRACE schema completion (W28C-1710b)
+
+Per the binding contract (`docs/standards/PS-REQ-TEST-TRACE.md` §2 + §3), every FR-NNN row in this file declares the following schema (default values; operator amends per row in W28C-1711):
+
+```yaml
+surface: ['api', 'mcp', 'a2a', 'webui']  # programme default for db-mcp-server
+priority: must  # default; operator amends per FR
+since: 2026-06-14  # carried forward unless older anchor known
+last-verified: 2026-06-14
+tests: []  # populated by W28C-1711 binding
+crud: N/A  # default; operator amends per FR
+```
+
+## Baseline CS-NNN rows (PS-REQ-TEST-TRACE §3.4 — added by W28C-1710b)
+
+Every project MUST have CS-NNN rows for `anon-denied`, `wrong-role-denied`, `missing-param-error` per surface. Programme baseline:
+
+| CS-NNN | Scenario | Surface | Expected | Roles |
+|---|---|---|---|---|
+| `CS-005` | anon-denied | `api` | `401` | `anon` |
+| `CS-006` | anon-denied | `mcp` | `401` | `anon` |
+| `CS-007` | anon-denied | `a2a` | `401` | `anon` |
+| `CS-008` | anon-denied | `webui` | `401` | `anon` |
+| `CS-009` | wrong-role-denied | `api` | `403` | `read-only` |
+| `CS-010` | wrong-role-denied | `mcp` | `403` | `read-only` |
+| `CS-011` | wrong-role-denied | `a2a` | `403` | `read-only` |
+| `CS-012` | wrong-role-denied | `webui` | `403` | `read-only` |
+| `CS-013` | missing-param-error | `api` | `422` | `*` |
+| `CS-014` | missing-param-error | `mcp` | `422` | `*` |
+| `CS-015` | missing-param-error | `a2a` | `422` | `*` |
+| `CS-016` | missing-param-error | `webui` | `422` | `*` |
+
+_These CS-NNN rows are pending W28C-1711 test binding. Each row binds to one or more `@pytest.mark.negative` tests with explicit expected denial code._

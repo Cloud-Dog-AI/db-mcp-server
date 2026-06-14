@@ -147,3 +147,21 @@ This document is the W28A-746 b-method traceability matrix for db-mcp. It maps r
 - The domain resource for the cascade is the db-mcp connection `Profile`.
 - Current db-mcp source has no per-profile `group_id` field; group membership affects effective permissions through `AccessControlService._rebuild_rbac()` and API keys/profile scopes enforce the profile boundary.
 - W28A-746 does not add a per-service FK or schema change. The central RBAC-binding model remains the cross-service direction from W28A-741.
+
+
+<!-- W28C-1710b design-delta additions (2026-06-14T18:01:23Z) -->
+
+## Cross-surface UC mappings (W28C-1710b)
+
+Per T-RUC v1.1 + PS-REQ-TEST-TRACE §3.5, every UC-NNN maps to one OR MORE FR-NNN across surfaces.
+
+This service's surface set: **api, mcp, a2a, webui**.
+
+Detailed UC-by-UC operator-review pass + per-FR cross-surface mapping deferred to W28C-1711. The cross-surface declarations are enabled here.
+
+```yaml
+# Schema for every UC-NNN (default; operator amends per UC):
+surfaces: ['api', 'mcp', 'a2a', 'webui']
+roles: [admin, read-write, read-only, anon]
+FR-mapping: []  # populated by W28C-1711
+```
