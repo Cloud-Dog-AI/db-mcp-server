@@ -78,7 +78,7 @@ def _make_nonadmin(access: AccessControlService, username: str = "nonadmin1") ->
     return username
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("R2")
 
 
 def test_principal_for_admin_has_wildcard(access: AccessControlService) -> None:
@@ -87,7 +87,7 @@ def test_principal_for_admin_has_wildcard(access: AccessControlService) -> None:
     assert "*" in principal.permissions
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("R2")
 
 
 def test_principal_for_nonadmin_is_denied_profile_manage(access: AccessControlService) -> None:
@@ -104,7 +104,7 @@ def test_principal_for_nonadmin_is_denied_profile_manage(access: AccessControlSe
         )
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("R2")
 
 
 def test_principal_for_unknown_user_is_none(access: AccessControlService) -> None:
@@ -112,7 +112,7 @@ def test_principal_for_unknown_user_is_none(access: AccessControlService) -> Non
     assert access.principal_for_username("") is None
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("R2")
 
 
 def test_profile_view_masks_connection_password(access: AccessControlService) -> None:
@@ -131,7 +131,7 @@ def test_profile_view_masks_connection_password(access: AccessControlService) ->
     assert all("SuperSecretPw" not in str(p.get("source_connection")) for p in listed)
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("R2")
 
 
 def test_mask_connection_secret_forms() -> None:
@@ -188,7 +188,7 @@ def mw_client() -> TestClient:
     return TestClient(app)
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("R2")
 
 
 def test_service_key_only_is_admin_unchanged(mw_client: TestClient) -> None:
@@ -197,7 +197,7 @@ def test_service_key_only_is_admin_unchanged(mw_client: TestClient) -> None:
     assert r.json()["permissions"] == ["*"]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("R2")
 
 
 def test_webui_forwarded_nonadmin_is_reresolved_not_admin(mw_client: TestClient) -> None:
@@ -209,7 +209,7 @@ def test_webui_forwarded_nonadmin_is_reresolved_not_admin(mw_client: TestClient)
     assert r.json()["permissions"] == ["data.read"]  # forwarded user's OWN RBAC, not "*"
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("R2")
 
 
 def test_webui_forwarded_unknown_user_denied(mw_client: TestClient) -> None:
@@ -220,7 +220,7 @@ def test_webui_forwarded_unknown_user_denied(mw_client: TestClient) -> None:
     assert r.status_code == 401
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("R2")
 
 
 def test_nonadmin_key_cannot_escalate_via_webui_header(mw_client: TestClient) -> None:
