@@ -72,7 +72,7 @@ def web_app(monkeypatch, tmp_path):
     return app
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("R2")
+@pytest.mark.req("FR-001")
 
 
 def test_unauth_principal_denied(web_app) -> None:
@@ -82,7 +82,7 @@ def test_unauth_principal_denied(web_app) -> None:
     assert '"roles"' not in resp.text and '"permissions"' not in resp.text, resp.text
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("R2")
+@pytest.mark.req("FR-001")
 
 
 def test_anon_proxy_request_is_keyless(web_app, monkeypatch) -> None:
@@ -111,7 +111,7 @@ def test_anon_proxy_request_is_keyless(web_app, monkeypatch) -> None:
     assert captured["api_key"] != SENTINEL_SERVICE_KEY
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("R2")
+@pytest.mark.req("FR-001")
 
 
 def test_forged_session_cookie_does_not_bypass(web_app) -> None:
@@ -121,7 +121,7 @@ def test_forged_session_cookie_does_not_bypass(web_app) -> None:
     assert resp.status_code == 401, f"forged cookie must not authenticate: {resp.status_code} {resp.text[:200]}"
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("R2")
+@pytest.mark.req("FR-001")
 
 
 def test_auth_me_resolves_managed_api_key(web_app) -> None:

@@ -37,7 +37,7 @@ class DummyConfig:
         return self._values.get(path, default)
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_resolve_mongodb_uri_prefers_profile_uri() -> None:
@@ -47,7 +47,7 @@ def test_resolve_mongodb_uri_prefers_profile_uri() -> None:
     assert resolve_mongodb_uri(config, profile) == "mongodb://profile-uri"
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_resolve_mongodb_uri_uses_configured_default_uri() -> None:
@@ -57,7 +57,7 @@ def test_resolve_mongodb_uri_uses_configured_default_uri() -> None:
     assert resolve_mongodb_uri(config, profile) == "mongodb://default-uri"
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_resolve_mongodb_uri_builds_uri_from_structured_defaults() -> None:
@@ -80,7 +80,7 @@ def test_resolve_mongodb_uri_builds_uri_from_structured_defaults() -> None:
     )
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_resolve_mongodb_uri_rejects_missing_settings() -> None:

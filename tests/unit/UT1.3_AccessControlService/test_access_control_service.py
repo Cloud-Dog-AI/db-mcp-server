@@ -52,7 +52,7 @@ def _demo_key(tmp_path: Path, role: str) -> str:
     return (tmp_path / "flat_role_keys" / f"{role}.key").read_text(encoding="utf-8").strip()
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_profile_masking_enforces_exclusions_and_masks(access_control: AccessControlService) -> None:
@@ -78,7 +78,7 @@ def test_profile_masking_enforces_exclusions_and_masks(access_control: AccessCon
     assert masked == {"salary": "***MASKED***", "department": "ops"}
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_internal_profile_lookup_preserves_connection_secret(access_control: AccessControlService) -> None:
@@ -101,7 +101,7 @@ def test_internal_profile_lookup_preserves_connection_secret(access_control: Acc
     assert "mongo-test-p4ssw0rd" in internal["source_connection"]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_verify_api_key_applies_role_permissions_and_key_scopes(access_control: AccessControlService) -> None:
@@ -145,7 +145,7 @@ def test_verify_api_key_applies_role_permissions_and_key_scopes(access_control: 
     assert principal.profile_ids == [profile["profile_id"]]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_group_role_assignments_contribute_to_effective_permissions(access_control: AccessControlService) -> None:
@@ -175,7 +175,7 @@ def test_group_role_assignments_contribute_to_effective_permissions(access_contr
     assert "schema.change" in updated_user["effective_permissions"]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_flat_demo_keys_resolve_to_three_flat_roles(access_control: AccessControlService, tmp_path: Path) -> None:

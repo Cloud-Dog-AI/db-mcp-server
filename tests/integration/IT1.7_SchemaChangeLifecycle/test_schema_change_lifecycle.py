@@ -31,7 +31,7 @@ from tests.helpers.server_runtime import active_env_file
 pytestmark = [pytest.mark.integration, pytest.mark.timeout(240)]
 @pytest.mark.IT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-009")
 
 
 def test_v1_7_schema_change_plan_approve_apply_audit_and_refresh() -> None:

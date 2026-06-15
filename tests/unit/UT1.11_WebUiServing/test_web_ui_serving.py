@@ -44,7 +44,7 @@ def web_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     return TestClient(create_web_app([str(PROJECT_ROOT / "tests" / "env-UT")]))
 @pytest.mark.UT
 @pytest.mark.webui
-@pytest.mark.req("R5")
+@pytest.mark.req("FR-002")
 
 
 def test_runtime_config_is_served_for_spa_bootstrap(web_client: TestClient) -> None:
@@ -61,7 +61,7 @@ def test_runtime_config_is_served_for_spa_bootstrap(web_client: TestClient) -> N
     assert '"A2A_BASE_URL": __origin' in response.text
 @pytest.mark.UT
 @pytest.mark.webui
-@pytest.mark.req("R5")
+@pytest.mark.req("FR-002")
 
 
 def test_history_routes_resolve_to_index_html(web_client: TestClient) -> None:
@@ -71,7 +71,7 @@ def test_history_routes_resolve_to_index_html(web_client: TestClient) -> None:
         assert "db-mcp-webui" in response.text
 @pytest.mark.UT
 @pytest.mark.webui
-@pytest.mark.req("R5")
+@pytest.mark.req("FR-002")
 
 
 def test_dist_assets_are_served_from_ui_dist(web_client: TestClient) -> None:
@@ -80,7 +80,7 @@ def test_dist_assets_are_served_from_ui_dist(web_client: TestClient) -> None:
     assert "console.log('ok');" in response.text
 @pytest.mark.UT
 @pytest.mark.webui
-@pytest.mark.req("R5")
+@pytest.mark.req("FR-002")
 
 
 def test_cookie_authenticated_browser_proxies_inject_role_key(
@@ -137,7 +137,7 @@ def test_cookie_authenticated_browser_proxies_inject_role_key(
         assert "db_web_session=" in headers["cookie"]
 @pytest.mark.UT
 @pytest.mark.webui
-@pytest.mark.req("R5")
+@pytest.mark.req("FR-002")
 
 
 def test_web_surface_raises_request_timeout_budget() -> None:

@@ -31,7 +31,7 @@ from tests.helpers.server_runtime import resolved_api_key, service_base_url
 pytestmark = [pytest.mark.system, pytest.mark.timeout(180)]
 @pytest.mark.ST
 @pytest.mark.webui
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-006")
 
 
 def test_web_server_serves_spa_runtime_config_and_api_proxy() -> None:

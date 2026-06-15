@@ -34,7 +34,7 @@ from tests.helpers.core_tools_runtime import (
 import pytest
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-006")
 
 
 def test_v1_7_search_metadata_finds_customer_email_field() -> None:

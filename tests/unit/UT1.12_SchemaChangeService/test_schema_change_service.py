@@ -138,7 +138,7 @@ class FakeRuntime:
         self.audit_logger = FakeAuditLogger()
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_schema_change_service_requires_approval_and_tracks_history() -> None:
@@ -166,7 +166,7 @@ def test_schema_change_service_requires_approval_and_tracks_history() -> None:
     assert history["items"][0]["audit_trail"][0]["action"] == "schema.change.plan"
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_schema_change_service_applies_plan_and_refreshes_index() -> None:

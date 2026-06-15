@@ -55,8 +55,13 @@ def _env_file(tmp_path: Path) -> Path:
 def _client(tmp_path: Path) -> TestClient:
     return TestClient(create_api_app([str(_env_file(tmp_path))]))
 @pytest.mark.UT
+@pytest.mark.req("CS-015")  # W28C-1711-R3.5 binding
+@pytest.mark.req("CS-014")  # W28C-1711-R3.5 binding
+@pytest.mark.req("CS-013")  # W28C-1711-R3.5 binding
+@pytest.mark.req("CS-011")  # W28C-1711-R3.5 binding
+@pytest.mark.req("CS-010")  # W28C-1711-R3.5 binding
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("CS-002")
 
 
 def test_test_data_seed_is_forbidden_outside_allowed_runtime_profiles(
@@ -77,7 +82,7 @@ def test_test_data_seed_is_forbidden_outside_allowed_runtime_profiles(
     assert "RUNTIME_PROFILE=preprod" in response.json()["error"]["message"]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("CS-003")
 
 
 def test_test_data_seed_runs_sqlite_fixture_when_runtime_profile_is_allowed(
@@ -120,7 +125,7 @@ def test_test_data_seed_runs_sqlite_fixture_when_runtime_profile_is_allowed(
         assert connection.execute("SELECT COUNT(*) FROM orders").fetchone()[0] == 7
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("CS-004")
 
 
 def test_test_data_seed_rejects_unknown_dataset(
@@ -142,7 +147,7 @@ def test_test_data_seed_rejects_unknown_dataset(
     assert "Unknown dataset_id" in response.json()["error"]["message"]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("CS-009")
 
 
 def test_test_data_seed_rejects_unknown_connection(

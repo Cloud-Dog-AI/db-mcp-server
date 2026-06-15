@@ -29,7 +29,7 @@ from tests.helpers.server_runtime import service_port
 pytestmark = pytest.mark.unit
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_load_runtime_config_reads_ports_and_auth_key() -> None:
@@ -40,7 +40,7 @@ def test_load_runtime_config_reads_ports_and_auth_key() -> None:
     assert config.get("auth.api_key") == "test-api-key"
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_runtime_config_js_exposes_web_settings() -> None:

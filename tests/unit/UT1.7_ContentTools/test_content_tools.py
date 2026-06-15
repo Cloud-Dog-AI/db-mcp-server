@@ -76,7 +76,7 @@ class _FakeConnectors:
         return [self.mask_record(profile_id, item) for item in records]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 async def test_content_tools_translate_filters_and_mask_results() -> None:

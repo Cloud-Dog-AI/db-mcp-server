@@ -416,3 +416,32 @@ Every project MUST have CS-NNN rows for `anon-denied`, `wrong-role-denied`, `mis
 | `CS-016` | missing-param-error | `webui` | `422` | `*` |
 
 _These CS-NNN rows are pending W28C-1711 test binding. Each row binds to one or more `@pytest.mark.negative` tests with explicit expected denial code._
+
+
+<!-- W28C-1711-R3 forensic: canonical FR-NNN rows derived from legacy R-NNN/FR1.NN test bindings (2026-06-15T15:21:28Z) -->
+
+## Functional Requirements (W28C-1711-R3 canonical-FR expansion)
+
+Per PS-REQ-TEST-TRACE §2: every test req() must reference a backtick-wrapped FR/CS/NF-NNN row. This section adds canonical FR-NNN rows derived from existing legacy R-NNN / FR1.NN bindings + ADD-REQ probe-test functional capabilities. Test bindings rewritten to use these canonical FR-NNN IDs.
+
+| ID | Source (legacy) | Test count | Surface (inferred) | Priority | Description |
+|---|---|---:|---|---|---|
+| `FR-001` | R2 | 13 | `internal` | `should` | Functional capability covered by legacy binding `R2` (W28C-1711-R3 derivation; see new-or-updated-tests.tsv for test list) |
+| `FR-002` | R5 | 5 | `webui` | `should` | Functional capability covered by legacy binding `R5` (W28C-1711-R3 derivation; see new-or-updated-tests.tsv for test list) |
+
+
+<!-- W28C-1711-R3 forensic: ADD-REQ FR rows derived from probe-test clusters (2026-06-15T15:21:28Z) -->
+
+## Functional Requirements (W28C-1711-R3 ADD-REQ derivation)
+
+Per W28C-1711 spec rule: ADD-REQ — create the requirement and bind the test. This section adds FR-NNN rows derived from functional probe-test clusters that had no matching FR in REQUIREMENTS.md. Each row's description is derived from the cluster's test names.
+
+| ID | Cluster | Test count | Surface (inferred) | Priority | Description |
+|---|---|---:|---|---|---|
+| `FR-003` | unit | 22 | `a2a,api,mcp` | `should` | Unit (W28C-1711-R3 ADD-REQ cluster derivation) |
+| `FR-004` | e2e | 1 | `internal` | `should` | E2E (W28C-1711-R3 ADD-REQ cluster derivation) |
+| `FR-005` | application | 1 | `webui` | `should` | Application (W28C-1711-R3 ADD-REQ cluster derivation) |
+| `FR-006` | system | 14 | `api,webui` | `should` | System (W28C-1711-R3 ADD-REQ cluster derivation) |
+| `FR-007` | smoke | 1 | `internal` | `should` | Smoke (W28C-1711-R3 ADD-REQ cluster derivation) |
+| `FR-008` | fixtures | 1 | `internal` | `should` | Fixtures (W28C-1711-R3 ADD-REQ cluster derivation) |
+| `FR-009` | integration | 12 | `api,mcp` | `should` | Integration (W28C-1711-R3 ADD-REQ cluster derivation) |

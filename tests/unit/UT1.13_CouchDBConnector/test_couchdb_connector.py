@@ -191,7 +191,7 @@ def fake_session(monkeypatch):
     monkeypatch.setattr("src.core.connectors.couchdb.adapter.requests.Session", FakeSession)
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_adapter_capabilities_and_catalogue_calls() -> None:
@@ -203,7 +203,7 @@ def test_adapter_capabilities_and_catalogue_calls() -> None:
     assert {item["name"] for item in entities} >= {"_documents", "widgets", "common/by_status"}
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_adapter_data_and_schema_operations() -> None:

@@ -26,7 +26,7 @@ from src.servers.mcp.app import create_mcp_app
 pytestmark = pytest.mark.unit
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_mcp_surface_raises_request_timeout_budget() -> None:

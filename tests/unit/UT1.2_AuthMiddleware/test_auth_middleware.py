@@ -42,7 +42,7 @@ def _flat_key(api_client: TestClient, role: str) -> str:
     return (api_client.flat_key_dir / f"{role}.key").read_text(encoding="utf-8").strip()  # type: ignore[attr-defined]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_health_route_is_public(api_client: TestClient) -> None:
@@ -52,7 +52,7 @@ def test_health_route_is_public(api_client: TestClient) -> None:
     assert response.json()["status"] == "ok"
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_protected_route_rejects_missing_api_key(api_client: TestClient) -> None:
@@ -61,7 +61,7 @@ def test_protected_route_rejects_missing_api_key(api_client: TestClient) -> None
     assert response.status_code == 401
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_protected_route_accepts_valid_api_key(api_client: TestClient) -> None:
@@ -71,7 +71,7 @@ def test_protected_route_accepts_valid_api_key(api_client: TestClient) -> None:
     assert response.json()["ok"] is True
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_api_base_path_override_exposes_prefixed_health_and_ping(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -86,7 +86,7 @@ def test_api_base_path_override_exposes_prefixed_health_and_ping(monkeypatch: py
     assert ping.status_code == 200
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_auth_me_returns_api_key_principal(api_client: TestClient) -> None:
@@ -101,7 +101,7 @@ def test_auth_me_returns_api_key_principal(api_client: TestClient) -> None:
     assert "data.create" not in payload["permissions"]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_read_only_key_is_forbidden_on_api_write(api_client: TestClient) -> None:

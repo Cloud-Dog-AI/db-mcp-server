@@ -28,7 +28,7 @@ from tests.helpers.server_runtime import active_env_file
 pytestmark = [pytest.mark.integration, pytest.mark.db, pytest.mark.mcp, pytest.mark.timeout(300)]
 @pytest.mark.IT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-009")
 
 
 def test_content_crud_lifecycle_through_mcp() -> None:

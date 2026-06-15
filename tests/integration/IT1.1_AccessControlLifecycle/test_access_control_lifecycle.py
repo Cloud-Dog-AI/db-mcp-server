@@ -52,7 +52,7 @@ def _wait(url: str) -> None:
     pytest.fail(f"Timed out waiting for {url}")
 @pytest.mark.IT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-009")
 
 
 def test_profile_user_group_api_key_lifecycle_and_mcp_admin_parity() -> None:

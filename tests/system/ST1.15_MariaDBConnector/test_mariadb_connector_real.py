@@ -46,7 +46,7 @@ def _connector():
     return manager._build_mariadb_connector({"source_connection": "default"})
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-006")
 
 
 def test_mariadb_connector_against_real_runtime() -> None:

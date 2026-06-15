@@ -34,7 +34,7 @@ from tests.helpers.server_runtime import active_env_file
 import pytest
 @pytest.mark.IT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-009")
 
 
 def test_v1_6_full_search_indexing_pipeline() -> None:

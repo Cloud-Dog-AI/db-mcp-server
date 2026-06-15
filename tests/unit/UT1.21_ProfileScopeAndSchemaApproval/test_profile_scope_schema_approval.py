@@ -120,7 +120,7 @@ def _client(tmp_path: Path) -> TestClient:
     return TestClient(create_api_app([str(_env_file(tmp_path))]))
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_profile_scope_route_dry_runs_filtered_profile_without_persisting(tmp_path: Path) -> None:
@@ -164,7 +164,7 @@ def test_profile_scope_route_dry_runs_filtered_profile_without_persisting(tmp_pa
     assert persisted.json()["data"]["entities"] == []
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_schema_change_approve_route_marks_plan_approved(tmp_path: Path) -> None:
@@ -219,7 +219,7 @@ def test_schema_change_approve_route_marks_plan_approved(tmp_path: Path) -> None
     assert data["audit_trail"][-1]["action"] == "schema.change.approve"
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_connector_manager_resolves_named_source_connection() -> None:

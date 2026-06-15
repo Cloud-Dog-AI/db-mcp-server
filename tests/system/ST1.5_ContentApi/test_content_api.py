@@ -32,7 +32,7 @@ from src.core.connectors.mongodb.adapter import MongoDBConnector
 pytestmark = [pytest.mark.system, pytest.mark.db, pytest.mark.mcp, pytest.mark.timeout(240)]
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-006")
 
 
 def test_content_tools_apply_structured_filters_and_masks() -> None:
@@ -120,7 +120,7 @@ def test_content_tools_apply_structured_filters_and_masks() -> None:
         cleanup_database(db_name)
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-006")
 
 
 def test_content_tools_support_all_documented_filter_operators() -> None:
@@ -256,7 +256,7 @@ def test_content_tools_support_all_documented_filter_operators() -> None:
         cleanup_database(db_name)
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-006")
 
 
 def test_content_tools_round_trip_binary_fields() -> None:

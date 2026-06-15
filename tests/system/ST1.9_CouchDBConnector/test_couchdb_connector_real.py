@@ -47,7 +47,7 @@ def _public_url(uri: str) -> str:
     return urlunparse((parsed.scheme, netloc, parsed.path, "", "", "")).rstrip("/")
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-006")
 
 
 def test_couchdb_adapter_against_real_local_couchdb() -> None:

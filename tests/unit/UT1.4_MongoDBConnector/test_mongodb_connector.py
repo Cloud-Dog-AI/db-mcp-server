@@ -168,7 +168,7 @@ def fake_mongo(monkeypatch):
     MongoDBConnector._namespace_cache.clear()
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_adapter_capabilities_and_catalogue_calls() -> None:
@@ -179,7 +179,7 @@ def test_adapter_capabilities_and_catalogue_calls() -> None:
     assert connector.list_entities("testdb") == [{"name": "widgets", "type": "collection"}]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_adapter_caches_namespace_listing_per_uri() -> None:
@@ -190,7 +190,7 @@ def test_adapter_caches_namespace_listing_per_uri() -> None:
     assert FakeMongoClient.list_database_names_calls == 1
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_adapter_data_and_schema_operations() -> None:
@@ -212,7 +212,7 @@ def test_adapter_data_and_schema_operations() -> None:
     assert connector.extract_relationships("testdb", "widgets")[0]["relationship_type"] == "reference_candidate"
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_adapter_plans_and_applies_entity_lifecycle() -> None:
@@ -232,7 +232,7 @@ def test_adapter_plans_and_applies_entity_lifecycle() -> None:
     assert dropped["entity_dropped"] is True
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-003")
 
 
 def test_adapter_normalises_binary_fields_and_preserves_binary_schema_type() -> None:
