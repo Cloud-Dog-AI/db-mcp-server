@@ -27,7 +27,7 @@ from src.core.filters import FilterCondition, FilterGroup, MongoDBFilterTranslat
 pytestmark = [pytest.mark.unit]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("NF-001")
 
 
 def test_parse_filter_accepts_legacy_mapping_and_nested_groups() -> None:
@@ -55,7 +55,7 @@ def test_parse_filter_accepts_legacy_mapping_and_nested_groups() -> None:
     assert isinstance(nested.conditions[0], FilterCondition)
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("NF-001")
 
 
 def test_translate_filter_to_mongodb_query() -> None:
@@ -85,7 +85,7 @@ def test_translate_filter_to_mongodb_query() -> None:
     }
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("NF-001")
 
 
 def test_filter_parser_rejects_invalid_input() -> None:
