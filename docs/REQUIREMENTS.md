@@ -526,3 +526,17 @@ recorded here for traceability but owned by the cross-cutting lane.
 - The 2026-06-16 W28C-1711 knowledge SUPPLEMENT dump file (`E2E db-mcp-server.md`) is
   un-triaged by the operator (no NEW-REQ/NEW-AT/DUPLICATE/SUPERSEDED/DEFER decision); per
   template T-W28E-A it is recorded as DEFER and NOT authored against in this lane.
+
+## Common-service baseline (pinned by reference)
+
+Per T-W28E-A D1, cross-service commonality is **pinned by reference** to
+`cloud-dog-ai-platform-standards/docs/standards/PS-COMMON-SVC-REQ.md` (W28E-1822), NOT
+restated here. db-mcp-server's CSR-001..CSR-040 consumption (FULL / PARTIAL / N/A with
+service anchor and source evidence) is recorded in
+`working/evidence/W28E-1808A/current/ps_common_svc_req_consumption.tsv`. The common
+identity / RBAC / config / audit / jobs / storage / request-context baseline that db-mcp
+consumes maps onto the FR/CS rows above (e.g. authn -> `FR-001`/`FR-002`; RBAC -> `FR-003` +
+`CS-*`; config precedence -> `FR-023`; jobs -> `FR-024`; audit AU-3 -> `FR-028`; MCP/A2A ->
+`FR-020`/`FR-021`). Audit/log compliance follows PS-AUDIT-LOG (W28E-1821); async jobs follow
+PS-AJOBS (W28E-1820); WebUI taxonomy + URL canonicalisation follow PS-WEBUI-STYLE-COMPONENTS
+/ PS-WEBUI-URL-CANONICAL (W28E-1825).
