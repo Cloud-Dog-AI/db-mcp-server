@@ -3,11 +3,11 @@ template-id: T-RCM
 template-version: 1.0
 applies-to: docs/REQ-COVERAGE.md
 project: db-mcp-server
-doc-last-updated: 2026-06-13T10:29:10.760541+00:00
-doc-git-commit: 6da4df0467c7fd9cca1db0f700e6ebae8b87836a
-doc-git-branch: main
+doc-last-updated: 2026-06-17T11:09:50.501180+00:00
+doc-git-commit: d064aa17d3a6570cb01e86bbf63e4632b37fb355
+doc-git-branch: W28C-1714-100pct-fix
 doc-age-policy: 30d
-doc-conformance-stamp: 2026-06-13T10:29:10.760541+00:00
+doc-conformance-stamp: 2026-06-17T11:09:50.501180+00:00
 generated-by: scripts/generate-req-coverage.py
 ---
 
@@ -18,23 +18,23 @@ generated-by: scripts/generate-req-coverage.py
 
 ## 1. Latest generation
 
-- **Generated at:** 2026-06-13T10:29:10.760541+00:00
-- **Source REQ commit:** 3ecf22f
-- **Source TEST commit:** 3ecf22f
+- **Generated at:** 2026-06-17T11:09:50.501180+00:00
+- **Source REQ commit:** d064aa1
+- **Source TEST commit:** 5b329a3
 
 ## 2. Coverage summary
 
 | Total REQs | Covered (passing) | Covered (failing) | Covered (stale >90d) | NO-TEST |
 |---|---|---|---|---|
-| 4 | 0 | 0 | 0 | 4 |
+| 4 | 4 | 0 | 0 | 0 |
 
-Coverage % = 0.0%
+Coverage % = 100.0%
 
 ## 3. Per-REQ matrix
 
 | REQ-ID | Surface | Priority | Tests | Last-run status | Last-run commit | Age (days) | Coverage state |
 |---|---|---|---|---|---|---|---|
-| CS-001 | api, mcp, a2a, webui | — | — | — | — | — | NO-TEST |
-| CS-002 | api, mcp | — | — | — | — | — | NO-TEST |
-| CS-003 | api | — | — | — | — | — | NO-TEST |
-| CS-004 | mcp | — | — | — | — | — | NO-TEST |
+| CS-001 | api, mcp, a2a, webui | — | tests/unit/UT1.52_FlatLoginContract/test_flat_login_contract.py | pass | d064aa17 | 0 | COVERED-PASSING |
+| CS-002 | api, mcp | — | tests/unit/UT1.22_TestDataSeed/test_test_data_seed_api.py | pass | d064aa17 | 0 | COVERED-PASSING |
+| CS-003 | api | — | tests/unit/UT1.22_TestDataSeed/test_test_data_seed_api.py | pass | d064aa17 | 0 | COVERED-PASSING |
+| CS-004 | mcp | — | tests/unit/UT1.22_TestDataSeed/test_test_data_seed_api.py | pass | d064aa17 | 0 | COVERED-PASSING |

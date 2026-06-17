@@ -23,6 +23,11 @@ doc-conformance-stamp: 2026-06-12T12:00:00Z
 
 ## Runs (most recent first)
 
+### 2026-06-17T11:09:50.028924+00:00
+- Commit: `d064aa17d3a6570cb01e86bbf63e4632b37fb355` (W28C-1714-100pct-fix)
+- Totals: 17 / P 17 / F 0 / S 0
+- Delta: new-fails 0 | newly-green 1
+
 ### 2026-06-13T10:59:12.425500+00:00
 - Commit: `6da4df0467c7fd9cca1db0f700e6ebae8b87836a` (main)
 - Totals: 149 / P 148 / F 1 / S 0
