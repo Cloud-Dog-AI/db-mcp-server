@@ -74,52 +74,59 @@ cleanup_conflicts() {
   esac
 }
 
+source_env_defaults() {
+  local env_file="$1"
+  local raw_line line key value
+
+  while IFS= read -r raw_line || [[ -n "${raw_line}" ]]; do
+    line="${raw_line#"${raw_line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    [[ -z "${line}" || "${line}" == \#* ]] && continue
+    line="${line#export }"
+    [[ "${line}" == *=* ]] || continue
+    key="${line%%=*}"
+    value="${line#*=}"
+    [[ -n "${key}" ]] || continue
+    if [[ -z "${!key+x}" ]]; then
+      export "${key}=${value}"
+    fi
+  done < "${env_file}"
+}
+
 seed_target() {
   case "${TARGET}" in
     mongodb)
-      set -a
-      source "${ROOT_DIR}/tests/env-mongodb"
-      set +a
+      source_env_defaults "${ROOT_DIR}/tests/env-mongodb"
       start_stack "${ROOT_DIR}/docker/docker-compose.mongodb.yml" mongodb
       wait_for_health db-mcp-mongodb 120
       "${python_bin}" -m tests.fixtures.mongodb_seed
       ;;
     couchdb)
-      set -a
-      source "${ROOT_DIR}/tests/env-couchdb"
-      set +a
+      source_env_defaults "${ROOT_DIR}/tests/env-couchdb"
       start_stack "${ROOT_DIR}/docker/docker-compose.couchdb.yml" couchdb
       wait_for_health db-mcp-couchdb 120
       "${python_bin}" -m tests.fixtures.couchdb_seed
       ;;
     opensearch)
-      set -a
-      source "${ROOT_DIR}/tests/env-opensearch"
-      set +a
+      source_env_defaults "${ROOT_DIR}/tests/env-opensearch"
       start_stack "${ROOT_DIR}/docker/docker-compose.opensearch.yml" opensearch
       wait_for_health db-mcp-opensearch 240
       "${python_bin}" -m tests.fixtures.opensearch_seed
       ;;
     elasticsearch)
-      set -a
-      source "${ROOT_DIR}/tests/env-elasticsearch"
-      set +a
+      source_env_defaults "${ROOT_DIR}/tests/env-elasticsearch"
       start_stack "${ROOT_DIR}/docker/docker-compose.elasticsearch.yml" elasticsearch
       wait_for_health db-mcp-elasticsearch 240
       "${python_bin}" -m tests.fixtures.elasticsearch_seed
       ;;
     cassandra)
-      set -a
-      source "${ROOT_DIR}/tests/env-cassandra"
-      set +a
+      source_env_defaults "${ROOT_DIR}/tests/env-cassandra"
       start_stack "${ROOT_DIR}/docker/docker-compose.cassandra.yml" cassandra
       wait_for_health db-mcp-cassandra 360
       "${python_bin}" -m tests.fixtures.cassandra_seed
       ;;
     all)
-      set -a
-      source "${ROOT_DIR}/tests/env-all"
-      set +a
+      source_env_defaults "${ROOT_DIR}/tests/env-all"
       start_stack "${ROOT_DIR}/docker/docker-compose.all.yml" mongodb couchdb opensearch elasticsearch cassandra
       wait_for_health db-mcp-mongodb 120
       wait_for_health db-mcp-couchdb 120

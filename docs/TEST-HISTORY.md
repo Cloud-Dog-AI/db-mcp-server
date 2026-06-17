@@ -23,6 +23,21 @@ doc-conformance-stamp: 2026-06-12T12:00:00Z
 
 ## Runs (most recent first)
 
+### 2026-06-17T12:28:14.133567+00:00
+- Commit: `9c5b12de8af6c1142c4401994aa3148adf2d1a6e` (W28C-1714-100pct-fix)
+- Totals: 107 / P 107 / F 0 / S 0
+- Delta: new-fails 0 | newly-green 0
+
+### 2026-06-17T12:27:56.698317+00:00
+- Commit: `9c5b12de8af6c1142c4401994aa3148adf2d1a6e` (W28C-1714-100pct-fix)
+- Totals: 101 / P 101 / F 0 / S 0
+- Delta: new-fails 0 | newly-green 0
+
+### 2026-06-17T12:24:35.920683+00:00
+- Commit: `9c5b12de8af6c1142c4401994aa3148adf2d1a6e` (W28C-1714-100pct-fix)
+- Totals: 101 / P 101 / F 0 / S 0
+- Delta: new-fails 0 | newly-green 0
+
 ### 2026-06-17T11:09:50.028924+00:00
 - Commit: `d064aa17d3a6570cb01e86bbf63e4632b37fb355` (W28C-1714-100pct-fix)
 - Totals: 17 / P 17 / F 0 / S 0
