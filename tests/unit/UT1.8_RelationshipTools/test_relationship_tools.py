@@ -47,7 +47,7 @@ class _FakeRelationships:
         return {"deleted": True, "relationship_id": relationship_id}
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-008")
 
 
 async def test_relationship_tools_cover_crud_and_inference() -> None:

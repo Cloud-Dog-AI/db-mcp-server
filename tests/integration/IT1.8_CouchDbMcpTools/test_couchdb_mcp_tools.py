@@ -72,7 +72,7 @@ def _public_url(uri: str) -> str:
     return urlunparse((parsed.scheme, netloc, parsed.path, "", "", "")).rstrip("/")
 @pytest.mark.IT
 @pytest.mark.mcp
-@pytest.mark.req("FR-009")
+@pytest.mark.req("FR-014")
 
 
 def test_couchdb_mcp_tools_crud_lifecycle() -> None:

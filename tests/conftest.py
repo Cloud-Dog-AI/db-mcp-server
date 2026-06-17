@@ -80,7 +80,35 @@ def _load_env_file(path: Path) -> None:
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config: pytest.Config) -> None:
-    """Require at least one env file and load it before test execution."""
+    """Register canonical PS-REQ-TEST-TRACE markers, then require + load an env file."""
+    # PS-REQ-TEST-TRACE v1.0 §6 canonical marker registry (W28E-1808A Stream-A).
+    # Registered here (not in a tests/pytest.ini) to keep pyproject.toml the single
+    # pytest rootdir-config and avoid relocating rootdir away from the repo root,
+    # which the custom --env plugin and `src` import path depend on.
+    _PS_REQ_TEST_TRACE_MARKERS = {
+        # tier markers
+        "QT": "QT tier - quality / static checks",
+        "UT": "UT tier - unit",
+        "ST": "ST tier - system / single-surface live",
+        "IT": "IT tier - integration / cross-component",
+        "AT": "AT tier - acceptance / end-to-end",
+        # surface markers
+        "api": "API surface",
+        "mcp": "MCP surface",
+        "a2a": "A2A surface",
+        "webui": "WebUI surface",
+        "cli": "CLI surface",
+        "internal": "internal / non-surface-bound",
+        # binding + classification markers
+        "req": "req(*ids): bind a test to one or more FR/CS/NF REQ-IDs",
+        "probe": "orphan test pending REQ binding (PS-REQ-TEST-TRACE §7)",
+        "negative": "negative / denial-path (CS-NNN) scenario",
+        "slow": "slow test",
+        "llm": "requires an LLM backend",
+    }
+    for _name, _desc in _PS_REQ_TEST_TRACE_MARKERS.items():
+        config.addinivalue_line("markers", f"{_name}: {_desc}")
+
     env_files = _normalise_env_args(config.getoption("env"))
     if not env_files:
         raise pytest.UsageError("Tests require at least one --env <path> argument")

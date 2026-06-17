@@ -49,7 +49,7 @@ def access_control(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> AccessCon
     return AccessControlService(config=config, engine=engine, audit_logger=get_audit_logger())
 @pytest.mark.QT
 @pytest.mark.mcp
-@pytest.mark.req("FR-007")
+@pytest.mark.req("FR-027")
 
 
 def test_t1_flat_roles_and_secret_masking(access_control: AccessControlService) -> None:
@@ -78,7 +78,7 @@ def test_t1_flat_roles_and_secret_masking(access_control: AccessControlService) 
     assert {"admin", "user", "group-admin", "restricted", "job-control", "audit-log"} <= roles
 @pytest.mark.QT
 @pytest.mark.mcp
-@pytest.mark.req("FR-007")
+@pytest.mark.req("FR-027")
 
 
 def test_t2_role_rbac_and_t3_group_membership_cascade(access_control: AccessControlService) -> None:

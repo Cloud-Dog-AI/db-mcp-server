@@ -76,7 +76,7 @@ class _FakeConnectors:
         return [self.mask_record(profile_id, item) for item in records]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-006")
 
 
 async def test_content_tools_translate_filters_and_mask_results() -> None:

@@ -29,7 +29,7 @@ from tests.helpers.opensearch_runtime import cleanup_index, cleanup_template, en
 pytestmark = [pytest.mark.system, pytest.mark.timeout(240)]
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.req("FR-006")
+@pytest.mark.req("FR-015")
 
 
 def test_opensearch_adapter_against_real_local_runtime() -> None:

@@ -28,7 +28,7 @@ from tests.helpers.server_runtime import active_env_file
 pytestmark = [pytest.mark.integration, pytest.mark.db, pytest.mark.mcp, pytest.mark.timeout(300)]
 @pytest.mark.IT
 @pytest.mark.mcp
-@pytest.mark.req("FR-009")
+@pytest.mark.req("FR-008")
 
 
 def test_relationship_infer_create_update_delete_flow() -> None:

@@ -33,7 +33,7 @@ READ_ONLY_USERNAME = os.environ.get("E2E_READ_ONLY_USERNAME", "read-only")
 READ_ONLY_PASSWORD = os.environ.get("E2E_READ_ONLY_PASSWORD", "GreenRiverDesk")
 @pytest.mark.AT
 @pytest.mark.mcp
-@pytest.mark.req("FR-004")
+@pytest.mark.req("FR-027")
 
 
 def test_live_t0_t1_negative_auth_and_flat_login() -> None:
@@ -59,7 +59,7 @@ def test_live_t0_t1_negative_auth_and_flat_login() -> None:
         assert admin_profiles.status_code == 200, admin_profiles.text[:300]
 @pytest.mark.AT
 @pytest.mark.mcp
-@pytest.mark.req("FR-004")
+@pytest.mark.req("FR-027")
 
 
 def test_live_t2_read_only_write_denied_and_surface_proxies() -> None:

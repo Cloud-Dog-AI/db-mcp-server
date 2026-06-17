@@ -27,7 +27,7 @@ from src.core.filters import FilterCondition, FilterGroup, MongoDBFilterTranslat
 pytestmark = [pytest.mark.unit]
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # W28C-1711-R3.5 invalid-binding archived (NF-001)
+@pytest.mark.req("FR-007")  # W28E-1808A semantic binding (replaced legacy probe marker)
 
 
 def test_parse_filter_accepts_legacy_mapping_and_nested_groups() -> None:
@@ -55,7 +55,7 @@ def test_parse_filter_accepts_legacy_mapping_and_nested_groups() -> None:
     assert isinstance(nested.conditions[0], FilterCondition)
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # W28C-1711-R3.5 invalid-binding archived (NF-001)
+@pytest.mark.req("FR-007")  # W28E-1808A semantic binding (replaced legacy probe marker)
 
 
 def test_translate_filter_to_mongodb_query() -> None:
@@ -85,7 +85,7 @@ def test_translate_filter_to_mongodb_query() -> None:
     }
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.probe  # W28C-1711-R3.5 invalid-binding archived (NF-001)
+@pytest.mark.req("FR-007")  # W28E-1808A semantic binding (replaced legacy probe marker)
 
 
 def test_filter_parser_rejects_invalid_input() -> None:

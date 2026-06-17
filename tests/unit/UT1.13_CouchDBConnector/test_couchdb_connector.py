@@ -191,7 +191,7 @@ def fake_session(monkeypatch):
     monkeypatch.setattr("src.core.connectors.couchdb.adapter.requests.Session", FakeSession)
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-014")
 
 
 def test_adapter_capabilities_and_catalogue_calls() -> None:
@@ -203,7 +203,7 @@ def test_adapter_capabilities_and_catalogue_calls() -> None:
     assert {item["name"] for item in entities} >= {"_documents", "widgets", "common/by_status"}
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-014")
 
 
 def test_adapter_data_and_schema_operations() -> None:

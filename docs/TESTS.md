@@ -3,14 +3,14 @@ template-id: T-TST
 template-version: 1.1
 applies-to: docs/TESTS.md
 project: db-mcp-server
-doc-last-updated: 2026-06-12T16:36:39Z
-doc-git-commit: de6c3ed78039fcf91204a0f860096008551f7018
+doc-last-updated: 2026-06-17T00:00:00Z
+doc-git-commit: d064aa17d3a6570cb01e86bbf63e4632b37fb355
 doc-git-branch: main
 doc-age-policy: 90d
-doc-conformance-stamp: 2026-06-12T16:36:39Z
+doc-conformance-stamp: 2026-06-17T00:00:00Z
 req-trace-version: 1.0
-total-tests: 0
-coverage-percent: 0
+total-tests: 146
+coverage-percent: 100
 ---
 
 # Tests
@@ -105,10 +105,93 @@ Current package classification:
 
 ## 2. Coverage map
 
-Mandatory 10-column schema per PS-REQ-TEST-TRACE v1.0 §4.2. The per-test catalogue below will be populated by operator-driven Instruction 4 work that binds @pytest.mark.req() decorators to specific REQ-IDs. Until then, all tests carry @pytest.mark.probe (KEEP-AS-PROBE disposition per PS-REQ-TEST-TRACE §7).
+Mandatory 10-column schema per PS-REQ-TEST-TRACE v1.0 §4.2. W28E-1808A Stream-A bound every
+collectable test to a semantic `@pytest.mark.req("FR-NNN"|"CS-NNN")` decorator (the residual
+W28C-1711-R3.5 orphan `probe` markers were replaced). Every row below binds to >=1 canonical
+REQ-ID in [REQUIREMENTS.md](REQUIREMENTS.md) and >=1 use case in
+[ROLES-AND-USECASES.md](ROLES-AND-USECASES.md); the catalogue is generated from the actual
+in-tree marker bindings. `Last run commit` is the design-baseline commit; live UT/IT/AT run
+verdicts are produced by Stream-B (`W28E-1808B`) and recorded in `docs/TEST-STATUS.md`.
 
 | Test ID | Tier | Use case | Requirement | Surface | Scenario | Variants | Env files | Known issue | Last run commit |
 |---|---|---|---|---|---|---|---|---|---|
+| `AT_WEBUI_E2E` | AT | UC-019 | `FR-022` | `webui` | WebUI E2E (login/dashboard/admin/data/search) | 17 case(s) | `env-AT` | — | `d064aa1` |
+| `test_w28a746_live_preprod_contract` | AT | UC-026 | `FR-027` | `mcp` | live preprod API/MCP/A2A/WebUI contract | 2 case(s) | `env-AT` | — | `d064aa1` |
+| `test_seed_data` | UT | UC-009 | `FR-012` | `mcp` | canonical seed-data fixture | 3 case(s) | `env-UT` | — | `d064aa1` |
+| `IT1.10` | IT | UC-016 | `FR-019` | `mcp` | backend connector matrix | 1 case(s) | `env-IT` | — | `d064aa1` |
+| `IT1.11` | IT | UC-001 | `FR-004` | `mcp` | source connections API | 1 case(s) | `env-IT` | — | `d064aa1` |
+| `IT1.12` | IT | UC-008 | `FR-011` | `mcp` | saved queries API | 1 case(s) | `env-IT` | — | `d064aa1` |
+| `IT1.1` | IT | UC-024 | `FR-003` | `mcp` | access-control lifecycle | 1 case(s) | `env-IT` | — | `d064aa1` |
+| `IT1.2` | IT | UC-010 | `FR-013` | `mcp` | MongoDB MCP tools | 1 case(s) | `env-IT + env-mongodb` | — | `d064aa1` |
+| `IT1.3` | IT | UC-002 | `FR-005` | `mcp` | full discovery flow | 1 case(s) | `env-IT` | — | `d064aa1` |
+| `IT1.4` | IT | UC-003,UC-004 | `FR-006` | `mcp` | content CRUD lifecycle | 1 case(s) | `env-IT` | — | `d064aa1` |
+| `IT1.5` | IT | UC-005 | `FR-008` | `mcp` | relationship lifecycle | 1 case(s) | `env-IT` | — | `d064aa1` |
+| `IT1.6` | IT | UC-007 | `FR-010` | `mcp` | search indexing lifecycle | 1 case(s) | `env-IT` | — | `d064aa1` |
+| `IT1.7` | IT | UC-006 | `FR-009` | `mcp` | schema-change lifecycle | 1 case(s) | `env-IT` | — | `d064aa1` |
+| `IT1.8` | IT | UC-011 | `FR-014` | `mcp` | CouchDB MCP tools | 1 case(s) | `env-IT + env-couchdb` | — | `d064aa1` |
+| `IT1.9` | IT | UC-012 | `FR-015` | `mcp` | OpenSearch MCP tools | 1 case(s) | `env-IT + env-opensearch` | — | `d064aa1` |
+| `QT1.1` | QT | UC-027 | `FR-026` | `mcp` | project structure + platform-package declarations | 4 case(s) | `env-QT` | — | `d064aa1` |
+| `test_w28a746_b_method_idam` | QT | UC-026 | `FR-027` | `mcp` | b-method IDAM consumer T0-T3 | 2 case(s) | `env-all` | — | `d064aa1` |
+| `ST1.10` | ST | UC-012 | `FR-015` | `mcp` | OpenSearch connector (real) | 1 case(s) | `env-ST + env-opensearch` | — | `d064aa1` |
+| `ST1.12` | ST | UC-013 | `FR-016` | `mcp` | Elasticsearch connector (real) | 1 case(s) | `env-ST + env-elasticsearch` | — | `d064aa1` |
+| `ST1.13` | ST | UC-014 | `FR-017` | `mcp` | Cassandra connector (real) | 1 case(s) | `env-ST + env-cassandra` | — | `d064aa1` |
+| `ST1.14` | ST | UC-015 | `FR-018` | `mcp` | PostgreSQL connector (real) | 1 case(s) | `env-ST + env-postgresql` | — | `d064aa1` |
+| `ST1.15` | ST | UC-015 | `FR-018` | `mcp` | MariaDB connector (real) | 1 case(s) | `env-ST + env-mariadb` | — | `d064aa1` |
+| `ST1.1` | ST | UC-022 | `FR-025` | `mcp` | four-surface server startup + health | 1 case(s) | `env-ST` | ST1.1 health flake (env-dependent) | `d064aa1` |
+| `ST1.2` | ST | UC-024,UC-025 | `FR-003`, `FR-028` | `mcp` | access-control API + audit-log assertion | 1 case(s) | `env-ST` | — | `d064aa1` |
+| `ST1.3` | ST | UC-010 | `FR-013` | `mcp` | MongoDB connector (real) | 1 case(s) | `env-ST + env-mongodb` | — | `d064aa1` |
+| `ST1.4` | ST | UC-002 | `FR-005` | `mcp` | catalog API (real) | 1 case(s) | `env-ST` | — | `d064aa1` |
+| `ST1.5` | ST | UC-003,UC-004 | `FR-006` | `mcp` | content API (real) | 3 case(s) | `env-ST` | — | `d064aa1` |
+| `ST1.6` | ST | UC-006 | `FR-009` | `mcp` | schema API (real) | 1 case(s) | `env-ST` | — | `d064aa1` |
+| `ST1.7` | ST | UC-007 | `FR-010` | `mcp` | search API (real) | 1 case(s) | `env-ST` | — | `d064aa1` |
+| `ST1.8` | ST | UC-019 | `FR-022` | `webui` | WebUI system serving | 1 case(s) | `env-ST-WEBUI` | — | `d064aa1` |
+| `ST1.9` | ST | UC-011 | `FR-014` | `mcp` | CouchDB connector (real) | 1 case(s) | `env-ST + env-couchdb` | — | `d064aa1` |
+| `UT1.10` | UT | UC-007 | `FR-010` | `mcp` | search service | 2 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.11` | UT | UC-019 | `FR-022` | `webui` | WebUI serving unit | 5 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.12` | UT | UC-006 | `FR-009` | `mcp` | schema-change service | 2 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.13` | UT | UC-011 | `FR-014` | `mcp` | CouchDB connector unit | 2 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.14` | UT | UC-012 | `FR-015` | `mcp` | OpenSearch connector unit | 2 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.15_A2AServer` | UT | UC-018 | `FR-021` | `mcp` | A2A server unit | 6 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.15_MongoConfig` | UT | UC-010 | `FR-013` | `mcp` | MongoDB config resolution | 4 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.16` | UT | UC-013 | `FR-016` | `mcp` | Elasticsearch connector unit | 2 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.17` | UT | UC-014 | `FR-017` | `mcp` | Cassandra connector unit | 2 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.18` | UT | UC-015 | `FR-018` | `mcp` | relational connector dispatch | 2 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.19` | UT | UC-021 | `FR-024` | `mcp` | async job lifecycle | 4 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.1` | UT | UC-020 | `FR-023` | `mcp` | config loading + masked provenance | 2 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.20_DiscoveryApi` | UT | UC-002 | `FR-005` | `mcp` | discovery API unit | 1 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.20_McpServer` | UT | UC-017 | `FR-020` | `mcp` | MCP server + tool registry | 1 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.21` | UT | UC-001,UC-006 | `FR-004` | `mcp` | profile scope + schema approval | 3 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.22` | UT | UC-009,UC-029,UC-030,UC-031 | `CS-002`, `CS-003`, `CS-004`, `CS-009`, `CS-010`, `CS-011`, `CS-013`, `CS-014`, `CS-015` | `mcp` | test-data seed RBAC negatives | 4 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.2` | UT | UC-023 | `FR-002` | `mcp` | auth middleware / cookie<->api-key bridge | 6 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.3` | UT | UC-024,UC-025 | `FR-003` | `mcp` | access-control service + RBAC + audit emission | 5 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.4` | UT | UC-010 | `FR-013` | `mcp` | MongoDB connector unit | 5 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.50` | UT | UC-028 | `FR-001` | `mcp` | unauth auth gate | 4 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.51` | UT | UC-023 | `FR-001` | `mcp` | authed non-admin gate | 9 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.52` | UT | UC-023,UC-028,UC-029 | `CS-001`, `CS-005`, `CS-006`, `CS-007`, `CS-008`, `CS-012`, `CS-016`, `FR-001` | `mcp` | flat-login contract + negatives | 9 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.5` | UT | UC-003 | `FR-007` | `mcp` | structured filter model parse/translate/reject | 3 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.6` | UT | UC-002 | `FR-005` | `mcp` | catalog tools | 1 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.7` | UT | UC-004 | `FR-006` | `mcp` | content tools CRUD | 1 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.8` | UT | UC-005 | `FR-008` | `mcp` | relationship tools | 1 case(s) | `env-UT` | — | `d064aa1` |
+| `UT1.9` | UT | UC-007 | `FR-010` | `mcp` | search indexer | 2 case(s) | `env-UT` | — | `d064aa1` |
+
+### 2.1 TEST-DESIGN-TODO — Stream-B / Stream-C drive-out targets
+
+These are design targets authored from the db-mcp WebUI Feedback Capture observations
+(`GarysWorkingNotes.md` db-mcp section) and the W28A-871 coverage gaps. They are NOT yet
+bound to a passing test (no fabricated binding); `W28E-1808B` (backend) and `W28E-1808C`
+(WebUI/E2E) must implement + bind them. Each cites the requirement anchor and observation.
+
+| TODO ID | Requirement anchor | Observation(s) | Drive-out target | Stream |
+|---|---|---|---|---|
+| `TD-001` | `FR-028`, AC-02, PS-40 | `DM-AL-09`, `DM-D-12`, `DM-X-19` | NIST AU-3 fully-populated audit events (actor/client_ip/session_id/correlation_id/target/outcome) emitted on every API/MCP/A2A/WebUI call; assert populated fields | B |
+| `TD-002` | `FR-003`, A4 | `DM-RB-08`, `DM-RB-01`, `DM-RB-02` | Per-role RBAC matrix + resource-RBAC binding CRUD test through shared idam | B / C |
+| `TD-003` | `FR-003` | `DM-RB-09`, `DM-U-04`, `DM-U-05`, `DM-U-06` | Users-as-username (GUID->username join), user-uniqueness, server-loaded roles/groups multiselect | B / C |
+| `TD-004` | `FR-022`, D2 | `DM-DB-05`..`DM-DB-08`, `DM-D-07`, `DM-D-08` | PS-77 DataTable behaviour (pagination, dynamic columns, loading/empty/error states), de-duplicated filter preview | C |
+| `TD-005` | `FR-020`, `FR-021`, `DM-AD-06`..`DM-AD-09` | `DM-AD-06`, `DM-AD-07`, `DM-AD-08`, `DM-MC-06`, `DM-MC-07`, `DM-AC-04`, `DM-AC-05` | API-docs/MCP-console/A2A-console Playwright coverage: parameter + output-schema columns, agent-card formatting, download/copy | C |
+| `TD-006` | `FR-024`, XC-010 | `DM-J-11`, `DM-J-01`, `DM-J-02`, `DM-J-08` | Resolve `/jobs` page keep/remove decision; if kept, assert async surface (`data.create`/`data.update`/`index.rebuild`) | C (decision) |
+| `TD-007` | `FR-022` (cross-cutting) | `DM-X-15`..`DM-X-18` | Shared `<HelpTip>` / `<StructuredMultiSelect>` primitives, column-picker overlay, status-column-left invariant — routed to W28E-1825 PS-WEBUI-STYLE-COMPONENTS | C / cross-cutting |
+| `TD-008` | `FR-019`, G1, G3 | W28A-871 G1/G3 WebUI gap | Seven-connector matrix exercised through the WebUI (Playwright) | C |
+
 
 
 <!-- W28C-1710b design-delta additions (2026-06-14T18:01:23Z) -->

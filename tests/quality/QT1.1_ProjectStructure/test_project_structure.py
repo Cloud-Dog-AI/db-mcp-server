@@ -47,7 +47,7 @@ REQUIRED_FILES = [
 ]
 @pytest.mark.QT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-026")  # W28E-1808A semantic binding (replaced legacy probe marker)
 
 
 def test_required_runtime_files_exist() -> None:
@@ -57,7 +57,7 @@ def test_required_runtime_files_exist() -> None:
     assert not missing, f"Missing required files: {missing}"
 @pytest.mark.QT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-026")  # W28E-1808A semantic binding (replaced legacy probe marker)
 
 
 def test_required_platform_package_declarations_are_present() -> None:
@@ -87,7 +87,7 @@ def test_required_platform_package_declarations_are_present() -> None:
     assert expected <= dependency_names
 @pytest.mark.QT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-026")  # W28E-1808A semantic binding (replaced legacy probe marker)
 
 
 def test_active_source_uses_platform_logging_only() -> None:
@@ -110,7 +110,7 @@ def test_active_source_uses_platform_logging_only() -> None:
     assert not findings, "Raw stdlib logging bypasses cloud_dog_logging: " + "; ".join(findings)
 @pytest.mark.QT
 @pytest.mark.mcp
-@pytest.mark.probe  # rtt-2026-06-12 INST3: KEEP-AS-PROBE pending operator REQ-binding
+@pytest.mark.req("FR-026")  # W28E-1808A semantic binding (replaced legacy probe marker)
 
 
 def test_w28a_118c_docs_map_packages_to_ui_and_tests() -> None:

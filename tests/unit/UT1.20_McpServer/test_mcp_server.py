@@ -26,7 +26,7 @@ from src.servers.mcp.app import create_mcp_app
 pytestmark = pytest.mark.unit
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-020")
 
 
 def test_mcp_surface_raises_request_timeout_budget() -> None:

@@ -66,7 +66,7 @@ def _resolve_mongodb_uri(env_file: Path) -> str:
     return ensure_real_mongodb()
 @pytest.mark.IT
 @pytest.mark.mcp
-@pytest.mark.req("FR-009")
+@pytest.mark.req("FR-013")
 
 
 def test_mongodb_mcp_tools_crud_lifecycle() -> None:

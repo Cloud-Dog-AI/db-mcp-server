@@ -9,12 +9,13 @@ template-last-updated: 2026-06-12
 template-owner: platform-standards
 
 project: db-mcp-server
-doc-last-updated: 2026-06-12
-doc-git-commit: ee5979008dace594f92b45315bdf687fb1aa00df
+doc-last-updated: 2026-06-17
+doc-git-commit: d064aa17d3a6570cb01e86bbf63e4632b37fb355
 doc-git-branch: main
 doc-source-shas: []
 doc-age-policy: indefinite
-doc-conformance-stamp: 2026-06-12T12:00:00Z
+doc-conformance-stamp: 2026-06-17T00:00:00Z
+stream-a-lane: W28E-1808A
 ---
 
 # db-mcp-server - ROLES-AND-USECASES
@@ -165,3 +166,63 @@ surfaces: ['api', 'mcp', 'a2a', 'webui']
 roles: [admin, read-write, read-only, anon]
 FR-mapping: []  # populated by W28C-1711
 ```
+
+## 8. Use-Case Inventory (UC-NNN) — W28E-1808A
+
+Formal use-case inventory authored in W28E-1808A Stream-A. Every `UC-NNN` maps an actor
+to an entity/action, cites the canonical `FR-NNN`/`CS-NNN` it exercises (see
+[REQUIREMENTS.md](REQUIREMENTS.md) §"Functional Requirements (W28E-1808A canonical
+capability map)"), the surfaces it covers, and its test evidence. UCs drive Stream-B
+(`W28E-1808B`) functional delivery and Stream-C (`W28E-1808C`) WebUI/E2E scope. A UC is
+"bound" when each of its supporting FR/CS rows has a `@pytest.mark.req()` test.
+
+### 8.1 Positive use cases
+
+| UC ID | Actor / role | Entity / action | Requirements | Surfaces | Test evidence |
+|---|---|---|---|---|---|
+| `UC-001` | Service administrator (`admin`, `data_steward`) | Connection-profile + source-connection CRUD | `FR-004` | api, mcp, webui | `IT1.11_SourceConnections`, `UT1.21_ProfileScopeAndSchemaApproval` |
+| `UC-002` | Analyst / developer (`analyst`, `developer`) | Browse catalogue namespaces and entities | `FR-005` | api, mcp, webui | `UT1.6_CatalogTools`, `ST1.4_CatalogApi`, `IT1.3_FullDiscoveryFlow` |
+| `UC-003` | Analyst (`analyst`, `read-only`) | Read content with a structured filter | `FR-006`, `FR-007` | api, mcp, webui | `UT1.5_FilterModel`, `ST1.5_ContentApi`, `IT1.4_ContentCRUDLifecycle` |
+| `UC-004` | Developer / steward (`developer`, `read-write`) | Create / update / delete content | `FR-006` | api, mcp | `UT1.7_ContentTools`, `ST1.5_ContentApi`, `IT1.4_ContentCRUDLifecycle` |
+| `UC-005` | Developer / steward | List / curate / infer relationships | `FR-008` | api, mcp | `UT1.8_RelationshipTools`, `IT1.5_RelationshipLifecycle` |
+| `UC-006` | Data steward (`data_steward`, `admin`) | Plan -> approve -> execute schema change | `FR-009` | api, mcp | `UT1.12_SchemaChangeService`, `ST1.6_SchemaApi`, `IT1.7_SchemaChangeLifecycle` |
+| `UC-007` | Analyst / developer | Search indexed metadata and content | `FR-010` | api, mcp, webui | `UT1.9_SearchIndexer`, `UT1.10_SearchService`, `ST1.7_SearchApi`, `IT1.6_SearchIndexingLifecycle` |
+| `UC-008` | Developer | Save and replay a structured query | `FR-011` | api, mcp | `IT1.12_SavedQueries` |
+| `UC-009` | Service administrator | Seed gated test data into allowed runtime profiles | `FR-012` | api | `fixtures/test_seed_data`, `UT1.22_TestDataSeed` |
+| `UC-010` | Developer | Connect + operate a MongoDB source | `FR-013` | internal, mcp | `UT1.4_MongoDBConnector`, `ST1.3_MongoDBConnector`, `IT1.2_MongoDbMcpTools` |
+| `UC-011` | Developer | Connect + operate a CouchDB source | `FR-014` | internal, mcp | `UT1.13_CouchDBConnector`, `ST1.9_CouchDBConnector`, `IT1.8_CouchDbMcpTools` |
+| `UC-012` | Developer | Connect + operate an OpenSearch source | `FR-015` | internal, mcp | `UT1.14_OpenSearchConnector`, `ST1.10_OpenSearchConnector`, `IT1.9_OpenSearchMcpTools` |
+| `UC-013` | Developer | Connect + operate an Elasticsearch source | `FR-016` | internal | `UT1.16_ElasticsearchConnector`, `ST1.12_ElasticsearchConnector` |
+| `UC-014` | Developer | Connect + operate a Cassandra source | `FR-017` | internal | `UT1.17_CassandraConnector`, `ST1.13_CassandraConnector` |
+| `UC-015` | Developer | Connect + operate a relational (PostgreSQL / MariaDB) source | `FR-018` | internal | `UT1.18_RelationalConnectorDispatch`, `ST1.14_PostgreSQLConnector`, `ST1.15_MariaDBConnector` |
+| `UC-016` | Operator | Verify the seven-connector lifecycle matrix | `FR-019` | internal, mcp | `IT1.10_BackendConnectorMatrix` |
+| `UC-017` | MCP client (`user`) | Invoke registered MCP tools | `FR-020` | mcp | `UT1.20_McpServer` |
+| `UC-018` | Peer agent (`system`) | Invoke A2A skills via the agent card | `FR-021` | a2a | `UT1.15_A2AServer` |
+| `UC-019` | Any authenticated role | Operate the WebUI admin/developer/system pages | `FR-022` | webui | `UT1.11_WebUiServing`, `ST1.8_WebUiServing`, `AT_WEBUI_E2E` |
+| `UC-020` | Administrator (`admin`, `read-only` masked) | Read masked effective configuration | `FR-023` | internal, api | `UT1.1_ConfigLoading` |
+| `UC-021` | Operator (`job-control`, `developer`) | Run indexing / schema-change / bulk jobs | `FR-024` | api, mcp | `UT1.19_JobLifecycle` |
+| `UC-022` | Any role | Check four-surface `GET /health` readiness | `FR-025` | api | `ST1.1_ServerStartup` |
+| `UC-023` | Administrator / read-write / read-only | Authenticate via flat-login cookie session | `FR-001`, `FR-002` | api, webui | `UT1.50_UnauthAuthGate`, `UT1.51_AuthedNonAdminGate`, `UT1.52_FlatLoginContract` |
+| `UC-024` | Administrator | Manage users / groups / API-keys / RBAC via shared `cloud_dog_idam` | `FR-003` | api, mcp, webui | `UT1.3_AccessControlService`, `ST1.2_AccessControlApi`, `IT1.1_AccessControlLifecycle` |
+| `UC-025` | Auditor (`auditor`, `audit-log`, `admin`) | Review NIST AU-3 audit events (list/get) | `FR-028` | api, mcp, webui | `ST1.2_AccessControlApi` |
+| `UC-026` | System / operator | Validate the live preprod deployment contract on `dbmcpserver0` | `FR-027` | api, a2a, webui | `e2e/test_w28a746_live_preprod_contract`, `smoke/test_w28a746_b_method_idam` |
+| `UC-027` | Project structure auditor | Verify required platform-package declarations and packaging quality | `FR-026` | internal | `QT1.1_ProjectStructure` |
+
+### 8.2 Negative use cases
+
+These re-state §4 NEG-001..005 as `UC-NNN` rows bound to the canonical `CS-NNN` security
+requirements.
+
+| UC ID | Actor / role | Attempted | Expected | Requirements | Test evidence |
+|---|---|---|---|---|---|
+| `UC-028` | Anonymous visitor (`anon`) | Read data / call any surface without a session | `401` | `CS-001`, `CS-005`, `CS-006`, `CS-007`, `CS-008`, `FR-001` | `UT1.52_FlatLoginContract`, `UT1.50_UnauthAuthGate` |
+| `UC-029` | Read-only user (`read-only`) | Write / mutate via any surface | `403` | `CS-002`, `CS-009`, `CS-010`, `CS-011`, `CS-012` | `UT1.52_FlatLoginContract`, `UT1.22_TestDataSeed` |
+| `UC-030` | Any role | Submit a request missing required parameters | `422` | `CS-003`, `CS-013`, `CS-014`, `CS-015` | `UT1.22_TestDataSeed` |
+| `UC-031` | Wrong-role principal (`read-write`, non-admin key) | Privileged user/group/admin op | `403`, audited denial | `CS-004`, `FR-003`, `FR-028` | `UT1.22_TestDataSeed`, `ST1.2_AccessControlApi` |
+
+### 8.3 Use-case coverage note
+
+- 31 use cases (`UC-001`..`UC-031`): 27 positive + 4 negative.
+- Every UC cites >=1 canonical `FR-NNN`/`CS-NNN`; every `FR-NNN`/`CS-NNN` is reached by
+  >=1 UC, so the UC inventory is bidirectionally complete with the requirements set.
+- Surface coverage per UC drives Stream-C (`W28E-1808C`) page x role x UC WebUI matrix.

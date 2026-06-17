@@ -54,7 +54,7 @@ def _wait(url: str) -> None:
     pytest.fail(f"Timed out waiting for {url}")
 @pytest.mark.IT
 @pytest.mark.mcp
-@pytest.mark.req("FR-009")
+@pytest.mark.req("FR-015")
 
 
 def test_opensearch_mcp_tools_crud_lifecycle() -> None:

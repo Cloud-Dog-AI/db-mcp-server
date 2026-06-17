@@ -32,7 +32,7 @@ from tests.helpers.server_runtime import service_base_url
 pytestmark = [pytest.mark.system, pytest.mark.timeout(120)]
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.req("FR-006")
+@pytest.mark.req("FR-025")
 
 
 def test_all_servers_start_and_report_health() -> None:

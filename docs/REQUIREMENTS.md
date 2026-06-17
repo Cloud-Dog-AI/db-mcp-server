@@ -3,14 +3,15 @@ template-id: T-REQ
 template-version: 1.1
 applies-to: docs/REQUIREMENTS.md
 project: db-mcp-server
-doc-last-updated: 2026-06-12T16:36:39Z
-doc-git-commit: de6c3ed78039fcf91204a0f860096008551f7018
+doc-last-updated: 2026-06-17T00:00:00Z
+doc-git-commit: d064aa17d3a6570cb01e86bbf63e4632b37fb355
 doc-git-branch: main
 doc-age-policy: indefinite
-doc-conformance-stamp: 2026-06-12T16:36:39Z
+doc-conformance-stamp: 2026-06-17T00:00:00Z
 req-trace-version: 1.0
-req-id-prefixes-used: [SV, BO, BR, FR, UC, CS, NF, R, F]
+req-id-prefixes-used: [FR, CS, NF, CR, CD, SC, CO, SI, RL, CN, AC, CFG]
 surface-coverage: [api, mcp, a2a, webui]
+stream-a-lane: W28E-1808A
 ---
 
 # db-mcp-server — REQUIREMENTS
@@ -375,10 +376,10 @@ Mandatory schema per PS-REQ-TEST-TRACE v1.0 §3.4. Every project covers anon-den
 
 | ID | Threat / negative scenario | Surface | Role(s) attempted | Expected | Tests |
 |---|---|---|---|---|---|
-| `CS-001` | Anon attempts data read | `api`, `mcp`, `a2a`, `webui` | `anon` | `401` | (to be bound in Instruction 4 by operator) |
-| `CS-002` | read-only attempts write | `api`, `mcp` | `read-only` | `403` | (to be bound in Instruction 4 by operator) |
-| `CS-003` | Missing required param | `api` | `admin` | `422` | (to be bound in Instruction 4 by operator) |
-| `CS-004` | Wrong-role privileged op | `mcp` | `read-write` | `403` | (to be bound in Instruction 4 by operator) |
+| `CS-001` | Anon attempts data read | `api`, `mcp`, `a2a`, `webui` | `anon` | `401` | `UT1.52_FlatLoginContract` |
+| `CS-002` | read-only attempts write | `api`, `mcp` | `read-only` | `403` | `UT1.22_TestDataSeed` |
+| `CS-003` | Missing required param | `api` | `admin` | `422` | `UT1.22_TestDataSeed` |
+| `CS-004` | Wrong-role privileged op | `mcp` | `read-write` | `403` | `UT1.22_TestDataSeed` |
 
 
 <!-- W28C-1710b design-delta additions (2026-06-14T18:01:23Z); SHA chain in working/W28C-1710b/KNOWLEDGE-PRESERVATION-DELTA.md -->
@@ -415,33 +416,113 @@ Every project MUST have CS-NNN rows for `anon-denied`, `wrong-role-denied`, `mis
 | `CS-015` | missing-param-error | `a2a` | `422` | `*` |
 | `CS-016` | missing-param-error | `webui` | `422` | `*` |
 
-_These CS-NNN rows are pending W28C-1711 test binding. Each row binds to one or more `@pytest.mark.negative` tests with explicit expected denial code._
+_W28E-1808A: every CS-NNN row above is bound to a `@pytest.mark.req("CS-NNN")` negative test. `CS-001`/`CS-005`-`CS-008` (anon-denied) and `CS-012`/`CS-016` bind to `tests/unit/UT1.52_FlatLoginContract`; `CS-002`-`CS-004` and `CS-009`-`CS-011`/`CS-013`-`CS-015` (wrong-role-denied + missing-param) bind to `tests/unit/UT1.22_TestDataSeed`. See `docs/REQ-COVERAGE.md` for the generated binding matrix._
 
 
-<!-- W28C-1711-R3 forensic: canonical FR-NNN rows derived from legacy R-NNN/FR1.NN test bindings (2026-06-15T15:21:28Z) -->
+<!--
+W28E-1808A Stream-A canonical-FR re-author (2026-06-17).
+This section SUPERSEDES the W28C-1711-R3 mechanical tier-bucket FR rows
+(FR-001=R2, FR-003=unit-cluster, FR-006=system-cluster, FR-009=integration-cluster, ...),
+which were derived from pytest *tier* clusters rather than service capabilities and are
+the PS-CLOSEOUT-WARRANTY §6 "probe-cluster ADD-REQ stub" pattern. Each FR-NNN below is a
+real db-mcp capability sourced from `src/` + the detailed CR/CD/SC/CO/SI/RL/CN/AC/CFG
+requirements above, and is bound to specific capability tests (semantic
+`@pytest.mark.req("FR-NNN")`, replacing all mechanical bindings + residual probes).
+The FR-NNN -> old-binding migration is recorded in
+working/evidence/W28E-1808A/current/03-requirements-map.tsv.
+-->
 
-## Functional Requirements (W28C-1711-R3 canonical-FR expansion)
+## Functional Requirements (W28E-1808A canonical capability map)
 
-Per PS-REQ-TEST-TRACE §2: every test req() must reference a backtick-wrapped FR/CS/NF-NNN row. This section adds canonical FR-NNN rows derived from existing legacy R-NNN / FR1.NN bindings + ADD-REQ probe-test functional capabilities. Test bindings rewritten to use these canonical FR-NNN IDs.
+Per PS-REQ-TEST-TRACE §2 every test `@pytest.mark.req()` references a backtick-wrapped
+FR/CS/NF-NNN row here, and every FR-NNN binds to >=1 capability test. `since` is the git
+short-sha that introduced the capability on `main` (`2d11a0c` = W28A-871-R2 forward-port;
+`d064aa1` = W28C-1711-R3 baseline). Detailed acceptance criteria live in the
+CR/CD/SC/CO/SI/RL/CN/AC/CFG/NF sections above (the `domain anchor` column).
 
-| ID | Source (legacy) | Test count | Surface (inferred) | Priority | Description |
-|---|---|---:|---|---|---|
-| `FR-001` | R2 | 13 | `internal` | `should` | Functional capability covered by legacy binding `R2` (W28C-1711-R3 derivation; see new-or-updated-tests.tsv for test list) |
-| `FR-002` | R5 | 5 | `webui` | `should` | Functional capability covered by legacy binding `R5` (W28C-1711-R3 derivation; see new-or-updated-tests.tsv for test list) |
+| ID | Capability | Surfaces | Priority | Since | Domain anchor + source_evidence | Semantic test binding |
+|---|---|---|---|---|---|---|
+| `FR-001` | Flat-login authentication contract: admin / read-write / read-only cookie login; authed-non-admin and anon gate (`401`) | `api`, `webui` | `must` | `2d11a0c` | AC-01, AC-05; `src/core/access_control/service.py` (flat demo roles), `src/servers/web/` | `UT1.50_UnauthAuthGate`, `UT1.51_AuthedNonAdminGate`, `UT1.52_FlatLoginContract` |
+| `FR-002` | Auth middleware and cookie<->API-key secure proxy bridge | `api`, `a2a` | `must` | `d064aa1` | AC-01; `src/core/access_control`, `cloud_dog_api_kit` middleware | `UT1.2_AuthMiddleware` |
+| `FR-003` | Access-control service and shared `cloud_dog_idam` RBAC (users / groups / API-keys / roles), profile-scoped permission rebuild | `api`, `mcp`, `webui` | `must` | `2d11a0c` | AC-04, AC-05, AC-06; `src/core/access_control/service.py`, `src/servers/api/access_control.py` | `UT1.3_AccessControlService`, `ST1.2_AccessControlApi`, `IT1.1_AccessControlLifecycle` |
+| `FR-004` | Source-connection registry and connection-profile CRUD + profile scope enforcement | `api`, `mcp`, `webui` | `must` | `2d11a0c` | CFG-01, AC-01; `src/servers/api/source_connections.py`, `src/core/access_control` | `IT1.11_SourceConnections`, `UT1.21_ProfileScopeAndSchemaApproval` |
+| `FR-005` | Catalogue and metadata discovery (namespaces / entities / fields), cached discovery API | `api`, `mcp` | `must` | `d064aa1` | CD-01, CD-02, CD-03, CD-04; `src/core/catalog`, `src/core/discovery`, `src/servers/api/discovery.py` | `UT1.6_CatalogTools`, `UT1.20_DiscoveryApi`, `ST1.4_CatalogApi`, `IT1.3_FullDiscoveryFlow` |
+| `FR-006` | Structured content CRUD operations (declarative payloads, profile/RBAC scoped) | `api`, `mcp` | `must` | `d064aa1` | CO-01, CO-02, CO-06; `src/core/content`, `src/servers/mcp/content_tools.py` | `UT1.7_ContentTools`, `ST1.5_ContentApi`, `IT1.4_ContentCRUDLifecycle` |
+| `FR-007` | Structured-filter operator grammar and filter model (16-operator grammar, and/or/not grouping) | `api`, `mcp` | `must` | `d064aa1` | CO-01, CO-05; `src/core/filters` | `UT1.5_FilterModel` |
+| `FR-008` | Relationship management: list declared/curated/inferred, curate CRUD, candidate inference | `api`, `mcp` | `should` | `d064aa1` | RL-01, RL-02, RL-03; `src/core/relationships`, `src/servers/mcp/relationship_tools.py` | `UT1.8_RelationshipTools`, `IT1.5_RelationshipLifecycle` |
+| `FR-009` | Schema introspection and validate->plan->approve->execute schema-change workflow | `api`, `mcp` | `must` | `d064aa1` | SC-01, SC-02, SC-03, SC-04; `src/core/schema`, `src/servers/api/schema_changes.py` | `UT1.12_SchemaChangeService`, `ST1.6_SchemaApi`, `IT1.7_SchemaChangeLifecycle` |
+| `FR-010` | Search and discovery indexing (keyword/phrase/filtered search, deterministic scoring) | `api`, `mcp` | `must` | `d064aa1` | SI-01, SI-02, SI-03, SI-04; `src/core/search` | `UT1.9_SearchIndexer`, `UT1.10_SearchService`, `ST1.7_SearchApi`, `IT1.6_SearchIndexingLifecycle` |
+| `FR-011` | Saved-query persistence and replay | `api`, `mcp` | `should` | `2d11a0c` | CO-01; `src/servers/api/saved_queries.py` | `IT1.12_SavedQueries` |
+| `FR-012` | Gated test-data seeding (allowed-runtime-profile guard) | `api` | `should` | `2d11a0c` | CO-02; `src/core/test_data`, `src/servers/api/test_data.py` | `fixtures/test_seed_data` (positive), `UT1.22_TestDataSeed` (RBAC negatives, `CS-*`) |
+| `FR-013` | MongoDB connector: validation, namespace discovery, schema sampling, structured filters, binary envelopes | `internal`, `mcp` | `must` | `d064aa1` | CN-01, CO-06; `src/core/connectors/mongodb` | `UT1.4_MongoDBConnector`, `UT1.15_MongoConfig`, `ST1.3_MongoDBConnector`, `IT1.2_MongoDbMcpTools` |
+| `FR-014` | CouchDB connector: database discovery, document metadata, view/index awareness | `internal`, `mcp` | `must` | `d064aa1` | CN-02; `src/core/connectors/couchdb` | `UT1.13_CouchDBConnector`, `ST1.9_CouchDBConnector`, `IT1.8_CouchDbMcpTools` |
+| `FR-015` | OpenSearch connector: index discovery, mappings, structured search, change planning | `internal`, `mcp` | `must` | `d064aa1` | CN-03; `src/core/connectors/opensearch` | `UT1.14_OpenSearchConnector`, `ST1.10_OpenSearchConnector`, `IT1.9_OpenSearchMcpTools` |
+| `FR-016` | Elasticsearch connector: index discovery, mappings, structured search, change planning | `internal` | `must` | `d064aa1` | CN-04; `src/core/connectors/elasticsearch` | `UT1.16_ElasticsearchConnector`, `ST1.12_ElasticsearchConnector` |
+| `FR-017` | Cassandra connector: keyspace/table discovery, schema inspection, safe reads/change planning | `internal` | `must` | `d064aa1` | CN-05; `src/core/connectors/cassandra` | `UT1.17_CassandraConnector`, `ST1.13_CassandraConnector` |
+| `FR-018` | Relational connector dispatch (PostgreSQL + MariaDB adapters) | `internal` | `must` | `d064aa1` | CN-01..CN-05 (relational), CFG-02; `src/core/connectors` relational dispatch | `UT1.18_RelationalConnectorDispatch`, `ST1.14_PostgreSQLConnector`, `ST1.15_MariaDBConnector` |
+| `FR-019` | Multi-backend connector matrix: uniform lifecycle across all seven connectors | `internal`, `mcp` | `must` | `d064aa1` | G1, G3, CN-01..CN-05; `src/core/connectors` | `IT1.10_BackendConnectorMatrix` |
+| `FR-020` | MCP server and tool registry (catalog/content/relationship/schema/search/mongodb/audit tools + legacy alias) | `mcp` | `must` | `d064aa1` | CR-01; `src/servers/mcp` | `UT1.20_McpServer` |
+| `FR-021` | A2A server and agent-card / skill surface with API-key auth | `a2a` | `must` | `d064aa1` | CR-01; `src/servers/a2a/app.py` | `UT1.15_A2AServer` |
+| `FR-022` | WebUI serving: SPA shell and the canonical admin/developer/system page set | `webui` | `must` | `2d11a0c` | CR-01; `src/servers/web`, `ui/dist` | `UT1.11_WebUiServing`, `ST1.8_WebUiServing`, `AT_WEBUI_E2E` |
+| `FR-023` | Configuration loading and masked effective-config provenance (`cloud_dog_config` + Vault precedence) | `internal`, `api` | `must` | `d064aa1` | CR-03, CFG-01, CFG-03; `src/common/runtime.py`, config-provenance | `UT1.1_ConfigLoading` |
+| `FR-024` | Async job lifecycle (`cloud_dog_jobs`) for indexing, schema-change and bulk operations | `api`, `mcp` | `should` | `d064aa1` | SI-04, SC-03, CO-03, NF-02; `cloud_dog_jobs` wiring | `UT1.19_JobLifecycle` |
+| `FR-025` | Four-surface server startup and `GET /health` readiness | `api` | `must` | `d064aa1` | CR-01, CR-02; `src/servers/*` health endpoints | `ST1.1_ServerStartup` |
+| `FR-026` | Project-structure / packaging quality: required platform-package declarations and W28A-118C doc-package-test map | `internal` | `should` | `d064aa1` | CR-03, NF-04; `pyproject.toml`, package layout | `QT1.1_ProjectStructure` |
+| `FR-027` | Live preprod deployment contract: b-method IDAM consumer (T0-T3) + live API/MCP/A2A/WebUI contract on `dbmcpserver0` | `api`, `a2a` | `must` | `2d11a0c` | CR-02, AC-01; `tests/e2e`, `tests/smoke` against deployed digest | `e2e/test_w28a746_live_preprod_contract`, `smoke/test_w28a746_b_method_idam` |
+| `FR-028` | Audit logging: NIST AU-3 audit-event capture (`event_type`/`actor`/`outcome`) and MCP audit query tools (`list_events`/`get_event`) | `api`, `mcp` | `must` | `d064aa1` | AC-02, PS-40; `src/core/audit/service.py`, `src/servers/mcp/audit_tools.py` | `ST1.2_AccessControlApi` (asserts `audit.log.jsonl` event_types + `denied` outcome) |
 
+> **Audit-emission gap (Stream-B target, do not mark closed here):** the live deployment
+> currently fails to populate the full NIST AU-3 actor/client/correlation fields for every
+> surface (WebUI observation `DM-AL-09`). `FR-028` is design-bound and asserted at the
+> service-layer (`ST1.2`); end-to-end populated-field emission across API/MCP/A2A/WebUI is a
+> Stream-B (`W28E-1808B`) implementation target. See the TEST-DESIGN-TODO rows in `docs/TESTS.md`.
 
-<!-- W28C-1711-R3 forensic: ADD-REQ FR rows derived from probe-test clusters (2026-06-15T15:21:28Z) -->
+## 6. WebUI Observation Traceability (DM-* -> requirement)
 
-## Functional Requirements (W28C-1711-R3 ADD-REQ derivation)
+Every atomic db-mcp WebUI Feedback Capture observation from `GarysWorkingNotes.md`
+(operator canonical checkout, db-mcp section ~L2577-2712) maps to an existing requirement
+row below. Observations are predominantly Stream-C (WebUI/E2E) drive-out targets; this
+table is the design-time binding so Stream-B/C have an explicit requirement anchor. No new
+backtick FR-IDs are minted for un-tested observations — they become TEST-DESIGN-TODO /
+AT-design rows in `docs/TESTS.md`. `[ui]` = present on the W28A-871 UI delta now on main.
 
-Per W28C-1711 spec rule: ADD-REQ — create the requirement and bind the test. This section adds FR-NNN rows derived from functional probe-test clusters that had no matching FR in REQUIREMENTS.md. Each row's description is derived from the cluster's test names.
+| Observation group | Codes | Requirement anchor | Stream |
+|---|---|---|---|
+| Dashboard layout + activity table | `DM-D-07`, `DM-D-08`, `DM-D-12`, `DM-D-13` | `FR-022` (WebUI), `FR-028` (AU-3 fields) | C / B |
+| Profiles dialog (rename, numeric field, help, USE semantics) | `DM-P-18`, `DM-P-22`, `DM-P-23`, `DM-P-24` | `FR-004` (profiles), `FR-022` | C |
+| Catalogue master/detail layout | `DM-CAT-02` | `FR-005` | C |
+| Data Browser (filter preview, button styling, role widget, dedup) | `DM-DB-05`, `DM-DB-06`, `DM-DB-07`, `DM-DB-08` | `FR-006`, `FR-007` | C |
+| Search page title | `DM-SR-07` | `FR-010` | C |
+| Relationships action labels | `DM-RE-04` | `FR-008` | C |
+| Schema page/nav labels | `DM-S-06`, `DM-S-07` | `FR-009` | C |
+| Audit & Log surface (width, metrics, NIST AU-3, filter, multi-select) | `DM-AL-06`, `DM-AL-08`..`DM-AL-12` | `FR-028`, `FR-022` | B / C |
+| Admin Users (add placement, uniqueness, roles/groups multiselect, created-time) | `DM-U-03`..`DM-U-06`, `DM-U-09`, `DM-U-11` | `FR-003` (idam users), `FR-022` | C |
+| Admin Groups (seed + styling) | `DM-G-01`, `DM-G-04` | `FR-003` (idam groups), `FR-022` | C |
+| Admin API Keys (rename, status placement, prefix clarity) | `DM-AK-08`, `DM-AK-09`, `DM-AK-10` | `FR-003` (idam api-keys), `FR-022` | C |
+| Admin RBAC (seed, resource-RBAC, CRUD spec, GUID->username) | `DM-RB-01`, `DM-RB-02`, `DM-RB-08`, `DM-RB-09` | `FR-003` (idam RBAC), `FR-022` | C |
+| Admin Roles (code-defined vs data-defined decision) | `DM-RL-02`, `DM-RL-03` | `FR-003` (idam roles) | C (decision) |
+| API Docs (reference widget, README, MCP/A2A param+schema columns, safety guide) | `DM-AD-01`, `DM-AD-04`, `DM-AD-06`..`DM-AD-09` | `FR-020` (MCP), `FR-021` (A2A), `FR-022` | C |
+| MCP Console (admin pre-filter, history collapse, download/copy) | `DM-MC-01`, `DM-MC-06`, `DM-MC-07` | `FR-020` | C |
+| A2A Console (agent-card formatting, skill pick-list) | `DM-AC-04`, `DM-AC-05` | `FR-021` | C |
+| Jobs (filters, thinking tab, keep/remove `/jobs` decision) | `DM-J-01`, `DM-J-02`, `DM-J-08`, `DM-J-11` | `FR-024`, `FR-022` | C (decision) |
+| Settings (value-column justify) | `DM-SET-01` | `FR-022`, `FR-023` | C |
+| Cross-cutting WebUI (button placement, title-case, activity label, confirm modal, help-tips, column picker overlay, status placement, NIST AU-3 ruling, shared multiselect) | `DM-X-04`, `DM-X-05`, `DM-X-08`, `DM-X-11`, `DM-X-15`..`DM-X-19` | `FR-022` + W28E-1825 PS-WEBUI-STYLE-COMPONENTS (cross-svc); `DM-X-19` -> `FR-028` | C / cross-cutting |
 
-| ID | Cluster | Test count | Surface (inferred) | Priority | Description |
-|---|---|---:|---|---|---|
-| `FR-003` | unit | 22 | `a2a,api,mcp` | `should` | Unit (W28C-1711-R3 ADD-REQ cluster derivation) |
-| `FR-004` | e2e | 1 | `internal` | `should` | E2E (W28C-1711-R3 ADD-REQ cluster derivation) |
-| `FR-005` | application | 1 | `webui` | `should` | Application (W28C-1711-R3 ADD-REQ cluster derivation) |
-| `FR-006` | system | 14 | `api,webui` | `should` | System (W28C-1711-R3 ADD-REQ cluster derivation) |
-| `FR-007` | smoke | 1 | `internal` | `should` | Smoke (W28C-1711-R3 ADD-REQ cluster derivation) |
-| `FR-008` | fixtures | 1 | `internal` | `should` | Fixtures (W28C-1711-R3 ADD-REQ cluster derivation) |
-| `FR-009` | integration | 12 | `api,mcp` | `should` | Integration (W28C-1711-R3 ADD-REQ cluster derivation) |
+Cross-cutting observations `DM-X-16`/`DM-X-17`/`DM-X-18` (column-picker overlay, shared
+`<StructuredMultiSelect>` / `<HelpTip>` primitives, status-column-left invariant) apply to
+every service WebUI and are routed to W28E-1825 (PS-WEBUI-STYLE-COMPONENTS); they are
+recorded here for traceability but owned by the cross-cutting lane.
+
+## W28E-1808A source-verified note
+
+- The canonical FR-NNN set (FR-001..FR-028) is source-verified against `src/core/`
+  (access_control, audit, catalog, connectors, content, discovery, filters, relationships,
+  schema, search, test_data) and `src/servers/` (api, mcp, a2a, web).
+- Connector adapters present on `main`: `mongodb`, `postgresql`, `mariadb`, `couchdb`,
+  `opensearch`, `elasticsearch`, `cassandra` (seven).
+- The W28C-1711-R3 mechanical FR rows (tier-cluster derivations) are superseded by this
+  capability map; the FR-id migration is recorded in
+  `working/evidence/W28E-1808A/current/03-requirements-map.tsv`.
+- The 2026-06-16 W28C-1711 knowledge SUPPLEMENT dump file (`E2E db-mcp-server.md`) is
+  un-triaged by the operator (no NEW-REQ/NEW-AT/DUPLICATE/SUPERSEDED/DEFER decision); per
+  template T-W28E-A it is recorded as DEFER and NOT authored against in this lane.

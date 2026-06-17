@@ -171,7 +171,7 @@ def _client(tmp_path: Path) -> tuple[TestClient, _FakeConnectorManager]:
     return TestClient(app), fake_connectors
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-005")
 
 
 def test_discovery_routes_cache_profile_results_and_discover_connection_namespaces(tmp_path: Path) -> None:

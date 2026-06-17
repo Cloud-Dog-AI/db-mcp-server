@@ -47,7 +47,7 @@ def _public_url(uri: str) -> str:
     return urlunparse((parsed.scheme, netloc, parsed.path, "", "", "")).rstrip("/")
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.req("FR-006")
+@pytest.mark.req("FR-014")
 
 
 def test_couchdb_adapter_against_real_local_couchdb() -> None:

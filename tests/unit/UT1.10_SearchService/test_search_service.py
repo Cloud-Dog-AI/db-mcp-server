@@ -57,7 +57,7 @@ def _build_runtime(tmp_path):
     )
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-010")
 
 
 def test_v1_10_1_repository_search_and_explain_match(tmp_path) -> None:
@@ -139,7 +139,7 @@ def test_v1_10_1_repository_search_and_explain_match(tmp_path) -> None:
     assert any(item["field"] == "keywords" for item in explanation["matched_components"])
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-010")
 
 
 def test_v1_10_2_index_status_includes_queue_and_entity_status(tmp_path) -> None:

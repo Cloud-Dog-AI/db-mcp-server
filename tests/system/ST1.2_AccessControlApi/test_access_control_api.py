@@ -55,9 +55,10 @@ def _wait_for_api() -> None:
     pytest.fail("Timed out waiting for API health endpoint")
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.req("FR-006")
+@pytest.mark.req("FR-003")
 
 
+@pytest.mark.req("FR-028")  # W28E-1808A: NIST AU-3 audit event capture
 def test_access_control_api_crud_and_audit() -> None:
     """API CRUD should enforce auth, persist state, and emit audit events."""
     root = Path(__file__).resolve().parents[3]

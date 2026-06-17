@@ -29,7 +29,7 @@ from tests.helpers.mongo_runtime import cleanup_database, ensure_real_mongodb
 pytestmark = [pytest.mark.system, pytest.mark.timeout(180)]
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.req("FR-006")
+@pytest.mark.req("FR-013")
 
 
 def test_mongodb_adapter_against_real_local_mongo() -> None:

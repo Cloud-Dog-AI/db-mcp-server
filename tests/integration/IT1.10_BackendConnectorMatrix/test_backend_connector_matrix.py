@@ -99,7 +99,7 @@ def _authed_request(base_url: str, method: str, path: str, **kwargs) -> requests
     return requests.request(method, clean_url, **kwargs)
 @pytest.mark.IT
 @pytest.mark.mcp
-@pytest.mark.req("FR-009")
+@pytest.mark.req("FR-019")
 
 
 def test_real_backend_connector_operations(backend: str) -> None:

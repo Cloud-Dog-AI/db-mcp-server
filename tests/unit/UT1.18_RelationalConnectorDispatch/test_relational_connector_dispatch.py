@@ -49,7 +49,7 @@ class DummyRuntime:
         self.access_control = DummyAccessControl(profile)
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-018")
 
 
 def test_connector_manager_supports_postgresql_source_type(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -69,7 +69,7 @@ def test_connector_manager_supports_postgresql_source_type(monkeypatch: pytest.M
     assert session.connector.uri.startswith("postgresql+psycopg://db-user:db-pass@db2.db.example.com:5432/")
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-018")
 
 
 def test_connector_manager_supports_mariadb_source_type(monkeypatch: pytest.MonkeyPatch) -> None:

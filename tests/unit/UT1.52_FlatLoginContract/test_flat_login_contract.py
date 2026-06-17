@@ -185,7 +185,7 @@ def test_read_write_can_write_and_forwards_role_principal(web_app, monkeypatch: 
 )
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-001")
 def test_mcp_proxy_forwards_session_role_key(tmp_path, monkeypatch, creds, role) -> None:
     """Each cookie session injects its OWN seeded flat role key on /webmcp so the MCP
     tier enforces per-role RBAC (it authorises by api-key role, not X-Request-User).
@@ -220,7 +220,7 @@ def test_mcp_proxy_forwards_session_role_key(tmp_path, monkeypatch, creds, role)
     assert seen["x-api-key"] != "service-sentinel-key", "MCP forward must be the role key, not the service key"
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-001")
 
 
 def test_anon_write_is_unauthorized(web_app, monkeypatch: pytest.MonkeyPatch) -> None:

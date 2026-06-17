@@ -54,7 +54,7 @@ def _client(tmp_path: Path) -> TestClient:
     return TestClient(create_api_app([str(_env_file(tmp_path))]))
 @pytest.mark.IT
 @pytest.mark.mcp
-@pytest.mark.req("FR-009")
+@pytest.mark.req("FR-011")
 
 
 def test_saved_queries_crud_conflict_and_delete(tmp_path: Path) -> None:

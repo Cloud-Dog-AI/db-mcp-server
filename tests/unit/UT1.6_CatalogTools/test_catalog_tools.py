@@ -59,7 +59,7 @@ class _FakeConnectors:
         return None
 @pytest.mark.UT
 @pytest.mark.mcp
-@pytest.mark.req("FR-003")
+@pytest.mark.req("FR-005")
 
 
 async def test_catalog_tools_list_and_search() -> None:

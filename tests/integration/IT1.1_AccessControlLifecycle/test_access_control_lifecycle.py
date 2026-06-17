@@ -52,7 +52,7 @@ def _wait(url: str) -> None:
     pytest.fail(f"Timed out waiting for {url}")
 @pytest.mark.IT
 @pytest.mark.mcp
-@pytest.mark.req("FR-009")
+@pytest.mark.req("FR-003")
 
 
 def test_profile_user_group_api_key_lifecycle_and_mcp_admin_parity() -> None:

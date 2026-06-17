@@ -46,7 +46,7 @@ def _connector():
     return manager._build_mariadb_connector({"source_connection": "default"})
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.req("FR-006")
+@pytest.mark.req("FR-018")
 
 
 def test_mariadb_connector_against_real_runtime() -> None:

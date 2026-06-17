@@ -55,7 +55,7 @@ def _authed_request(base_url: str, method: str, path: str, **kwargs) -> requests
     return requests.request(method, clean, **kwargs)
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.req("FR-006")
+@pytest.mark.req("FR-016")
 
 
 def test_elasticsearch_adapter_against_real_runtime() -> None:

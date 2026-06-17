@@ -34,7 +34,7 @@ from tests.helpers.core_tools_runtime import (
 import pytest
 @pytest.mark.ST
 @pytest.mark.mcp
-@pytest.mark.req("FR-006")
+@pytest.mark.req("FR-010")
 
 
 def test_v1_7_search_metadata_finds_customer_email_field() -> None:
