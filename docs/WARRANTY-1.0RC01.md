@@ -97,34 +97,34 @@ _W28E-1808A Stream-A finalised: every Section-A row PASS. `cross_surface_covered
 
 | id | impl_committed | unit_test | integration_test | acceptance_test | surface_api | surface_mcp | surface_a2a | idam_role_negative | audit_event_emitted | ajobs_integration | preprod_deployed | preprod_smoke | sibling_regression | variation_pinned | verdict |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `FR-001` | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-002` | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-003` | PENDING | BOUND | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-004` | PENDING | BOUND | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-005` | PENDING | BOUND | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-006` | PENDING | BOUND | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-007` | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-008` | PENDING | BOUND | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-009` | PENDING | BOUND | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-010` | PENDING | BOUND | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-011` | PENDING | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-012` | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-013` | PENDING | BOUND | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-014` | PENDING | BOUND | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-015` | PENDING | BOUND | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-016` | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-017` | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-018` | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-019` | PENDING | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-020` | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-021` | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-022` | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-023` | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-024` | PENDING | BOUND | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-025` | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-026` | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-027` | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
-| `FR-028` | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | PENDING | **PENDING** |
+| `FR-001` | YES | PASS | N/A | PASS | PASS | N/A | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-002` | YES | PASS | N/A | N/A | PASS | N/A | PASS | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-003` | YES | PASS | PASS | PASS | PASS | PASS | N/A | PASS | PASS | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-004` | YES | PASS | PASS | N/A | PASS | PASS | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-005` | YES | PASS | PASS | N/A | PASS | PASS | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-006` | YES | PASS | PASS | N/A | PASS | PASS | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-007` | YES | PASS | N/A | N/A | PASS | PASS | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-008` | YES | PASS | PASS | N/A | PASS | PASS | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-009` | YES | PASS | PASS | N/A | PASS | PASS | N/A | N/A | PASS | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-010` | YES | PASS | PASS | N/A | PASS | PASS | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-011` | YES | N/A | PASS | N/A | PASS | PASS | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-012` | YES | PASS | N/A | N/A | PASS | N/A | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-013` | YES | PASS | PASS | N/A | N/A | PASS | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-014` | YES | PASS | PASS | N/A | N/A | PASS | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-015` | YES | PASS | PASS | N/A | N/A | PASS | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-016` | YES | PASS | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-017` | YES | PASS | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-018` | YES | PASS | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-019` | YES | N/A | PASS | N/A | N/A | PASS | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-020` | YES | PASS | N/A | PASS | N/A | PASS | N/A | N/A | PASS | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-021` | YES | PASS | N/A | PASS | N/A | N/A | PASS | N/A | PASS | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-022` | YES | PASS | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-023` | YES | PASS | N/A | N/A | PASS | N/A | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-024` | YES | PASS | N/A | N/A | PASS | PASS | N/A | N/A | N/A | PASS | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-025` | YES | PASS | N/A | PASS | PASS | N/A | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-026` | YES | PASS | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-027` | YES | N/A | N/A | PASS | PASS | N/A | PASS | N/A | N/A | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
+| `FR-028` | YES | PASS | PASS | N/A | PASS | PASS | N/A | N/A | PASS | N/A | YES | PASS | PASS | sqlite/pysqlite,llm=none,vdb=none | **PASS** |
 
 ## Section C — WebUI + E2E coverage
 
