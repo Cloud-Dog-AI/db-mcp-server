@@ -9,11 +9,14 @@ Related: W28A-746, PS-70 UM3, PS-40 L3, PS-50
 
 from __future__ import annotations
 
+import dataclasses
 import time
 from typing import Any, Callable, Dict
 
+from cloud_dog_api_kit.mcp.tool_router import ToolContract
 from cloud_dog_idam import RBACEngine
 from cloud_dog_logging import get_logger  # type: ignore[import-untyped]
+from cloud_dog_logging.audit_logger import Actor, Target
 
 logger = get_logger("db_mcp_server.mcp.tools")
 
@@ -129,6 +132,127 @@ def audit_tool_call(
         f"mcp_tool_audit tool={tool_name} outcome={'success' if success else 'failure'}"
         f" duration_ms={duration_ms:.0f} actor={actor_id}"
     )
+
+
+# ── TD-001 (W28E-1808B): full NIST AU-3 MCP audit emission ───────────────────
+# Every MCP tool call emits a fully-populated audit event through the platform
+# AuditLogger (PS-AUDIT-LOG §3): actor (id/roles/ip), target, outcome,
+# correlation_id, session_id, duration. Mirrors the API AuditMiddleware path so
+# the MCP surface is no longer un-audited (TD-001 / DM-AL-09 / DM-X-19).
+
+# payload keys that identify the target resource of a tool call, best-first.
+_TARGET_ID_KEYS = (
+    "entity", "entity_name", "namespace", "profile_id", "profile",
+    "name", "relationship_id", "query_id", "user_id", "group_id",
+    "api_key_id", "event_id", "id",
+)
+
+
+def _derive_target(tool_name: str, params: Dict[str, Any]) -> Target:
+    """Derive a PS-AUDIT-LOG Target from the tool name + payload (best-effort)."""
+    target_type = tool_name.split(".", 1)[0] or "tool"
+    target_id = "-"
+    for key in _TARGET_ID_KEYS:
+        value = (params or {}).get(key)
+        if value not in (None, ""):
+            target_id = str(value)
+            break
+    return Target(type=target_type, id=target_id, name=tool_name)
+
+
+def _actor_from_request(request: Any) -> Actor:
+    """Build a PS-AUDIT-LOG Actor (id/roles/ip) from request.state (auth middleware)."""
+    state = getattr(request, "state", None)
+    user_id = getattr(state, "user", None) if state is not None else None
+    roles = getattr(state, "roles", None) if state is not None else None
+    client = getattr(request, "client", None)
+    ip = getattr(client, "host", None) if client is not None else None
+    if not user_id:
+        return Actor(type="anonymous", id="anonymous", roles=None, ip=ip)
+    return Actor(type="user", id=str(user_id), roles=list(roles) if roles else None, ip=ip)
+
+
+def emit_tool_audit(
+    audit_logger: Any,
+    *,
+    tool_name: str,
+    request: Any,
+    params: Dict[str, Any],
+    success: bool,
+    duration_ms: float,
+    error: str = "",
+) -> None:
+    """Emit a full NIST AU-3 audit event for an MCP tool call via the platform AuditLogger."""
+    state = getattr(request, "state", None)
+    correlation_id = getattr(state, "correlation_id", None) if state is not None else None
+    session_id = (
+        getattr(state, "session_id", None) or getattr(state, "api_key_id", None)
+        if state is not None else None
+    )
+    actor = _actor_from_request(request)
+    target = _derive_target(tool_name, params)
+    details: Dict[str, Any] = {
+        "target_type": target.type,
+        "target_id": target.id,
+        "target_name": target.name,
+        "source_address": actor.ip,
+        "session_id": session_id,
+    }
+    if correlation_id:
+        details["correlation_id"] = correlation_id
+    if not success and error:
+        details["error_code"] = "tool_error"
+        details["error_message"] = error
+    try:
+        audit_logger.log_tool_call(
+            actor,
+            tool_name,
+            _redact_params(params if isinstance(params, dict) else {}),
+            "success" if success else "failure",
+            int(duration_ms),
+            **details,
+        )
+    except Exception:  # noqa: BLE001 — audit must never break the tool call
+        logger.exception(f"mcp_tool_audit emit failed tool={tool_name}")
+
+
+def wrap_tool_contract(runtime: Any, contract: ToolContract) -> ToolContract:
+    """Return a copy of the ToolContract whose handler emits a full AU-3 audit event.
+
+    The wrapped handler keeps the platform (payload, request) signature so it is
+    transparent to register_tool_router / register_mcp_routes.
+    """
+    inner = contract.handler
+    tool_name = contract.name
+    audit_logger = getattr(runtime, "audit_logger", None)
+    if audit_logger is None:
+        return contract
+
+    async def _audited(payload: Dict[str, Any], request: Any) -> Any:
+        start = time.monotonic()
+        success = True
+        error_msg = ""
+        try:
+            result = inner(payload, request)
+            if hasattr(result, "__await__"):
+                result = await result
+            return result
+        except Exception as exc:  # noqa: BLE001
+            success = False
+            error_msg = str(exc)[:200]
+            raise
+        finally:
+            emit_tool_audit(
+                audit_logger,
+                tool_name=tool_name,
+                request=request,
+                params=payload if isinstance(payload, dict) else {},
+                success=success,
+                duration_ms=(time.monotonic() - start) * 1000,
+                error=error_msg,
+            )
+
+    return dataclasses.replace(contract, handler=_audited)
 
 
 def wrap_tool_with_audit(tool_name: str, handler: Callable) -> Callable:

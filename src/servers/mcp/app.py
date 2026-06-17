@@ -37,7 +37,13 @@ from src.servers.mcp.content_tools import build_content_tool_registry
 from src.servers.mcp.relationship_tools import build_relationship_tool_registry
 from src.servers.mcp.schema_tools import build_schema_tool_registry
 from src.servers.mcp.search_tools import build_search_tool_registry
-from src.servers.mcp.tool_rbac_audit import TOOL_RBAC_MAP, audit_tool_call, check_tool_permission, wrap_tool_with_audit
+from src.servers.mcp.tool_rbac_audit import (
+    TOOL_RBAC_MAP,
+    audit_tool_call,
+    check_tool_permission,
+    wrap_tool_contract,
+    wrap_tool_with_audit,
+)
 
 
 def _apply_request_timeout(app, timeout_seconds: float) -> None:
@@ -70,6 +76,9 @@ def create_mcp_app(explicit_env_files: list[str] | None = None):
     tool_registry.update(build_relationship_tool_registry(runtime))
     tool_registry.update(build_audit_tool_registry(runtime))
     tool_registry.update(build_search_tool_registry(runtime))
+    # TD-001 (W28E-1808B): wrap every MCP tool with full NIST AU-3 audit emission
+    # (actor/ip/roles/target/outcome/correlation/session) via the platform AuditLogger.
+    tool_registry = {name: wrap_tool_contract(runtime, contract) for name, contract in tool_registry.items()}
     app.include_router(build_health_router(runtime, "db-mcp-server-mcp"))
     if mcp_base_path:
         app.include_router(build_health_router(runtime, "db-mcp-server-mcp"), prefix=mcp_base_path)
