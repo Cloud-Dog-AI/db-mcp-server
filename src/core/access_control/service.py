@@ -144,7 +144,7 @@ class AccessControlService:
             for role, values in configured_permissions.items()
         })
         self._role_permissions = role_permissions
-        self._rbac = RBACEngine(role_permissions=self._role_permissions)
+        self._rbac = RBACEngine(role_overlay=self._role_permissions)
         self._bootstrap_user_id = str(config.get("access_control.bootstrap_admin.user_id", "bootstrap-admin"))
         self._bootstrap_username = str(
             config.get("access_control.bootstrap_admin.username", "bootstrap-admin")
@@ -273,7 +273,7 @@ class AccessControlService:
             write_text_file(join_fs_path(keys_dir, f"{role}.key"), f"{raw_key}\n", mode=0o600)
 
     def _rebuild_rbac(self) -> None:
-        self._rbac = RBACEngine(role_permissions=self._role_permissions)
+        self._rbac = RBACEngine(role_overlay=self._role_permissions)
         for user in self._repository.list_users():
             for role in user.roles:
                 self._rbac.assign_role_to_user(user.user_id, role)
