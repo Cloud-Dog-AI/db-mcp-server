@@ -35,10 +35,10 @@ certifi==2026.5.20
 cffi==2.0.0
 charset-normalizer==3.4.7
 click==8.4.1
-cloud-dog-api-kit==0.12.4
+cloud-dog-api-kit==0.13.0
 cloud-dog-config==0.3.2
 cloud_dog_db[nosql,sql]==0.3.0
-cloud-dog-idam==0.4.0
+cloud-dog-idam==0.5.2
 cloud-dog-jobs==0.4.1
 cloud-dog-logging==0.4.0
 cloud_dog_storage==0.1.4

@@ -63,7 +63,7 @@ RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
       cloud-dog-config cloud-dog-logging "cloud-dog-api-kit==0.13.0" \
-      cloud-dog-idam "cloud-dog-jobs>=0.3.0" "cloud-dog-db[nosql,sql]>=0.3.0" \
+      "cloud-dog-idam>=0.5.2,<0.6" "cloud-dog-jobs>=0.3.0" "cloud-dog-db[nosql,sql]>=0.3.0" \
       "cloud-dog-storage==0.1.4" && \
     pip install --no-cache-dir .
 
