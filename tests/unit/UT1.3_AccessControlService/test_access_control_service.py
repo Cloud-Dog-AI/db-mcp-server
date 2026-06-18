@@ -104,6 +104,49 @@ def test_internal_profile_lookup_preserves_connection_secret(access_control: Acc
 @pytest.mark.req("FR-003")
 
 
+def test_profile_update_preserves_masked_connection_secret(access_control: AccessControlService) -> None:
+    """Read-edit-save profile updates should not persist the API's masked password."""
+    created = access_control.create_profile(
+        {
+            "name": "masked-postgres",
+            "source_type": "postgresql",
+            "source_connection": "postgresql://postgres:real-db-pass@example.net:5432/app",
+            "allowed_permissions": ["catalog.read", "data.read"],
+        },
+        actor_user_id="bootstrap-admin",
+        actor_roles=["admin"],
+    )
+    external = access_control.get_profile(created["profile_id"])
+
+    access_control.update_profile(
+        created["profile_id"],
+        {
+            "name": external["name"],
+            "source_type": external["source_type"],
+            "source_connection": external["source_connection"],
+            "description": external["description"],
+            "namespaces": external["namespaces"],
+            "entities": external["entities"],
+            "enabled_tools": external["enabled_tools"],
+            "allowed_permissions": external["allowed_permissions"],
+            "field_masks": {"email": "***MASKED***"},
+            "field_exclusions": external["field_exclusions"],
+            "index_policy": external["index_policy"],
+        },
+        actor_user_id="bootstrap-admin",
+        actor_roles=["admin"],
+    )
+
+    internal = access_control.get_profile_internal(created["profile_id"])
+    refreshed = access_control.get_profile(created["profile_id"])
+
+    assert internal["source_connection"] == "postgresql://postgres:real-db-pass@example.net:5432/app"
+    assert refreshed["source_connection"] == "postgresql://postgres:****@example.net:5432/app"
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.req("FR-003")
+
+
 def test_verify_api_key_applies_role_permissions_and_key_scopes(access_control: AccessControlService) -> None:
     """API keys should inherit user/group RBAC and then be reduced by key scopes."""
     profile = access_control.create_profile(
@@ -141,6 +184,56 @@ def test_verify_api_key_applies_role_permissions_and_key_scopes(access_control: 
     assert principal is not None
     assert principal.user_id == user["user_id"]
     assert principal.roles == ["analyst"]
+    assert principal.permissions == ["data.read"]
+    assert principal.profile_ids == [profile["profile_id"]]
+
+
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.req("FR-003")
+def test_rotate_api_key_revokes_old_key_and_preserves_scope(access_control: AccessControlService) -> None:
+    """Rotating an API key should invalidate the old secret and preserve bindings."""
+    profile = access_control.create_profile(
+        {
+            "name": "rotation-profile",
+            "source_type": "mongodb",
+            "source_connection": "mongo0",
+            "allowed_permissions": ["catalog.read", "data.read"],
+        },
+        actor_user_id="bootstrap-admin",
+        actor_roles=["admin"],
+    )
+    user = access_control.create_user(
+        {
+            "username": "rotation-analyst",
+            "display_name": "Rotation Analyst",
+            "roles": ["analyst"],
+        },
+        actor_user_id="bootstrap-admin",
+        actor_roles=["admin"],
+    )
+    created = access_control.create_api_key(
+        {
+            "owner_user_id": user["user_id"],
+            "name": "rotation-key",
+            "scopes": ["data.read"],
+            "profile_ids": [profile["profile_id"]],
+        },
+        actor_user_id="bootstrap-admin",
+        actor_roles=["admin"],
+    )
+
+    rotated = access_control.rotate_api_key(
+        created["api_key_id"],
+        actor_user_id="bootstrap-admin",
+        actor_roles=["admin"],
+        reason="unit-test",
+    )
+
+    assert access_control.verify_api_key(created["raw_key"]) is None
+    principal = access_control.verify_api_key(rotated["raw_key"])
+    assert principal is not None
+    assert principal.api_key_id == rotated["api_key"]["api_key_id"]
     assert principal.permissions == ["data.read"]
     assert principal.profile_ids == [profile["profile_id"]]
 @pytest.mark.UT

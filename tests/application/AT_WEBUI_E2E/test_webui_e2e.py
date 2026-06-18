@@ -766,7 +766,7 @@ def test_t10_settings(authenticated_page):
     """T10: Settings page shows runtime config and operations controls."""
     page = authenticated_page
 
-    _goto_route(page, "/settings", "Settings")
+    _goto_route(page, "/system/settings", "Settings")
 
     body = page.locator("body").inner_text()
 
@@ -797,7 +797,7 @@ def test_t11_audit_log(authenticated_page):
     """T11: Audit page shows event viewer with filters and events table."""
     page = authenticated_page
 
-    _goto_route(page, "/audit", "Audit")
+    _goto_route(page, "/audit-log", "Audit")
 
     body = page.locator("body").inner_text()
 

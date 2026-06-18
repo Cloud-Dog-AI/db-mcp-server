@@ -24,7 +24,6 @@ import hashlib
 import hmac
 import re
 import secrets
-import re
 import time
 from dataclasses import asdict, dataclass
 from datetime import timedelta
@@ -94,6 +93,18 @@ def _mask_connection_secret(value: Any) -> Any:
     masked = re.sub(r"(://[^:/@\s]+:)[^@/\s]+(@)", r"\1****\2", value)
     masked = re.sub(r"(?i)(\b(?:password|passwd|pwd)\s*=\s*)[^;\s]+", r"\1****", masked)
     return masked
+
+
+def _preserve_masked_connection_secret(payload: dict[str, Any], current: Profile) -> dict[str, Any]:
+    next_payload = dict(payload)
+    submitted = next_payload.get("source_connection")
+    if (
+        isinstance(submitted, str)
+        and "****" in submitted
+        and submitted == _mask_connection_secret(current.source_connection)
+    ):
+        next_payload["source_connection"] = current.source_connection
+    return next_payload
 
 
 @dataclass(slots=True)
@@ -841,6 +852,7 @@ class AccessControlService:
         current = self._repository.get_profile(profile_id)
         if current is None:
             raise NotFoundError(message=f"Profile not found: {profile_id}")
+        payload = _preserve_masked_connection_secret(payload, current)
         ensure_known_permissions(list(payload.get("allowed_permissions", [])))
         updated = Profile(profile_id=profile_id, created_at=current.created_at, updated_at=utcnow(), **payload)
         self._repository.upsert_profile(updated)
@@ -1063,6 +1075,40 @@ class AccessControlService:
             reason=reason,
         )
         return True
+
+    def rotate_api_key(self, api_key_id: str, *, actor_user_id: str | None, actor_roles: list[str] | None, reason: str = "rotated") -> dict[str, Any]:
+        item = self._repository.get_api_key(api_key_id)
+        if item is None:
+            raise NotFoundError(message=f"API key not found: {api_key_id}")
+        if item.status != "active":
+            raise ValidationError(message=f"API key is not active: {api_key_id}")
+
+        raw_key = f"cd_{secrets.token_urlsafe(32)}"
+        rotated = AccessApiKey(
+            owner_user_id=item.owner_user_id,
+            name=item.name,
+            key_prefix="cd_",
+            key_hash=hash_api_key(raw_key),
+            status="active",
+            scopes=list(item.scopes or ["*"]),
+            profile_ids=list(item.profile_ids or ["*"]),
+            expires_at=item.expires_at,
+        )
+        saved = self._repository.upsert_api_key(rotated)
+        item.status = "revoked"
+        item.revoked_at = utcnow()
+        self._repository.revoke_api_key(api_key_id, self._repository.serialise_api_key(item))
+        self._audit_crud(
+            actor_user_id=actor_user_id,
+            actor_roles=actor_roles,
+            action="rotate",
+            resource_type="api_key",
+            resource_id=api_key_id,
+            outcome="success",
+            reason=reason,
+            rotated_api_key_id=saved.api_key_id,
+        )
+        return {"api_key": self._api_key_view(saved), "raw_key": raw_key}
 
     # ----- Roles (PS-71 §IW3A; canonical cloud_dog_idam role store) -----------
     def ensure_roles_seed(self) -> None:

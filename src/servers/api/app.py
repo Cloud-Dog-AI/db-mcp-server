@@ -27,9 +27,11 @@ from collections.abc import Mapping
 from datetime import datetime, timezone
 from types import MappingProxyType
 
+from cloud_dog_jobs import JobStatus
 from fastapi import APIRouter, Request
 
 from cloud_dog_api_kit import create_app, success_envelope
+from cloud_dog_api_kit.errors import UnauthorisedError
 from cloud_dog_logging import Actor, Target
 from cloud_dog_logging.middleware.audit import AuditMiddleware
 
@@ -111,8 +113,134 @@ def _serialise_job(job) -> dict[str, object]:
         "duration_seconds": duration_seconds,
         "correlation_id": job.correlation_id,
         "user_id": job.user_id,
+        "request_auth_identity": job.request_auth_identity,
+        "request_source": job.request_source,
+        "request_auth_method": job.request_auth_method,
         "payload": job.payload,
     }
+
+
+def _normalise_identity(value: object) -> str:
+    """Normalise optional actor identifiers for owner checks."""
+    return str(value or "").strip().casefold()
+
+
+def _principal_is_jobs_admin(principal) -> bool:
+    """Return whether a principal can administer all jobs."""
+    roles = {_normalise_identity(role) for role in getattr(principal, "roles", []) or []}
+    permissions = {str(permission or "").strip() for permission in getattr(principal, "permissions", []) or []}
+    return bool({"admin", "system_admin"} & roles) or "*" in permissions or "jobs.delete" in permissions
+
+
+def _principal_job_identities(principal) -> set[str]:
+    """Return the actor identifiers that may own jobs for a principal."""
+    return {
+        identity
+        for identity in (
+            _normalise_identity(getattr(principal, "username", "")),
+            _normalise_identity(getattr(principal, "user_id", "")),
+        )
+        if identity
+    }
+
+
+def _job_owner_identities(job) -> set[str]:
+    """Return the owner identifiers recorded on a job."""
+    return {
+        identity
+        for identity in (
+            _normalise_identity(getattr(job, "request_auth_identity", "")),
+            _normalise_identity(getattr(job, "user_id", "")),
+        )
+        if identity
+    }
+
+
+def _principal_can_access_job(principal, job) -> bool:
+    """Return whether the principal can see or act on a job."""
+    return _principal_is_jobs_admin(principal) or bool(_principal_job_identities(principal) & _job_owner_identities(job))
+
+
+def _recent_jobs(runtime, *, limit: int = 50, job_type: str | None = None, principal=None) -> list[object]:
+    """Return recent jobs without filtering out non-queued lifecycle states."""
+    jobs = list(runtime.job_backend.all_jobs())
+    jobs = [
+        job
+        for job in jobs
+        if getattr(getattr(job, "status", None), "value", str(getattr(job, "status", "")))
+        != JobStatus.ARCHIVED.value
+    ]
+    if principal is not None and not _principal_is_jobs_admin(principal):
+        jobs = [job for job in jobs if _principal_can_access_job(principal, job)]
+    if job_type:
+        jobs = [job for job in jobs if str(getattr(job, "job_type", "")) == job_type]
+    jobs.sort(
+        key=lambda job: job.created_at.timestamp() if getattr(job, "created_at", None) else 0.0,
+        reverse=True,
+    )
+    return jobs[: max(1, min(int(limit), 500))]
+
+
+def _hard_delete_job_from_backend(backend, job_id: str) -> bool | None:
+    """Remove a job from known backend implementations when a public delete API is absent."""
+    sql_backend = getattr(backend, "_sql", None)
+    redis_backend = getattr(backend, "_redis", None)
+    if sql_backend is not None or redis_backend is not None:
+        redis_deleted = _hard_delete_job_from_backend(redis_backend, job_id) if redis_backend is not None else None
+        sql_deleted = _hard_delete_job_from_backend(sql_backend, job_id) if sql_backend is not None else None
+        return bool(sql_deleted or redis_deleted)
+
+    repo = getattr(backend, "_repo", None)
+    if repo is not None and all(hasattr(repo, attr) for attr in ("engine", "jobs")):
+        with repo.engine.begin() as conn:
+            for table_name in ("job_call_logs", "job_deliveries", "job_callbacks"):
+                table = getattr(repo, table_name, None)
+                if table is not None:
+                    conn.execute(table.delete().where(table.c.job_id == job_id))
+            result = conn.execute(repo.jobs.delete().where(repo.jobs.c.job_id == job_id))
+        return result.rowcount == 1
+
+    jobs = getattr(backend, "_jobs", None)
+    lock = getattr(backend, "_lock", None)
+    if isinstance(jobs, dict):
+        if lock is not None:
+            with lock:
+                return jobs.pop(job_id, None) is not None
+        return jobs.pop(job_id, None) is not None
+
+    redis_client = getattr(backend, "_client", None)
+    job_key = getattr(backend, "_job_key", None)
+    queue_key = getattr(backend, "_queue_key", None)
+    if redis_client is not None and callable(job_key):
+        key = job_key(job_id)
+        redis_client.zrem(queue_key, job_id) if queue_key is not None else None
+        return bool(redis_client.delete(key))
+
+    return None
+
+
+def _delete_job(runtime, job_id: str) -> bool:
+    """Delete a platform job from the WebUI's administrative view."""
+    if runtime.job_backend.get(job_id) is None:
+        return False
+    deleted = _hard_delete_job_from_backend(runtime.job_backend, job_id)
+    if deleted is not None:
+        return deleted
+    return runtime.job_backend.update_status(job_id, JobStatus.ARCHIVED.value)
+
+
+def _require_job_access(runtime, request: Request, job_id: str, *, permission: str) -> tuple[object, object | None]:
+    """Require permission and same-actor access for non-admin job operations."""
+    principal = runtime.access_control.require_request_permission(
+        request,
+        permission=permission,
+        audit_resource_type="job",
+        audit_resource_id=job_id,
+    )
+    job = runtime.job_queue.get(job_id)
+    if job is not None and not _principal_can_access_job(principal, job):
+        raise UnauthorisedError(message="Forbidden: only own jobs can be accessed")
+    return principal, job
 
 
 def _read_log_entries(surface: str, limit: int) -> list[dict[str, object]]:
@@ -234,7 +362,7 @@ def _build_config_source_map(value, path: str = "") -> tuple[dict[str, dict[str,
     return (
         {
             path: {
-                "source": "runtime",
+                "source": "default",
                 "secret": is_secret,
                 "servers": _servers_for_config_path(path),
             }
@@ -352,14 +480,14 @@ def create_api_app(explicit_env_files: list[str] | None = None):
     @router.get("/config/sources")
     async def config_sources() -> dict:
         """Return per-leaf source metadata for the effective runtime config."""
-        sources, total, secret = _build_config_source_map(runtime.config.data)
+        sources, total, secret = _build_config_source_map(_mask_runtime_config(runtime.config.data))
         return success_envelope(
             {
                 "sources": sources,
                 "counts": {
                     "total": total,
                     "secret": secret,
-                    "by_source": {"runtime": total},
+                    "by_source": {"default": total},
                 },
             }
         )
@@ -381,7 +509,7 @@ def create_api_app(explicit_env_files: list[str] | None = None):
                 command_text="settings reveal secrets",
                 secret_paths=[
                     path
-                    for path, meta in _build_config_source_map(runtime.config.data)[0].items()
+                    for path, meta in _build_config_source_map(_mask_runtime_config(runtime.config.data))[0].items()
                     if bool(meta.get("secret"))
                 ],
             )
@@ -400,30 +528,63 @@ def create_api_app(explicit_env_files: list[str] | None = None):
         )
 
     @router.get("/jobs")
-    async def jobs(limit: int = 50, job_type: str | None = None) -> dict:
+    async def jobs(request: Request, limit: int = 50, job_type: str | None = None) -> dict:
         """Return recent platform jobs for the jobs page."""
+        principal = runtime.access_control.require_request_permission(
+            request,
+            permission="data.read",
+            audit_resource_type="job",
+            audit_resource_id="jobs",
+        )
         return success_envelope(
             {
-                "items": [_serialise_job(job) for job in runtime.job_queue.list(limit=limit, job_type=job_type)],
+                "items": [
+                    _serialise_job(job)
+                    for job in _recent_jobs(runtime, limit=limit, job_type=job_type, principal=principal)
+                ],
             }
         )
 
     @router.get("/jobs/{job_id}")
-    async def get_job(job_id: str) -> dict:
+    async def get_job(job_id: str, request: Request) -> dict:
         """Return a single platform job by identifier."""
-        job = runtime.job_queue.get(job_id)
+        _principal, job = _require_job_access(runtime, request, job_id, permission="data.read")
         return success_envelope(_serialise_job(job) if job else {})
 
     @router.post("/jobs/{job_id}/cancel")
     async def cancel_job(job_id: str, request: Request) -> dict:
         """Cancel a running or queued platform job."""
-        runtime.access_control.require_request_permission(
-            request,
-            permission="index.manage",
-            audit_resource_type="job",
-            audit_resource_id=job_id,
-        )
+        _require_job_access(runtime, request, job_id, permission="index.manage")
         return success_envelope({"cancelled": runtime.job_queue.cancel(job_id), "job_id": job_id})
+
+    @router.post("/jobs/{job_id}/retry")
+    async def retry_job(job_id: str, request: Request) -> dict:
+        """Return a failed or waiting platform job to the queued state."""
+        _require_job_access(runtime, request, job_id, permission="index.manage")
+        return success_envelope(
+            {
+                "retried": runtime.job_backend.update_status(job_id, JobStatus.QUEUED.value),
+                "job_id": job_id,
+            }
+        )
+
+    @router.delete("/jobs/{job_id}")
+    async def delete_job(job_id: str, request: Request) -> dict:
+        """Delete a platform job from the administrative jobs view."""
+        principal, job = _require_job_access(runtime, request, job_id, permission="index.manage")
+        if not _principal_is_jobs_admin(principal):
+            raise UnauthorisedError(message="Forbidden: delete requires admin")
+        deleted = _delete_job(runtime, job_id)
+        if deleted:
+            runtime.audit_logger.log_crud(
+                actor=Actor(type="user", id=principal.user_id, roles=principal.roles),
+                action="delete",
+                target=Target(type="job", id=job_id),
+                outcome="success",
+                job_type=getattr(job, "job_type", None),
+                job_status=getattr(getattr(job, "status", None), "value", None),
+            )
+        return success_envelope({"deleted": deleted, "job_id": job_id})
 
     app.include_router(router)
     app.include_router(create_access_control_router(runtime, api_base_path))

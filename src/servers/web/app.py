@@ -28,6 +28,7 @@ from pathlib import Path
 import httpx
 from fastapi import HTTPException, Request, Response
 from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
+from starlette.requests import ClientDisconnect
 
 from cloud_dog_api_kit import create_app
 from cloud_dog_api_kit.middleware import TimeoutMiddleware
@@ -45,6 +46,31 @@ _WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 _ADMIN_ROLE = "admin"
 _READ_WRITE_ROLE = "read-write"
 _READ_ONLY_ROLE = "read-only"
+_WEBUI_LEGACY_REDIRECTS = {
+    "/ui/login": "/login",
+    "/auth/login": "/login",
+    "/audit": "/audit-log",
+    "/diagnostics-audit": "/audit-log",
+    "/observability": "/audit-log",
+    "/logs": "/audit-log",
+    "/idam/users": "/admin/users",
+    "/idam/groups": "/admin/groups",
+    "/idam/api-keys": "/admin/api-keys",
+    "/apikeys": "/admin/api-keys",
+    "/api-keys": "/admin/api-keys",
+    "/idam/roles": "/admin/roles",
+    "/idam/rbac": "/admin/rbac",
+    "/rbac": "/admin/rbac",
+    "/api-docs": "/developer/api-docs",
+    "/docs": "/developer/api-docs",
+    "/openapi": "/developer/api-docs",
+    "/redoc": "/developer/api-docs",
+    "/mcp-console": "/developer/mcp-console",
+    "/a2a-console": "/developer/a2a-console",
+    "/jobs": "/system/jobs",
+    "/settings": "/system/settings",
+    "/about": "/system/about",
+}
 
 
 def _role_can_write(role: str | None) -> bool:
@@ -63,6 +89,14 @@ def _apply_request_timeout(app, timeout_seconds: float) -> None:
         if middleware.cls is TimeoutMiddleware:
             middleware.kwargs["timeout_seconds"] = timeout_seconds
             return
+
+
+def _webui_redirect(request: Request, target_path: str) -> RedirectResponse:
+    """Return a canonical WebUI redirect while preserving the query string."""
+    location = target_path
+    if request.url.query:
+        location = f"{location}?{request.url.query}"
+    return RedirectResponse(location, status_code=308)
 
 _HOP_BY_HOP_HEADERS = {
     "connection",
@@ -112,6 +146,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         title="db-mcp-server Web",
         version=str(runtime.config.get("app.version", "0.1.0")),
         api_prefix=web_base_path or "",
+        enable_docs=False,
         enable_health=False,
     )
     _apply_request_timeout(app, timeout_seconds)
@@ -164,6 +199,25 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     mcp_proxy_prefix = join_route(web_base_path, mcp_base_path)
     webmcp_prefix = join_route(web_base_path, "/webmcp")
     weba2a_prefix = join_route(web_base_path, "/weba2a")
+
+    @app.get(join_route(web_base_path, "/web-ready"))
+    async def web_ready() -> JSONResponse:
+        """Report WebUI readiness only after every proxied backend is reachable."""
+        targets = {
+            "api": f"{api_base}/health",
+            "mcp": f"{mcp_base}/health",
+            "a2a": f"{a2a_base}/health",
+        }
+        checks: dict[str, dict[str, object]] = {}
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            for name, url in targets.items():
+                try:
+                    response = await client.get(url)
+                    checks[name] = {"status_code": response.status_code, "ok": response.status_code < 500}
+                except httpx.RequestError as exc:
+                    checks[name] = {"status_code": None, "ok": False, "error": exc.__class__.__name__}
+        ready = all(bool(item.get("ok")) for item in checks.values())
+        return JSONResponse({"status": "ready" if ready else "starting", "checks": checks}, status_code=200 if ready else 503)
 
     def _get_session(request: Request) -> dict | None:
         token = request.cookies.get(_cookie_name)
@@ -249,6 +303,27 @@ def create_web_app(explicit_env_files: list[str] | None = None):
             return authorisation[7:].strip()
         return ""
 
+    def _compat_session_or_principal(request: Request) -> tuple[dict | None, object | None]:
+        """Resolve compatibility endpoints from either cookie session or API key."""
+        sess = _get_session(request)
+        if sess:
+            return sess, None
+        api_key = _request_api_key(request)
+        if api_key:
+            principal = runtime.access_control.verify_api_key(api_key)
+            if principal is not None:
+                return None, principal
+        return None, None
+
+    def _principal_is_system_admin(principal: object) -> bool:
+        roles = {str(role).strip().lower() for role in getattr(principal, "roles", []) or []}
+        permissions = {str(permission).strip() for permission in getattr(principal, "permissions", []) or []}
+        return "admin" in roles or "system_admin" in roles or "*" in permissions
+
+    def _principal_can_write(principal: object) -> bool:
+        permissions = {str(permission).strip() for permission in getattr(principal, "permissions", []) or []}
+        return "*" in permissions or bool({"admin.write", "index.manage", "profile.manage"} & permissions)
+
     @app.post(join_route(web_base_path, "/auth/login"))
     async def auth_login(request: Request) -> JSONResponse:
         """Validate username/password and mint a flat-role cookie session.
@@ -297,7 +372,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
                 principal = runtime.access_control.verify_api_key(api_key)
                 if principal is not None:
                     return JSONResponse({"user": runtime.access_control.principal_summary(principal)})
-            raise HTTPException(status_code=401, detail="Not authenticated")
+            return JSONResponse(None)
         return JSONResponse({"user": {"id": sess["user_id"], "displayName": sess["user"], "email": None, "roles": [sess["role"]], "permissions": _role_permissions(sess["role"])}})
 
     @app.post(join_route(web_base_path, "/auth/logout"))
@@ -308,6 +383,52 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         resp = JSONResponse({"ok": True})
         resp.delete_cookie(_cookie_name, path=cookie_path)
         return resp
+
+    @app.get(join_route(web_base_path, "/webapi/auth/status"))
+    async def webapi_auth_status(request: Request) -> JSONResponse:
+        """Compatibility status endpoint for shared IDAM WebUI pages."""
+        sess, principal = _compat_session_or_principal(request)
+        if not sess and principal is None:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        if principal is not None:
+            return JSONResponse(
+                {
+                    "username": str(getattr(principal, "username", "") or getattr(principal, "user_id", "")),
+                    "role": ",".join(str(role) for role in getattr(principal, "roles", []) or []),
+                    "is_system_admin": _principal_is_system_admin(principal),
+                    "can_write": _principal_can_write(principal),
+                }
+            )
+        role = str(sess.get("role") or "")
+        return JSONResponse(
+            {
+                "username": str(sess.get("user") or ""),
+                "role": role,
+                "is_system_admin": role == _ADMIN_ROLE,
+                "can_write": _role_can_write(role),
+            }
+        )
+
+    @app.get(join_route(web_base_path, "/webapi/v1/admin/permissions"))
+    async def webapi_idam_permissions(request: Request) -> JSONResponse:
+        """Compatibility permission list for shared IDAM Roles WebUI."""
+        sess, principal = _compat_session_or_principal(request)
+        if not sess and principal is None:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        permissions: set[str] = set()
+        for role in (_ADMIN_ROLE, _READ_WRITE_ROLE, _READ_ONLY_ROLE):
+            role_permissions = runtime.config.get(f"access_control.roles.{role}", [])
+            if isinstance(role_permissions, (list, tuple, set)):
+                permissions.update(str(item) for item in role_permissions if str(item).strip())
+        return JSONResponse({"permissions": sorted(permissions) or ["*"]})
+
+    @app.get(join_route(web_base_path, "/webapi/v1/idam/v1/rbac-bindings"))
+    async def webapi_idam_rbac_bindings(request: Request) -> JSONResponse:
+        """Compatibility RBAC bindings list for shared IDAM RBAC WebUI."""
+        sess, principal = _compat_session_or_principal(request)
+        if not sess and principal is None:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        return JSONResponse({"bindings": []})
 
     @app.get(join_route(web_base_path, "/runtime-config.js"), response_class=Response)
     async def runtime_config(request: Request) -> Response:
@@ -368,7 +489,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         """Proxy the API OpenAPI schema without the /api prefix rewrite."""
         return await _proxy_via(
             request,
-            proxy=api_session_proxy if _get_session(request) else api_proxy,
+            proxy=api_session_proxy,
             strip_prefix=webapi_openapi_prefix,
             rewrite_prefix="/openapi.json",
         )
@@ -422,15 +543,23 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         """Disable indexing for local admin surfaces."""
         return PlainTextResponse("User-agent: *\nDisallow: /\n")
 
-    @app.get(join_route(web_base_path, "/api-docs"))
+    @app.get(join_route(web_base_path, "/developer/api-docs"))
     async def api_docs_spa() -> Response:
-        """Serve the SPA shell for the /api-docs route."""
+        """Serve the SPA shell for the canonical API docs route."""
         return serve_spa_index()
+
+    @app.get(join_route(web_base_path, "/api-docs"))
+    async def api_docs_legacy_alias(request: Request) -> Response:
+        """Redirect the legacy API docs route to the canonical Stream-C URL."""
+        return _webui_redirect(request, join_route(web_base_path, "/developer/api-docs"))
 
     @app.get(join_route(web_base_path, "/{path:path}"))
     async def spa(path: str, request: Request) -> Response:
         """Serve static SPA assets and browser-history routes from ui/dist."""
         cleaned = "/" + path.lstrip("/")
+        redirect_target = _WEBUI_LEGACY_REDIRECTS.get(cleaned)
+        if redirect_target:
+            return _webui_redirect(request, join_route(web_base_path, redirect_target))
         if is_spa_entry_path(cleaned):
             return serve_spa_index()
         return serve_spa_asset(path)
@@ -520,7 +649,10 @@ async def _proxy_request(
     if rewrite_prefix:
         target_path = rewrite_prefix + target_path
     target_url = httpx.URL(target_base.rstrip("/") + target_path).copy_merge_params(request.query_params)
-    body = await request.body()
+    try:
+        body = await request.body()
+    except ClientDisconnect:
+        return Response(status_code=499)
     headers = {
         key: value
         for key, value in request.headers.items()
@@ -534,12 +666,22 @@ async def _proxy_request(
             headers["x-api-key"] = session_api_key
         if "authorization" not in lower_headers:
             headers["authorization"] = f"Bearer {session_api_key}"
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        proxied = await client.request(
-            request.method,
-            target_url,
-            content=body,
-            headers=headers,
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            proxied = await client.request(
+                request.method,
+                target_url,
+                content=body,
+                headers=headers,
+            )
+    except httpx.RequestError as exc:
+        return JSONResponse(
+            {
+                "detail": "Upstream service unavailable",
+                "target": str(target_url),
+                "error": exc.__class__.__name__,
+            },
+            status_code=503,
         )
     return Response(
         content=proxied.content,

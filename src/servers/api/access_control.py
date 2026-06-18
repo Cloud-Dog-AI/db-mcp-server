@@ -393,4 +393,21 @@ def create_access_control_router(runtime, base_path: str) -> APIRouter:
         )
         return success_envelope({"revoked": True, "api_key_id": api_key_id})
 
+    @router.post("/api-keys/{api_key_id}/rotate")
+    async def rotate_api_key(api_key_id: str, payload: RevokeApiKeyRequest, request: Request) -> dict:
+        principal = access.require_request_permission(
+            request,
+            permission="profile.manage",
+            audit_resource_type="api_key",
+            audit_resource_id=api_key_id,
+        )
+        return success_envelope(
+            access.rotate_api_key(
+                api_key_id,
+                actor_user_id=principal.user_id,
+                actor_roles=principal.roles,
+                reason=payload.reason,
+            )
+        )
+
     return router

@@ -65,10 +65,95 @@ def test_runtime_config_is_served_for_spa_bootstrap(web_client: TestClient) -> N
 
 
 def test_history_routes_resolve_to_index_html(web_client: TestClient) -> None:
-    for path in ("/search", "/mcp-console", "/a2a-console"):
+    for path in (
+        "/search",
+        "/audit-log",
+        "/developer/api-docs",
+        "/developer/mcp-console",
+        "/developer/a2a-console",
+        "/system/jobs",
+        "/system/settings",
+        "/system/about",
+        "/admin/users",
+        "/admin/api-keys",
+        "/admin/rbac",
+    ):
         response = web_client.get(path)
         assert response.status_code == 200
         assert "db-mcp-webui" in response.text
+@pytest.mark.UT
+@pytest.mark.webui
+@pytest.mark.req("FR-022")
+
+
+def test_legacy_webui_routes_redirect_to_canonical_urls(web_client: TestClient) -> None:
+    aliases = {
+        "/ui/login": "/login",
+        "/audit": "/audit-log",
+        "/logs": "/audit-log",
+        "/idam/users": "/admin/users",
+        "/idam/groups": "/admin/groups",
+        "/idam/api-keys": "/admin/api-keys",
+        "/apikeys": "/admin/api-keys",
+        "/api-keys": "/admin/api-keys",
+        "/idam/roles": "/admin/roles",
+        "/idam/rbac": "/admin/rbac",
+        "/rbac": "/admin/rbac",
+        "/api-docs": "/developer/api-docs",
+        "/docs": "/developer/api-docs",
+        "/openapi": "/developer/api-docs",
+        "/redoc": "/developer/api-docs",
+        "/mcp-console": "/developer/mcp-console",
+        "/a2a-console": "/developer/a2a-console",
+        "/jobs": "/system/jobs",
+        "/settings": "/system/settings",
+        "/about": "/system/about",
+    }
+    for source, target in aliases.items():
+        response = web_client.get(f"{source}?actor_id=admin", follow_redirects=False)
+        assert response.status_code == 308
+        assert response.headers["location"] == f"{target}?actor_id=admin"
+
+
+@pytest.mark.UT
+@pytest.mark.webui
+@pytest.mark.req("FR-022")
+def test_unknown_extensionless_webui_route_is_not_spa_entry(web_client: TestClient) -> None:
+    response = web_client.get("/not-a-real-webui-route")
+    assert response.status_code == 404
+
+
+@pytest.mark.UT
+@pytest.mark.webui
+@pytest.mark.req("FR-022")
+def test_idam_webui_compatibility_reads_are_session_protected(web_client: TestClient) -> None:
+    anonymous = web_client.get("/webapi/auth/status")
+    assert anonymous.status_code == 401
+
+    api_key_status = web_client.get("/webapi/auth/status", headers={"X-API-Key": "test-api-key"})
+    assert api_key_status.status_code == 200
+    assert api_key_status.json()["is_system_admin"] is True
+
+    api_key_bindings = web_client.get("/webapi/v1/idam/v1/rbac-bindings", headers={"X-API-Key": "test-api-key"})
+    assert api_key_bindings.status_code == 200
+    assert api_key_bindings.json() == {"bindings": []}
+
+    login = web_client.post("/auth/login", json={"username": "admin", "password": "test-password"})
+    assert login.status_code == 200
+
+    status = web_client.get("/webapi/auth/status")
+    assert status.status_code == 200
+    assert status.json()["is_system_admin"] is True
+
+    permissions = web_client.get("/webapi/v1/admin/permissions")
+    assert permissions.status_code == 200
+    assert "permissions" in permissions.json()
+
+    bindings = web_client.get("/webapi/v1/idam/v1/rbac-bindings")
+    assert bindings.status_code == 200
+    assert bindings.json() == {"bindings": []}
+
+
 @pytest.mark.UT
 @pytest.mark.webui
 @pytest.mark.req("FR-022")

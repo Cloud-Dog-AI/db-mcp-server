@@ -50,17 +50,32 @@ def spa_entry_routes() -> set[str]:
 _SPA_ENTRY_ROUTES = {
     "/",
     "/login",
+    "/audit-log",
+    "/developer/api-docs",
+    "/developer/mcp-console",
+    "/developer/a2a-console",
+    "/system/jobs",
+    "/system/settings",
+    "/system/about",
+    "/admin/source-connections",
     "/admin/profiles",
     "/admin/users",
+    "/admin/groups",
+    "/admin/api-keys",
     "/admin/roles",
+    "/admin/rbac",
     "/catalogue",
+    "/data-browser",
     "/search",
     "/relationships",
     "/schema",
     "/audit",
+    "/api-docs",
     "/mcp-console",
     "/a2a-console",
+    "/jobs",
     "/settings",
+    "/about",
 }
 
 
@@ -69,9 +84,9 @@ def is_spa_entry_path(path: str) -> bool:
     cleaned = "/" + str(path or "").strip().lstrip("/")
     if cleaned in _SPA_ENTRY_ROUTES:
         return True
-    if cleaned.startswith("/catalogue/") or cleaned.startswith("/data/"):
+    if cleaned.startswith("/catalogue/") or cleaned.startswith("/data/") or cleaned.startswith("/schema/"):
         return True
-    return "." not in cleaned.rsplit("/", 1)[-1]
+    return False
 
 
 def require_ui_dist(storage: LocalStorage) -> None:

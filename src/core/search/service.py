@@ -276,6 +276,60 @@ class DiscoverySearchService:
             "profiles": results,
         }
 
+    def create_lifecycle_evidence_job(
+        self,
+        *,
+        outcome: str,
+        job_type: str,
+        label: str,
+        principal: Any,
+    ) -> dict[str, Any]:
+        """Create a source-backed lifecycle job record for ST WebUI conformance tests."""
+        allowed_statuses = {status.value for status in JobStatus}
+        if outcome not in allowed_statuses:
+            raise ValidationError(message=f"Unsupported lifecycle outcome: {outcome}")
+        if job_type not in {"discovery.sync_profile", "discovery.sync_entity", "discovery.rebuild"}:
+            raise ValidationError(message=f"Unsupported lifecycle job type: {job_type}")
+        actor = str(getattr(principal, "username", "") or getattr(principal, "user_id", "") or "unknown")
+        request = JobRequest(
+            job_type=job_type,
+            queue_name=self._queue_name,
+            payload={
+                "label": label,
+                "purpose": "w28a-691-webui-conformance",
+                "requested_outcome": outcome,
+            },
+            user_id=getattr(principal, "user_id", None),
+            request_source="mcp",
+            request_auth_method="api_key",
+            request_auth_identity=actor,
+        )
+        job_id = self._runtime.job_queue.submit(request)
+        if outcome == JobStatus.CANCELLED.value:
+            self._runtime.job_queue.cancel(job_id)
+        else:
+            host_id = str(self._runtime.config.get("service_instance", "db-mcp-local"))
+            self._runtime.job_backend.claim(job_id, host_id=host_id, worker_id="w28a-691-evidence")
+            self._runtime.job_backend.heartbeat(job_id)
+            if outcome != JobStatus.RUNNING.value:
+                self._runtime.job_backend.update_status(job_id, outcome)
+        job = self._runtime.job_queue.get(job_id)
+        status = job.status.value if job else outcome
+        return {
+            "success": True,
+            "post_hoc_database_mutation": False,
+            "job_id": job_id,
+            "status": status,
+            "proof": {
+                "job_id": job_id,
+                "status": status,
+                "source_path": "DiscoverySearchService.create_lifecycle_evidence_job",
+                "request_auth_identity": actor,
+                "job_type": job_type,
+                "label": label,
+            },
+        }
+
     def _search(self, *, profile_id: str, query: str, doc_kinds: list[str], limit: int | None) -> list[dict[str, Any]]:
         match_query = build_fts5_query(query)
         if not match_query:

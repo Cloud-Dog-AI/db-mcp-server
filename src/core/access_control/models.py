@@ -164,6 +164,7 @@ DB_READ_PERMISSIONS = {
     "content.search",
     "data.read",
     "audit.read",
+    "job.read",
 }
 
 DB_WRITE_PERMISSIONS = {
@@ -267,6 +268,7 @@ PERMISSION_DOMAINS = {
     "index.manage",
     "profile.manage",
     "audit.read",
+    "job.read",
 }
 
 

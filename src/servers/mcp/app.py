@@ -34,6 +34,7 @@ from src.servers.mcp.access_control_tools import build_access_control_tool_regis
 from src.servers.mcp.audit_tools import build_audit_tool_registry
 from src.servers.mcp.catalog_tools import build_catalog_tool_registry
 from src.servers.mcp.content_tools import build_content_tool_registry
+from src.servers.mcp.e2e_tools import build_e2e_tool_registry, e2e_tools_enabled
 from src.servers.mcp.relationship_tools import build_relationship_tool_registry
 from src.servers.mcp.schema_tools import build_schema_tool_registry
 from src.servers.mcp.search_tools import build_search_tool_registry
@@ -76,6 +77,8 @@ def create_mcp_app(explicit_env_files: list[str] | None = None):
     tool_registry.update(build_relationship_tool_registry(runtime))
     tool_registry.update(build_audit_tool_registry(runtime))
     tool_registry.update(build_search_tool_registry(runtime))
+    if e2e_tools_enabled(runtime.env_files):
+        tool_registry.update(build_e2e_tool_registry(runtime))
     # TD-001 (W28E-1808B): wrap every MCP tool with full NIST AU-3 audit emission
     # (actor/ip/roles/target/outcome/correlation/session) via the platform AuditLogger.
     tool_registry = {name: wrap_tool_contract(runtime, contract) for name, contract in tool_registry.items()}
