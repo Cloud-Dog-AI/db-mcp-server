@@ -21,7 +21,7 @@ RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
       cloud-dog-config \
       cloud-dog-logging \
       cloud-dog-api-kit==0.13.0 \
-      "cloud-dog-idam>=0.5,<0.6" \
+      "cloud-dog-idam>=0.5.2,<0.6" \
       "cloud-dog-db[nosql,sql]" \
       cloud-dog-jobs \
       cloud-dog-storage==0.1.4
