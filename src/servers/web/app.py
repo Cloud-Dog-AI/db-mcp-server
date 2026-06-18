@@ -435,6 +435,17 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         """Return runtime configuration for the SPA bootstrap contract."""
         return serve_runtime_config(runtime, request)
 
+    @app.get(join_route(web_base_path, "/apikeys"))
+    @app.get(join_route(web_base_path, "/api-keys"))
+    async def api_keys_legacy_alias(request: Request) -> Response:
+        """Redirect API-key WebUI aliases before the /api proxy can claim them."""
+        return _webui_redirect(request, join_route(web_base_path, "/admin/api-keys"))
+
+    @app.get(join_route(web_base_path, "/api-docs"))
+    async def api_docs_legacy_alias(request: Request) -> Response:
+        """Redirect the legacy API docs route before the /api proxy can claim it."""
+        return _webui_redirect(request, join_route(web_base_path, "/developer/api-docs"))
+
     @app.api_route(api_proxy_prefix, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     @app.api_route(f"{api_proxy_prefix}/{{full_path:path}}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     async def proxy_api(request: Request, full_path: str = "") -> Response:
@@ -547,11 +558,6 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     async def api_docs_spa() -> Response:
         """Serve the SPA shell for the canonical API docs route."""
         return serve_spa_index()
-
-    @app.get(join_route(web_base_path, "/api-docs"))
-    async def api_docs_legacy_alias(request: Request) -> Response:
-        """Redirect the legacy API docs route to the canonical Stream-C URL."""
-        return _webui_redirect(request, join_route(web_base_path, "/developer/api-docs"))
 
     @app.get(join_route(web_base_path, "/{path:path}"))
     async def spa(path: str, request: Request) -> Response:
