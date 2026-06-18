@@ -6,7 +6,10 @@ canon-set: SERVICE
 canon-template-baseline: 1.0
 
 conditional-docs:
-  []
+  - filename: WEBUI-REFERENCE.md
+    template-id: T-WUI
+    template-version: 1.0
+    condition: service ships a WebUI SPA (ui/dist present, port 8087)
 
 additional-docs:
   []
