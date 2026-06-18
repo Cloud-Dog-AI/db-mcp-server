@@ -1,3 +1,22 @@
+---
+template-id: T-CTX
+template-version: 1.0
+applies-to: CONTEXT-SUMMARY.md
+registry: service
+required: must-have
+when-applicable: ""
+template-last-updated: 2026-06-12
+template-owner: platform-standards
+
+project: db-mcp-server
+doc-last-updated: 2026-06-18T00:00:00Z
+doc-git-commit: 58fb399bb2ba144e262f97293103a7a0a19ba05d
+doc-git-branch: main
+doc-source-shas: []
+doc-age-policy: 90d
+doc-conformance-stamp: 2026-06-18T00:00:00Z
+---
+
 # db-mcp-server — Context Summary
 
 ## Current state
