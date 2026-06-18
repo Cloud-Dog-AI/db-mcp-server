@@ -267,6 +267,23 @@ def page(browser):
     p._e2e_console_errors = console_errors      # type: ignore[attr-defined]
 
     yield p
+
+    # W28C-1715 CONSOLE-GATE: hard-fail on any non-benign browser console error or
+    # JS page error captured during this test.  This converts the previously
+    # "observe-only" listener into a mandatory gate (PS-77 §6 CW-T8 error state).
+    if console_errors:
+        p.close()
+        ctx.close()
+        raise AssertionError(
+            f"Browser console errors detected during test (non-benign): {console_errors}"
+        )
+    if page_errors:
+        p.close()
+        ctx.close()
+        raise AssertionError(
+            f"Browser page (JS) errors detected during test: {page_errors}"
+        )
+
     p.close()
     ctx.close()
 
@@ -980,3 +997,79 @@ def test_t16_entity_detail(authenticated_page):
         "Entity detail surface should expose entity selection or catalogue data"
 
     _screenshot(page, "t16_entity_detail")
+
+
+# ===========================================================================
+# T17: Console Gate + PS-77 CW data-testid assertions (W28C-1715)
+# ===========================================================================
+@pytest.mark.AT
+@pytest.mark.webui
+@pytest.mark.req("FR-022")
+
+
+def test_t17_console_gate_and_cw_testids(authenticated_page):
+    """T17 (W28C-1715): Hard console gate + PS-77 CW data-testid coverage on the Settings page.
+
+    CONSOLE GATE (PS-77 §6 CW-T8):
+      The page fixture now hard-fails on any non-benign browser console or JS page error.
+      This test navigates to /settings and explicitly asserts the collected error lists
+      are empty to make the expectation visible in the test output.
+
+    PS-77 CW data-testid ASSERTIONS:
+      db-mcp does not use the canonical CW-T*/CW-F* data-testid naming scheme from
+      PS-77 §CW-T1..CW-F6 in its React source (e.g. 'data-testid="cw-datatable"').
+      Instead it uses descriptive, page-scoped testids (e.g. 'settings-key-count',
+      'data-run-query', 'filter-add-condition').
+
+      UI-COMPONENT GAP NOTE: The db-mcp WebUI (apps/db-mcp in cloud-dog-ai-ui-monorepo)
+      does not emit CW-T*/CW-F* prefixed data-testid attributes on any component.
+      The PS-77 canonical CW testid scheme is referenced only in the Playwright test
+      names (e.g. "CW-T6/T7 — audit DataTable shows rows...") not as rendered
+      HTML attributes.  This gap is NOTED here for W28C-1715 traceability; resolution
+      requires a UI-monorepo change (out of scope for this test-only fix lane).
+
+      This test instead asserts the *actual* data-testids that ARE present on the
+      db-mcp Settings page as the strongest available CW-equivalent structural check.
+    """
+    page = authenticated_page
+
+    _goto_route(page, "/settings", "Settings")
+    page.wait_for_timeout(2000)
+
+    # --- CONSOLE GATE: explicit assertion (hard-fail is also enforced in fixture teardown) ---
+    console_errors = getattr(page, "_e2e_console_errors", [])
+    page_errors = getattr(page, "_e2e_page_errors", [])
+    assert console_errors == [], (
+        f"Non-benign browser console errors on /settings: {console_errors}"
+    )
+    assert page_errors == [], (
+        f"Browser JS page errors on /settings: {page_errors}"
+    )
+
+    # --- CW-EQUIVALENT STRUCTURAL TESTID ASSERTIONS ---
+    # PS-77 CW-T1 equivalent: settings page renders its root container
+    assert page.locator("[data-testid='settings-page']").count() > 0, \
+        "Settings page must render data-testid='settings-page' (CW-T1 equivalent root)"
+
+    # PS-77 CW-T1 equivalent: settings header present
+    assert page.locator("[data-testid='settings-header']").count() > 0, \
+        "Settings page must render data-testid='settings-header'"
+
+    # PS-77 CW-T6/T7 equivalent: key-count widget renders a real value, not empty
+    key_count_el = page.locator("[data-testid='settings-key-count']")
+    assert key_count_el.count() > 0, \
+        "Settings page must render data-testid='settings-key-count' (CW-T6/T7 equivalent — non-empty state)"
+    key_count_text = key_count_el.first.inner_text().strip()
+    assert key_count_text.isdigit() and int(key_count_text) > 0, (
+        f"data-testid='settings-key-count' must show a positive integer; got: '{key_count_text}'"
+    )
+
+    # PS-77 CW-F* equivalent: settings search input renders
+    assert page.locator("[data-testid='settings-search']").count() > 0, \
+        "Settings page must render data-testid='settings-search' (CW-F* equivalent input)"
+
+    # PS-77 CW-T8 equivalent: runtime config card present
+    assert page.locator("[data-testid='settings-card-runtime']").count() > 0, \
+        "Settings page must render data-testid='settings-card-runtime'"
+
+    _screenshot(page, "t17_console_gate_and_cw_testids")
