@@ -1008,30 +1008,44 @@ def test_t16_entity_detail(authenticated_page):
 
 
 def test_t17_console_gate_and_cw_testids(authenticated_page):
-    """T17 (W28C-1715): Hard console gate + PS-77 CW data-testid coverage on the Settings page.
+    """T17 (W28C-1715): Hard console gate + PS-77 canonical CW data-testid coverage.
 
     CONSOLE GATE (PS-77 §6 CW-T8):
       The page fixture now hard-fails on any non-benign browser console or JS page error.
-      This test navigates to /settings and explicitly asserts the collected error lists
-      are empty to make the expectation visible in the test output.
+      This test navigates to the dashboard and to /settings and explicitly asserts the
+      collected error lists are empty to make the expectation visible in the test output.
 
-    PS-77 CW data-testid ASSERTIONS:
-      db-mcp does not use the canonical CW-T*/CW-F* data-testid naming scheme from
-      PS-77 §CW-T1..CW-F6 in its React source (e.g. 'data-testid="cw-datatable"').
-      Instead it uses descriptive, page-scoped testids (e.g. 'settings-key-count',
-      'data-run-query', 'filter-add-condition').
+    PS-77 CW data-testid ASSERTIONS (W28C-1715 redeploy):
+      The db-mcp WebUI now renders the PS-77 canonical CW-T*/CW-F* data-testid contract
+      from @cloud-dog/ui (cloud-dog-ai-ui-monorepo origin/main 39d7571).  The
+      @cloud-dog/ui DataTable root container carries data-testid="CW-T1" and the
+      EntityDialog (modal CRUD create/edit container) carries data-testid="CW-F1".
 
-      UI-COMPONENT GAP NOTE: The db-mcp WebUI (apps/db-mcp in cloud-dog-ai-ui-monorepo)
-      does not emit CW-T*/CW-F* prefixed data-testid attributes on any component.
-      The PS-77 canonical CW testid scheme is referenced only in the Playwright test
-      names (e.g. "CW-T6/T7 — audit DataTable shows rows...") not as rendered
-      HTML attributes.  This gap is NOTED here for W28C-1715 traceability; resolution
-      requires a UI-monorepo change (out of scope for this test-only fix lane).
-
-      This test instead asserts the *actual* data-testids that ARE present on the
-      db-mcp Settings page as the strongest available CW-equivalent structural check.
+      The dashboard landing page (DashboardPage.tsx, route "/") renders a DataTable, so
+      the post-login landing page exposes the canonical PS-77 CW-T1 data-testid.  This
+      test asserts get_by_test_id("CW-T1") on the dashboard as the canonical panel check,
+      then retains the db-mcp page-scoped settings testids (settings-page,
+      settings-key-count, settings-search, settings-card-runtime) as supplementary
+      structural coverage on the Settings page.
     """
     page = authenticated_page
+
+    # --- PS-77 CANONICAL CW-T1 ASSERTION (W28C-1715) ---
+    # The dashboard (DashboardPage.tsx, route "/") renders the @cloud-dog/ui DataTable,
+    # whose root container carries the canonical PS-77 data-testid="CW-T1".
+    _goto_route(page, "/", "Dashboard")
+    page.wait_for_timeout(2000)
+    assert page.get_by_test_id("CW-T1").count() > 0, \
+        "Dashboard must render the @cloud-dog/ui DataTable with canonical PS-77 data-testid='CW-T1'"
+    dashboard_console_errors = getattr(page, "_e2e_console_errors", [])
+    dashboard_page_errors = getattr(page, "_e2e_page_errors", [])
+    assert dashboard_console_errors == [], (
+        f"Non-benign browser console errors on dashboard: {dashboard_console_errors}"
+    )
+    assert dashboard_page_errors == [], (
+        f"Browser JS page errors on dashboard: {dashboard_page_errors}"
+    )
+    _screenshot(page, "t17_dashboard_cw_t1")
 
     _goto_route(page, "/settings", "Settings")
     page.wait_for_timeout(2000)
@@ -1046,27 +1060,27 @@ def test_t17_console_gate_and_cw_testids(authenticated_page):
         f"Browser JS page errors on /settings: {page_errors}"
     )
 
-    # --- CW-EQUIVALENT STRUCTURAL TESTID ASSERTIONS ---
-    # PS-77 CW-T1 equivalent: settings page renders its root container
+    # --- SUPPLEMENTARY db-mcp PAGE-SCOPED STRUCTURAL TESTID ASSERTIONS ---
+    # db-mcp page-scoped: settings page renders its root container
     assert page.locator("[data-testid='settings-page']").count() > 0, \
-        "Settings page must render data-testid='settings-page' (CW-T1 equivalent root)"
+        "Settings page must render data-testid='settings-page'"
 
-    # PS-77 CW-T1 equivalent: settings header present
+    # db-mcp page-scoped: settings header present
     assert page.locator("[data-testid='settings-header']").count() > 0, \
         "Settings page must render data-testid='settings-header'"
 
-    # PS-77 CW-T6/T7 equivalent: key-count widget renders a real value, not empty
+    # db-mcp page-scoped: key-count widget renders a real value, not empty
     key_count_el = page.locator("[data-testid='settings-key-count']")
     assert key_count_el.count() > 0, \
-        "Settings page must render data-testid='settings-key-count' (CW-T6/T7 equivalent — non-empty state)"
+        "Settings page must render data-testid='settings-key-count' (non-empty state)"
     key_count_text = key_count_el.first.inner_text().strip()
     assert key_count_text.isdigit() and int(key_count_text) > 0, (
         f"data-testid='settings-key-count' must show a positive integer; got: '{key_count_text}'"
     )
 
-    # PS-77 CW-F* equivalent: settings search input renders
+    # db-mcp page-scoped: settings search input renders
     assert page.locator("[data-testid='settings-search']").count() > 0, \
-        "Settings page must render data-testid='settings-search' (CW-F* equivalent input)"
+        "Settings page must render data-testid='settings-search' (input)"
 
     # PS-77 CW-T8 equivalent: runtime config card present
     assert page.locator("[data-testid='settings-card-runtime']").count() > 0, \
