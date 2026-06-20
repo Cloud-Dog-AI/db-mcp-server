@@ -464,7 +464,7 @@ def create_api_app(explicit_env_files: list[str] | None = None):
 
     @router.get("/jobs/queue-status")
     async def jobs_queue_status_legacy() -> dict:
-        """Return queue status for older preprod evidence probes."""
+        """Return queue status for older deployment evidence probes."""
         return success_envelope(runtime.job_backend.get_queue_status())
 
     @router.get("/metrics")

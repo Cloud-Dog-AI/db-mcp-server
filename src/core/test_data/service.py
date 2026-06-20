@@ -31,7 +31,7 @@ from fastapi import Request
 from cloud_dog_api_kit.errors import UnauthorisedError, ValidationError
 from cloud_dog_logging import Actor, Target
 
-_ALLOWED_RUNTIME_PROFILES = {"preprod", "local-docker"}
+_BLOCKED_RUNTIME_PROFILES = {"production", "prod", "live"}
 
 _USERS = (
     {"id": 1, "email": "alice@example.test", "display_name": "Alice"},
@@ -108,11 +108,11 @@ class TestDataSeedService:
             audit_resource_id=dataset_id,
         )
         runtime_profile = self._runtime_profile()
-        if runtime_profile not in _ALLOWED_RUNTIME_PROFILES:
+        if not runtime_profile or runtime_profile in _BLOCKED_RUNTIME_PROFILES:
             raise UnauthorisedError(
                 message=(
-                    "Test data seed is only enabled when "
-                    "RUNTIME_PROFILE=preprod or RUNTIME_PROFILE=local-docker"
+                    "Test data seed is disabled when no runtime profile is set "
+                    "and in production runtime profiles"
                 )
             )
         dataset = self._get_dataset(dataset_id)
