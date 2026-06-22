@@ -19,6 +19,13 @@ doc-conformance-stamp: 2026-06-18T00:00:00Z
 
 # Agent Lessons Learned — db-mcp-server
 
+## Central Programme Lesson Authority
+
+The canonical programme lessons are in `/opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards/AGENT-LESSONS.md`. This repository file is a service-specific overlay only. If this file conflicts with the central programme file, the central file wins.
+
+Before project work, every agent must read the central `RULES.md`, central `AGENT-LESSONS.md`, `AGENT-BOOTSTRAP-DIRECTIVE.md`, the live `AGENT-DISPATCH-TABLE.md`, the exact lane instruction, and this overlay. Do not copy central rules here; add only service-specific deltas and feed reusable lessons back to the central file.
+
+
 **Version:** 3.1 — 2026-05-07
 **Purpose:** Lessons from agent work on this service. Read BEFORE making changes.
 
