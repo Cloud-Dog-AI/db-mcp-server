@@ -210,3 +210,33 @@ Consolidation rules (per W28C-1711):
 6. Every `CS-NNN` binds to `@pytest.mark.negative` test with expected denial code.
 7. CRUD-applicable entities have C/R/U/D coverage.
 8. Orphan retirement requires knowledge-extract worksheet.
+
+
+<!-- W28E-1854 PS-PREPROD-DEPLOY-SMOKE rollout (2026-06-29) -->
+
+## W28E-1854 — PS-PREPROD-DEPLOY-SMOKE (preprod deployment smoke)
+
+Binding standard: `cloud-dog-ai-platform-standards/docs/standards/PS-PREPROD-DEPLOY-SMOKE.md`
+(PDS-001..PDS-013 + sibling sentinels). Lesson origin: AGENT-LESSONS §6.157 — a
+deployed service can answer health checks while its WebUI login flow crashes blank
+post-login. Health-only / route-only / local-only proof is NOT acceptance; this
+gate runs a real browser AFTER the final deployed digest is live.
+
+- **Smoke command (service entry point):**
+  `E2E_WEB_PASSWORD="<approved preprod admin password>" bash tests/smoke/run-preprod-deploy-smoke.sh`
+- **SSOT spec:** `cloud-dog-ai-ui-monorepo/apps/db-mcp/tests/e2e/preprod-deploy-smoke.spec.ts`
+- **Dedicated Playwright config (no local webServer):** `cloud-dog-ai-ui-monorepo/apps/db-mcp/playwright.preprod-smoke.config.ts`
+- **Required config keys (no hardcoded secrets):** `E2E_BASE_URL`
+  (default `https://dbmcpserver0.cloud-dog.net`), `E2E_WEB_USERNAME` (default `admin`),
+  `E2E_WEB_PASSWORD` (approved preprod admin password from the approved preprod env /
+  the W28A-746 preprod contract config; db-mcp is not under Vault `dev.services`).
+- **Expected auth mode:** cookie session login at canonical `/login`
+  (`/ui/login` → 308 → `/login`); anonymous `/auth/me` → 401 or `{user:null}` (no principal leak).
+- **Canonical page inventory (PDS-009):** `/`, `/idam/users`, `/idam/groups`, `/idam/api-keys`, `/idam/roles`, `/idam/rbac`, `/api-docs`, `/mcp-console`, `/a2a-console`, `/jobs`, `/settings`, `/audit`.
+- **Service-specific page inventory (PDS-010, hard-navigated — the crash-class guard):** `/catalogue`, `/data-browser`, `/schema`, `/search`.
+- **Cleanliness bar (PDS-012):** zero uncaught page errors, zero fatal console
+  errors, zero 5xx, zero unexpected 4xx (shared `@cloud-dog/idam` best-effort
+  capability probes are the only tolerated 4xx; the crash discriminator
+  pageerror + blank `#root` + 5xx is asserted with zero tolerance).
+- **Evidence output location:** `working/preprod-deploy-smoke/` (gitignored test
+  output: JUnit `preprod-deploy-smoke.junit.xml`, HTML report, traces, screenshots).
