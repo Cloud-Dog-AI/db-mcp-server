@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from pathlib import Path
 
@@ -36,10 +37,11 @@ class DummyRuntime:
 
 
 def _connector():
+    backend_env = os.getenv("W28C_DBMCP_MARIADB_ENV", "").strip()
     config = load_runtime_config(
         [
             str(PROJECT_ROOT / "tests/env-ST"),
-            str(PROJECT_ROOT / "tests/env-mariadb"),
+            backend_env or str(PROJECT_ROOT / "tests/env-mariadb"),
         ]
     )
     manager = ConnectorManager(DummyRuntime(config))
@@ -51,7 +53,7 @@ def _connector():
 
 def test_mariadb_connector_against_real_runtime() -> None:
     connector = _connector()
-    namespace = "cloud_dog_db_test"
+    namespace = os.getenv("W28C_DBMCP_MARIADB_NAMESPACE", "cloud_dog_db_test")
     entity = f"w28a554_maria_widgets_{int(time.time())}"
     index_name = f"{entity}_owner_idx"
     try:

@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from pathlib import Path
 
@@ -36,10 +37,11 @@ class DummyRuntime:
 
 
 def _connector():
+    backend_env = os.getenv("W28C_DBMCP_POSTGRESQL_ENV", "").strip()
     config = load_runtime_config(
         [
             str(PROJECT_ROOT / "tests/env-ST"),
-            str(PROJECT_ROOT / "tests/env-postgresql"),
+            backend_env or str(PROJECT_ROOT / "tests/env-postgresql"),
         ]
     )
     manager = ConnectorManager(DummyRuntime(config))
