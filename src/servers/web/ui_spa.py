@@ -57,6 +57,8 @@ _SPA_ENTRY_ROUTES = {
     "/system/jobs",
     "/system/settings",
     "/system/about",
+    "/source-connections",
+    "/profiles",
     "/admin/source-connections",
     "/admin/profiles",
     "/admin/users",

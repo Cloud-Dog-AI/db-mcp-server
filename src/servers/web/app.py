@@ -53,6 +53,8 @@ _WEBUI_LEGACY_REDIRECTS = {
     "/diagnostics-audit": "/audit-log",
     "/observability": "/audit-log",
     "/logs": "/audit-log",
+    "/source-connections": "/admin/source-connections",
+    "/profiles": "/admin/profiles",
     "/idam/users": "/admin/users",
     "/idam/groups": "/admin/groups",
     "/idam/api-keys": "/admin/api-keys",
