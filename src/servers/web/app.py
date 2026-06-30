@@ -449,6 +449,11 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         """Redirect the legacy API docs route before the /api proxy can claim it."""
         return _webui_redirect(request, join_route(web_base_path, "/developer/api-docs"))
 
+    @app.get(join_route(web_base_path, "/data"))
+    async def data_browser_legacy_alias(request: Request) -> Response:
+        """Redirect the legacy data-browser alias before the SPA catch-all claims it."""
+        return _webui_redirect(request, join_route(web_base_path, "/data-browser"))
+
     @app.api_route(api_proxy_prefix, methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     @app.api_route(f"{api_proxy_prefix}/{{full_path:path}}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
     async def proxy_api(request: Request, full_path: str = "") -> Response:
