@@ -36,7 +36,13 @@ from cloud_dog_api_kit.web.proxy import WebApiProxy
 
 from src.common.base_paths import configured_base_path, join_route
 from src.common.runtime import RuntimeFactory, build_health_router, request_timeout_seconds
-from src.servers.web.ui_spa import is_spa_entry_path, serve_runtime_config, serve_spa_asset, serve_spa_index
+from src.servers.web.ui_spa import (
+    is_spa_entry_path,
+    serve_runtime_config,
+    serve_spa_asset,
+    serve_spa_icon,
+    serve_spa_index,
+)
 from cloud_dog_idam.rbac import RBACEngine as _RBACEngine  # PS-70 RBAC enforcement
 
 _rbac_engine = _RBACEngine()
@@ -437,6 +443,13 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     async def runtime_config(request: Request) -> Response:
         """Return runtime configuration for the SPA bootstrap contract."""
         return serve_runtime_config(runtime, request)
+
+    @app.get(join_route(web_base_path, "/favicon.ico"))
+    @app.get(join_route(web_base_path, "/apple-touch-icon.png"))
+    @app.get(join_route(web_base_path, "/apple-touch-icon-precomposed.png"))
+    async def ui_icons(request: Request) -> Response:
+        """Serve browser-discovered icons from the built WebUI assets."""
+        return serve_spa_icon(request.url.path)
 
     @app.get(join_route(web_base_path, "/apikeys"))
     @app.get(join_route(web_base_path, "/api-keys"))

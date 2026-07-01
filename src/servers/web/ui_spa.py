@@ -23,6 +23,7 @@ from __future__ import annotations
 import mimetypes
 import os
 from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
 
 from cloud_dog_storage.backends.local import LocalStorage
 from cloud_dog_storage.errors import StorageFileNotFoundError, StoragePermissionError
@@ -30,6 +31,11 @@ from fastapi import HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 
 _SPA_PREFIX = "/ui/dist"
+_ICON_ASSETS = {
+    "/favicon.ico": ("assets/favicon-*.ico", "image/x-icon"),
+    "/apple-touch-icon.png": ("assets/apple-touch-icon-*.png", "image/png"),
+    "/apple-touch-icon-precomposed.png": ("assets/apple-touch-icon-*.png", "image/png"),
+}
 
 
 def _project_storage() -> LocalStorage:
@@ -127,6 +133,16 @@ def serve_spa_asset(relative_path: str) -> Response:
         raise HTTPException(status_code=404, detail="UI asset not found") from exc
     media_type, _ = mimetypes.guess_type(relative_path)
     return Response(content=data, media_type=media_type or "application/octet-stream")
+
+
+def serve_spa_icon(request_path: str) -> Response:
+    """Return browser-discovered root icon assets from the hashed UI bundle."""
+    pattern, media_type = _ICON_ASSETS.get(request_path, ("", "application/octet-stream"))
+    root = Path(os.getcwd()) / "ui" / "dist"
+    matches = sorted(root.glob(pattern)) if pattern else []
+    if not matches:
+        raise HTTPException(status_code=404, detail="UI asset not found")
+    return Response(content=matches[0].read_bytes(), media_type=media_type)
 
 
 def serve_runtime_config(runtime, request: Request) -> Response:
