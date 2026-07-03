@@ -18,10 +18,10 @@ RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
     pip install --no-cache-dir \
       --trusted-host pypi.cloud-dog.net \
       --trusted-host files.pythonhosted.org \
-      cloud-dog-config \
+      "cloud-dog-config==0.3.4" \
       cloud-dog-logging \
       cloud-dog-api-kit==0.13.0 \
-      "cloud-dog-idam>=0.5.2,<0.6" \
+      "cloud-dog-idam==0.5.3" \
       "cloud-dog-db[nosql,sql]" \
       cloud-dog-jobs \
       cloud-dog-storage==0.1.4
