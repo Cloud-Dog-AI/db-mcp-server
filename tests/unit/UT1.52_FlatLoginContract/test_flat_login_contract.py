@@ -237,3 +237,26 @@ def test_anon_write_is_unauthorized(web_app, monkeypatch: pytest.MonkeyPatch) ->
     resp = client.post(WRITE_PATH, json={"name": "x"})
     assert resp.status_code == 401, resp.text
     assert captured["api_key"] == "", "anon write must NOT inject the service admin key"
+
+
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.req("CS-001")
+def test_admin_user_proxy_auth_precedes_malformed_json(web_app) -> None:
+    """W28R-3001: auth must reject admin-user writes before proxy JSON parsing."""
+    client = TestClient(web_app, raise_server_exceptions=False)
+
+    anon = client.post(
+        "/webapi/v1/admin/users",
+        data=b"{",
+        headers={"Content-Type": "application/json"},
+    )
+    assert anon.status_code == 401, anon.text
+
+    assert _login(client, *READ_ONLY_CREDS).status_code == 200
+    read_only = client.post(
+        "/webapi/v1/admin/users",
+        data=b"{",
+        headers={"Content-Type": "application/json"},
+    )
+    assert read_only.status_code == 403, read_only.text

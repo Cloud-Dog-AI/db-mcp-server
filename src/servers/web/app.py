@@ -498,6 +498,13 @@ def create_web_app(explicit_env_files: list[str] | None = None):
         blocked = _read_only_write_block(sess, request)
         if blocked is not None:
             return blocked
+        rel_path = "/" + full_path.strip("/")
+        if (
+            request.method.upper() in _WRITE_METHODS
+            and (rel_path == "/v1/admin/users" or rel_path.startswith("/v1/admin/users/"))
+            and sess is None
+        ):
+            return JSONResponse({"detail": "authentication required"}, status_code=401)
         return await _proxy_via(
             request,
             proxy=api_session_proxy if sess else api_proxy,
