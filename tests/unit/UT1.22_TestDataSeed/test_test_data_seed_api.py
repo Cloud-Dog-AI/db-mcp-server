@@ -79,7 +79,13 @@ def test_test_data_seed_is_forbidden_outside_allowed_runtime_profiles(
         },
     )
     assert response.status_code == 403, response.text
-    assert "RUNTIME_PROFILE=preprod" in response.json()["error"]["message"]
+    # W28E-1863 WS-A-EVIDENCE: the source denial message was reworded in c90fb50
+    # (from "RUNTIME_PROFILE=preprod or ..." to the generic wording below); the
+    # security behaviour (403 for a production/unset runtime profile) is unchanged.
+    # Assert against the current message so this stale wording no longer diverges.
+    assert (
+        "production runtime profiles" in response.json()["error"]["message"]
+    )
 @pytest.mark.UT
 @pytest.mark.mcp
 @pytest.mark.req("CS-003")
