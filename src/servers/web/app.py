@@ -138,6 +138,63 @@ class _ProxyConfigAdapter:
         return self._values.get(key, default)
 
 
+def _git_head_commit() -> str:
+    """Best-effort git HEAD for dev/source runs (empty string if unavailable).
+
+    Mirrors the deployed chart-mcp / file-mcp ``_git_head_commit`` reference so a
+    local/source run still populates the WebUI About page when no container
+    build-identity ENV is present. W28E-1863 fix-wave-d (WSC-014).
+    """
+    try:
+        import subprocess
+
+        repo_root = Path(__file__).resolve().parents[3]
+        out = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
+        )
+        if out.returncode == 0:
+            return out.stdout.strip()
+    except Exception:  # noqa: BLE001 - build identity must never crash a request
+        return ""
+    return ""
+
+
+def _build_identity(runtime) -> dict[str, str]:
+    """Return build/deploy identity for WSC-014 / PS-30 UI-R7.3.
+
+    Source of truth is the container build: ``docker-build.sh`` stamps the image
+    OCI ``org.opencontainers.image.revision`` label AND injects the matching
+    runtime ENV, which ``cloud_dog_config`` surfaces as ``build.source_commit`` /
+    ``build.source_branch`` / ``build.build_date`` / ``build.container_digest``
+    (env keys ``CLOUD_DOG__BUILD__SOURCE_COMMIT`` … routed through cloud_dog_config,
+    NOT direct os.environ — RULES §1.4.1). For a dev/source run (no container ENV)
+    ``source_commit`` falls back to the working-tree git HEAD so the About page is
+    still populated locally. Modelled on the deployed chart-mcp reference
+    (``0e18aa8``). W28E-1863 fix-wave-d.
+    """
+    cfg = runtime.config
+    commit = str(cfg.get("build.source_commit", "") or "").strip()
+    if not commit or commit == "unknown":
+        commit = _git_head_commit()
+    branch = str(cfg.get("build.source_branch", "") or "").strip()
+    if branch == "unknown":
+        branch = ""
+    build_date = str(cfg.get("build.build_date", "") or "").strip()
+    digest = str(cfg.get("build.container_digest", "") or "").strip()
+    env_name = str(cfg.get("environment", "") or cfg.get("app.environment", "") or "").strip()
+    return {
+        "source_commit": commit,
+        "source_branch": branch,
+        "build_date": build_date,
+        "container_digest": digest,
+        "environment": env_name,
+    }
+
+
 def create_web_app(explicit_env_files: list[str] | None = None):
     """Create the db-mcp-server web application."""
     runtime = RuntimeFactory.create(explicit_env_files)
@@ -586,6 +643,49 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     async def api_docs_spa() -> Response:
         """Serve the SPA shell for the canonical API docs route."""
         return serve_spa_index()
+
+    _version_route_path = join_route(web_base_path, "/version")
+
+    @app.get(_version_route_path)
+    async def web_version() -> JSONResponse:
+        """Web-tier build-identity surface for the shared About page (WSC-014).
+
+        W28E-1863 fix-wave-d / PS-30 UI-R7.3: emit source commit + build date +
+        deployment identity (config-routed via ``_build_identity``, git-HEAD dev
+        fallback) so the shared @cloud-dog/shell AboutPage can render build
+        provenance. Adopts the deployed chart-mcp / file-mcp reference pattern.
+
+        The shared cloud_dog_api_kit factory already registers a ``/version``
+        route (emitting only ``application``/``version``/``api_version``) at the
+        same path since this web tier mounts with an empty api-prefix. FastAPI
+        matches routes in registration order, so this build-identity route is
+        promoted to the FRONT of the router below to take precedence over the
+        factory's version endpoint and over the SPA ``/{path:path}`` catch-all.
+        """
+        _build = _build_identity(runtime)
+        _app_version = str(runtime.config.get("app.version", "0.1.0") or "0.1.0")
+        return JSONResponse(
+            {
+                "service": "db-mcp-server",
+                "version": _app_version,
+                "appVersion": _app_version,
+                "source_commit": _build["source_commit"],
+                "source_branch": _build["source_branch"],
+                "build_date": _build["build_date"],
+                "container_digest": _build["container_digest"],
+                "environment": _build["environment"],
+                # legacy field name any VersionInfo consumer may already read
+                "commit": _build["source_commit"],
+            }
+        )
+
+    # W28E-1863 fix-wave-d (WSC-014): promote the build-identity /version route to
+    # the front so it takes precedence over the shared api-kit factory's own
+    # same-path /version endpoint (first-match-wins) without forking the factory.
+    for _idx, _route in enumerate(list(app.router.routes)):
+        if getattr(_route, "endpoint", None) is web_version:
+            app.router.routes.insert(0, app.router.routes.pop(_idx))
+            break
 
     @app.get(join_route(web_base_path, "/{path:path}"))
     async def spa(path: str, request: Request) -> Response:

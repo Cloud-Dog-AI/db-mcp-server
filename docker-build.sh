@@ -88,6 +88,10 @@ echo "=========================================="
 
 VCS_REF="$(git -C "${SCRIPT_DIR}" rev-parse HEAD 2>/dev/null || printf 'unknown')"
 BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+# W28E-1863 fix-wave-d (WSC-014): propagate build identity to the image so the
+# Dockerfile can stamp OCI ref.name + runtime ENV for _build_identity() / /version.
+SOURCE_COMMIT="${VCS_REF}"
+SOURCE_BRANCH="$(git -C "${SCRIPT_DIR}" rev-parse --abbrev-ref HEAD 2>/dev/null || printf 'unknown')"
 
 # ── PyPI Configuration ───────────────────────────────────────────
 # Default index depends on variant:
@@ -173,6 +177,8 @@ DOCKER_BUILDKIT=1 docker buildx build \
   --build-arg no_proxy="${no_proxy:-}" \
   --build-arg VCS_REF="${VCS_REF}" \
   --build-arg BUILD_DATE="${BUILD_DATE}" \
+  --build-arg SOURCE_COMMIT="${SOURCE_COMMIT}" \
+  --build-arg SOURCE_BRANCH="${SOURCE_BRANCH}" \
   -t "${FOLDER}/${CONTAINER}:${EFFECTIVE_TAG}" \
   "${SCRIPT_DIR}" 2>&1 | tee "${SCRIPT_DIR}/docker-build.log"
 
