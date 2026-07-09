@@ -3,11 +3,11 @@ template-id: T-RCM
 template-version: 1.0
 applies-to: docs/REQ-COVERAGE.md
 project: db-mcp-server
-doc-last-updated: 2026-07-09T09:05:52.685222+00:00
-doc-git-commit: 7833b6c97f978429eadd545e829639382863790c
+doc-last-updated: 2026-07-09T10:10:51.272245+00:00
+doc-git-commit: d827e8870e3da8834788794f6c218fa1907293a3
 doc-git-branch: main
 doc-age-policy: 30d
-doc-conformance-stamp: 2026-07-09T09:05:52.685222+00:00
+doc-conformance-stamp: 2026-07-09T10:10:51.272245+00:00
 generated-by: scripts/generate-req-coverage.py
 ---
 
@@ -18,7 +18,7 @@ generated-by: scripts/generate-req-coverage.py
 
 ## 1. Latest generation
 
-- **Generated at:** 2026-07-09T09:05:52.685222+00:00
+- **Generated at:** 2026-07-09T10:10:51.272245+00:00
 - **Source REQ commit:** d101e34
 - **Source TEST commit:** 71f6500
 
@@ -26,9 +26,9 @@ generated-by: scripts/generate-req-coverage.py
 
 | Total REQs | Covered (passing) | Covered (failing) | Covered (stale >90d) | Covered (bound/no run) | NO-TEST |
 |---|---|---|---|---|---|
-| 44 | 41 | 0 | 0 | 3 | 0 |
+| 44 | 44 | 0 | 0 | 0 | 0 |
 
-- **Passing coverage %** (passing / total) = **93.2%**
+- **Passing coverage %** (passing / total) = **100.0%**
 - **Bound coverage %** (any bound test, i.e. not NO-TEST) = **100.0%**
 
 ## 3. Per-REQ matrix
@@ -61,15 +61,15 @@ generated-by: scripts/generate-req-coverage.py
 | FR-008 | api, mcp | should | tests/unit/UT1.8_RelationshipTools/test_relationship_tools.py, tests/integration/IT1.5_RelationshipLifecycle/test_relationship_lifecycle.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-009 | api, mcp | must | tests/unit/UT1.12_SchemaChangeService/test_schema_change_service.py, tests/unit/UT1.12_SchemaChangeService/test_schema_change_service.py, tests/system/ST1.6_SchemaApi/test_schema_api.py, tests/integration/IT1.7_SchemaChangeLifecycle/test_schema_change_lifecycle.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-010 | api, mcp | must | tests/unit/UT1.9_SearchIndexer/test_search_indexer.py, tests/unit/UT1.9_SearchIndexer/test_search_indexer.py, tests/unit/UT1.10_SearchService/test_search_service.py, tests/unit/UT1.10_SearchService/test_search_service.py, tests/system/ST1.7_SearchApi/test_search_api.py, tests/integration/IT1.6_SearchIndexingLifecycle/test_search_indexing_lifecycle.py | pass | 973991f8 | 1 | COVERED-PASSING |
-| FR-011 | api, mcp | should | tests/integration/IT1.12_SavedQueries/test_saved_queries_api.py | — | — | — | COVERED-BOUND |
-| FR-012 | api | should | tests/fixtures/test_seed_data.py, tests/fixtures/test_seed_data.py, tests/fixtures/test_seed_data.py | — | — | — | COVERED-BOUND |
+| FR-011 | api, mcp | should | tests/integration/IT1.12_SavedQueries/test_saved_queries_api.py | pass | 5b7b58c | 0 | COVERED-PASSING |
+| FR-012 | api | should | tests/fixtures/test_seed_data.py, tests/fixtures/test_seed_data.py, tests/fixtures/test_seed_data.py | pass | 5b7b58c | 0 | COVERED-PASSING |
 | FR-013 | internal, mcp | must | tests/unit/UT1.4_MongoDBConnector/test_mongodb_connector.py, tests/unit/UT1.4_MongoDBConnector/test_mongodb_connector.py, tests/unit/UT1.4_MongoDBConnector/test_mongodb_connector.py, tests/unit/UT1.4_MongoDBConnector/test_mongodb_connector.py, tests/unit/UT1.4_MongoDBConnector/test_mongodb_connector.py, tests/unit/UT1.15_MongoConfig/test_mongo_config_resolution.py, tests/unit/UT1.15_MongoConfig/test_mongo_config_resolution.py, tests/unit/UT1.15_MongoConfig/test_mongo_config_resolution.py, tests/unit/UT1.15_MongoConfig/test_mongo_config_resolution.py, tests/system/ST1.3_MongoDBConnector/test_mongodb_connector_real.py, tests/integration/IT1.2_MongoDbMcpTools/test_mongodb_mcp_tools.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-014 | internal, mcp | must | tests/unit/UT1.13_CouchDBConnector/test_couchdb_connector.py, tests/unit/UT1.13_CouchDBConnector/test_couchdb_connector.py, tests/system/ST1.9_CouchDBConnector/test_couchdb_connector_real.py, tests/integration/IT1.8_CouchDbMcpTools/test_couchdb_mcp_tools.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-015 | internal, mcp | must | tests/unit/UT1.14_OpenSearchConnector/test_opensearch_connector.py, tests/unit/UT1.14_OpenSearchConnector/test_opensearch_connector.py, tests/system/ST1.10_OpenSearchConnector/test_opensearch_connector_real.py, tests/integration/IT1.9_OpenSearchMcpTools/test_opensearch_mcp_tools.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-016 | internal | must | tests/unit/UT1.16_ElasticsearchConnector/test_elasticsearch_connector.py, tests/unit/UT1.16_ElasticsearchConnector/test_elasticsearch_connector.py, tests/system/ST1.12_ElasticsearchConnector/test_elasticsearch_connector_real.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-017 | internal | must | tests/unit/UT1.17_CassandraConnector/test_cassandra_connector.py, tests/unit/UT1.17_CassandraConnector/test_cassandra_connector.py, tests/system/ST1.13_CassandraConnector/test_cassandra_connector_real.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-018 | internal | must | tests/unit/UT1.18_RelationalConnectorDispatch/test_relational_connector_dispatch.py, tests/unit/UT1.18_RelationalConnectorDispatch/test_relational_connector_dispatch.py, tests/system/ST1.15_MariaDBConnector/test_mariadb_connector_real.py, tests/system/ST1.14_PostgreSQLConnector/test_postgresql_connector_real.py | pass | 973991f8 | 1 | COVERED-PASSING |
-| FR-019 | internal, mcp | must | tests/integration/IT1.10_BackendConnectorMatrix/test_backend_connector_matrix.py | — | — | — | COVERED-BOUND |
+| FR-019 | internal, mcp | must | tests/integration/IT1.10_BackendConnectorMatrix/test_backend_connector_matrix.py | pass | 5b7b58c | 0 | COVERED-PASSING |
 | FR-020 | mcp | must | tests/unit/UT1.20_McpServer/test_mcp_server.py, tests/integration/IT1.15_McpJsonRpcEnvelope/test_mcp_jsonrpc_tools_call.py, tests/integration/IT1.15_McpJsonRpcEnvelope/test_mcp_jsonrpc_tools_call.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-021 | a2a | must | tests/unit/UT1.15_A2AServer/test_a2a_server.py, tests/unit/UT1.15_A2AServer/test_a2a_server.py, tests/unit/UT1.15_A2AServer/test_a2a_server.py, tests/unit/UT1.15_A2AServer/test_a2a_server.py, tests/unit/UT1.15_A2AServer/test_a2a_server.py, tests/unit/UT1.15_A2AServer/test_a2a_server.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-022 | webui | must | tests/unit/UT1.53_W28E1846WebUiAliases/test_webui_aliases.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/system/ST1.8_WebUiServing/test_web_ui_system_serving.py | pass | 5b7b58c | 1 | COVERED-PASSING |

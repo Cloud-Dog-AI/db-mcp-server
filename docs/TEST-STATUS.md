@@ -2,11 +2,11 @@
 template-id: T-TSS
 template-version: 1.0
 project: db-mcp-server
-doc-last-updated: 2026-07-09T06:46:32+00:00
+doc-last-updated: 2026-07-09T10:04:35+00:00
 doc-git-commit: 5b7b58c8a0c55018cd0527e0bfb0b5709af7de79
 doc-git-branch: main
 doc-age-policy: 30d
-doc-conformance-stamp: 2026-07-09T06:46:32+00:00
+doc-conformance-stamp: 2026-07-09T10:04:35+00:00
 ---
 
 # db-mcp-server — TEST-STATUS
@@ -17,16 +17,23 @@ doc-conformance-stamp: 2026-07-09T06:46:32+00:00
 
 ## 1. Latest run
 
-- **Run timestamp:** 2026-07-09T06:46:32+00:00
+- **Run timestamp:** 2026-07-09T10:04:35+00:00
 - **Commit:** `5b7b58c8a0c55018cd0527e0bfb0b5709af7de79` (`main` working tree)
-- **Totals:** 144 tests | 144 passed | 0 failed | 0 skipped
+- **Totals:** 149 tests | 149 passed | 0 failed | 0 skipped
 - **Evidence basis:** 2026-07-08 W28E-1863 WS-A-EVIDENCE per-node JUnit plus focused
-  W28E-1863 db-mcp tail reverify JUnit in `working/W28E-1863/db-mcp-tail/`.
+  W28E-1863 db-mcp tail reverify JUnit in `working/W28E-1863/db-mcp-tail/`, plus
+  2026-07-09 focused reruns for IT1.12 saved queries, canonical seed data, and
+  the MongoDB backend connector matrix row.
 
 ## 2. Per-test status
 
 | Test ID | Tier | Status | Last run | Commit | Known issue |
 |---|---|---|---|---|---|
+| `tests/fixtures/test_seed_data.py::test_seed_counts_match_canonical_dataset` | UT | pass | 2026-07-09 | `5b7b58c` | focused rerun passed with `tests/env-mongodb` |
+| `tests/fixtures/test_seed_data.py::test_cross_collection_references_resolve` | UT | pass | 2026-07-09 | `5b7b58c` | focused rerun passed with `tests/env-mongodb` |
+| `tests/fixtures/test_seed_data.py::test_field_types_and_nullability_are_preserved` | UT | pass | 2026-07-09 | `5b7b58c` | focused rerun passed with `tests/env-mongodb` |
+| `tests/integration/IT1.10_BackendConnectorMatrix/test_backend_connector_matrix.py::test_real_backend_connector_operations[mongodb]` | IT | pass | 2026-07-09 | `5b7b58c` | focused MongoDB connector rerun passed |
+| `tests/integration/IT1.12_SavedQueries/test_saved_queries_api.py::test_saved_queries_crud_conflict_and_delete` | IT | pass | 2026-07-09 | `5b7b58c` | focused saved-query API rerun passed |
 | `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t10_settings` | UT/IT/ST/AT/QT | pass | 2026-07-09 | `5b7b58c` | focused reverify: `working/W28E-1863/db-mcp-tail/at_webui_tail.xml` |
 | `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t11_audit_log` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t12_system_health` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
@@ -174,17 +181,15 @@ doc-conformance-stamp: 2026-07-09T06:46:32+00:00
 
 ## 3. Failures (detail)
 
-- No current failures in the 144-test status set. The six W28E-1863 db-mcp second-pass
+- No current failures in the 149-test status set. The six W28E-1863 db-mcp second-pass
   origin/main fail rows were reverified with focused JUnit evidence under
   `working/W28E-1863/db-mcp-tail/`.
 
 ## 4. Blocked / not-run tiers (honest gaps)
 
-- **tests/integration** — BLOCKED (wall-clock timeout). The IT tier connects to the real
-  remote MongoDB backend (`mongo0.app.vpc0.cloud-dog.net:27017`) configured in `tests/env-IT`.
-  Each connector round-trip over the VPC link takes ~25-60s, so the tier (and even a reduced
-  subset with `--ignore` of the mongodb matrix/tools/schema suites) exceeds the 600s foreground
-  budget before emitting a JUnit summary. Partial observed on 2026-07-08 CPython 3.12.13:
-  ~19 passed / 3 failed before the cutoff (indicative only — not recorded as per-node evidence).
-  Consequence: REQs whose ONLY binding is an integration test remain COVERED-BOUND (no run status):
-  FR-011 (also bound elsewhere), FR-012, FR-019. Re-run against a local/low-latency Mongo to close.
+- **tests/integration full tier** — not fully re-run in one sweep because the remote MongoDB
+  backend (`mongo0.app.vpc0.cloud-dog.net:27017`) configured in `tests/env-IT` still exceeds the
+  600s foreground budget. The W28E-1863 tail rows needed for coverage were instead re-run as
+  focused evidence on 2026-07-09: IT1.12 saved queries passed, canonical seed data passed 3/3,
+  and the MongoDB backend connector matrix row passed. No DB requirement remains bound/no-run
+  because of these three tail areas.
