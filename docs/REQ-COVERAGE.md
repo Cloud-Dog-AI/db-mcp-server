@@ -2,23 +2,23 @@
 template-id: T-RCM
 template-version: 1.0
 applies-to: docs/REQ-COVERAGE.md
-project: w28e-1863-wave2-db-0630
-doc-last-updated: 2026-07-09T06:47:29.559637+00:00
-doc-git-commit: 49c3fe309eaddbf84dd77e86c2448db842b3e6df
+project: db-mcp-server
+doc-last-updated: 2026-07-09T07:11:55.926159+00:00
+doc-git-commit: 5b7b58c8a0c55018cd0527e0bfb0b5709af7de79
 doc-git-branch: w28e-1863-wave2-db-0630
 doc-age-policy: 30d
-doc-conformance-stamp: 2026-07-09T06:47:29.559637+00:00
+doc-conformance-stamp: 2026-07-09T07:11:55.926159+00:00
 generated-by: scripts/generate-req-coverage.py
 ---
 
-# w28e-1863-wave2-db-0630 — REQ-COVERAGE
+# db-mcp-server — REQ-COVERAGE
 
 > **Template version:** T-RCM v1.0 — script-generated, do not hand-edit.
-> Re-generate via: `scripts/generate-req-coverage.py w28e-1863-wave2-db-0630`
+> Re-generate via: `scripts/generate-req-coverage.py db-mcp-server`
 
 ## 1. Latest generation
 
-- **Generated at:** 2026-07-09T06:47:29.559637+00:00
+- **Generated at:** 2026-07-09T07:11:55.926159+00:00
 - **Source REQ commit:** d101e34
 - **Source TEST commit:** 71f6500
 
@@ -72,10 +72,10 @@ generated-by: scripts/generate-req-coverage.py
 | FR-019 | internal, mcp | must | tests/integration/IT1.10_BackendConnectorMatrix/test_backend_connector_matrix.py | — | — | — | COVERED-BOUND |
 | FR-020 | mcp | must | tests/unit/UT1.20_McpServer/test_mcp_server.py, tests/integration/IT1.15_McpJsonRpcEnvelope/test_mcp_jsonrpc_tools_call.py, tests/integration/IT1.15_McpJsonRpcEnvelope/test_mcp_jsonrpc_tools_call.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-021 | a2a | must | tests/unit/UT1.15_A2AServer/test_a2a_server.py, tests/unit/UT1.15_A2AServer/test_a2a_server.py, tests/unit/UT1.15_A2AServer/test_a2a_server.py, tests/unit/UT1.15_A2AServer/test_a2a_server.py, tests/unit/UT1.15_A2AServer/test_a2a_server.py, tests/unit/UT1.15_A2AServer/test_a2a_server.py | pass | 973991f8 | 1 | COVERED-PASSING |
-| FR-022 | webui | must | tests/unit/UT1.53_W28E1846WebUiAliases/test_webui_aliases.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/system/ST1.8_WebUiServing/test_web_ui_system_serving.py | pass | 49c3fe3 | 1 | COVERED-PASSING |
+| FR-022 | webui | must | tests/unit/UT1.53_W28E1846WebUiAliases/test_webui_aliases.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/unit/UT1.11_WebUiServing/test_web_ui_serving.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/application/AT_WEBUI_E2E/test_webui_e2e.py, tests/system/ST1.8_WebUiServing/test_web_ui_system_serving.py | pass | 5b7b58c | 1 | COVERED-PASSING |
 | FR-023 | internal, api | must | tests/unit/UT1.1_ConfigLoading/test_config_loading.py, tests/unit/UT1.1_ConfigLoading/test_config_loading.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-024 | api, mcp | should | tests/unit/UT1.19_JobLifecycle/test_job_lifecycle.py, tests/unit/UT1.19_JobLifecycle/test_job_lifecycle.py, tests/unit/UT1.19_JobLifecycle/test_job_lifecycle.py, tests/unit/UT1.19_JobLifecycle/test_job_lifecycle.py, tests/unit/UT1.23_JobsApi/test_jobs_api.py, tests/unit/UT1.23_JobsApi/test_jobs_api.py | pass | 973991f8 | 1 | COVERED-PASSING |
-| FR-025 | api | must | tests/system/ST1.1_ServerStartup/test_server_startup.py | pass | 49c3fe3 | 0 | COVERED-PASSING |
+| FR-025 | api | must | tests/system/ST1.1_ServerStartup/test_server_startup.py | pass | 5b7b58c | 0 | COVERED-PASSING |
 | FR-026 | internal | should | tests/quality/QT1.1_ProjectStructure/test_project_structure.py, tests/quality/QT1.1_ProjectStructure/test_project_structure.py, tests/quality/QT1.1_ProjectStructure/test_project_structure.py, tests/quality/QT1.1_ProjectStructure/test_project_structure.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-027 | api, a2a | must | tests/e2e/test_w28a746_live_preprod_contract.py, tests/e2e/test_w28a746_live_preprod_contract.py, tests/smoke/test_w28a746_b_method_idam.py, tests/smoke/test_w28a746_b_method_idam.py | pass | 973991f8 | 1 | COVERED-PASSING |
 | FR-028 | api, mcp | must | tests/system/ST1.2_AccessControlApi/test_access_control_api.py, tests/integration/IT1.13_McpAuditAU3/test_mcp_audit_au3.py | pass | 973991f8 | 1 | COVERED-PASSING |
