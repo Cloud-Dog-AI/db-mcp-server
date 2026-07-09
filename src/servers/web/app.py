@@ -438,7 +438,7 @@ def create_web_app(explicit_env_files: list[str] | None = None):
                 principal = runtime.access_control.verify_api_key(api_key)
                 if principal is not None:
                     return JSONResponse({"user": runtime.access_control.principal_summary(principal)})
-            return JSONResponse(None)
+            raise HTTPException(status_code=401, detail="Not authenticated")
         return JSONResponse({"user": {"id": sess["user_id"], "displayName": sess["user"], "email": None, "roles": [sess["role"]], "permissions": _role_permissions(sess["role"])}})
 
     @app.post(join_route(web_base_path, "/auth/logout"))

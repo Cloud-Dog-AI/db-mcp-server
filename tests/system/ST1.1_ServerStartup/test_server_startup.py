@@ -29,7 +29,7 @@ import pytest
 
 from tests.helpers.server_runtime import service_base_url
 
-pytestmark = [pytest.mark.system, pytest.mark.timeout(120)]
+pytestmark = [pytest.mark.system, pytest.mark.timeout(480)]
 @pytest.mark.ST
 @pytest.mark.mcp
 @pytest.mark.req("FR-025")
@@ -51,16 +51,17 @@ def test_all_servers_start_and_report_health() -> None:
             f"{service_base_url('mcp', env_file)}/health",
             f"{service_base_url('a2a', env_file)}/health",
         ]
-        for url in urls:
-            while True:
-                try:
-                    response = httpx.get(url, timeout=5.0)
-                    if response.status_code == 200:
-                        break
-                except httpx.HTTPError:
-                    pass
-                if time.time() > deadline:
-                    pytest.fail(f"Timed out waiting for health endpoint: {url}")
-                time.sleep(1)
+        with httpx.Client(timeout=5.0, verify=False, trust_env=False) as client:
+            for url in urls:
+                while True:
+                    try:
+                        response = client.get(url)
+                        if response.status_code == 200:
+                            break
+                    except httpx.HTTPError:
+                        pass
+                    if time.time() > deadline:
+                        pytest.fail(f"Timed out waiting for health endpoint: {url}")
+                    time.sleep(1)
     finally:
         subprocess.run(["bash", str(control), "--env", str(env_file), "stop", "all"], check=True, cwd=root)

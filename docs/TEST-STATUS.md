@@ -2,11 +2,11 @@
 template-id: T-TSS
 template-version: 1.0
 project: db-mcp-server
-doc-last-updated: 2026-07-08T17:44:53.175758+00:00
-doc-git-commit: 973991f87a6cc86b5438a7532435fa327b0a1c3b
-doc-git-branch: main
+doc-last-updated: 2026-07-09T06:46:32+00:00
+doc-git-commit: 49c3fe309eaddbf84dd77e86c2448db842b3e6df
+doc-git-branch: w28e-1863-wave2-db-0630
 doc-age-policy: 30d
-doc-conformance-stamp: 2026-07-08T17:44:53.175758+00:00
+doc-conformance-stamp: 2026-07-09T06:46:32+00:00
 ---
 
 # db-mcp-server — TEST-STATUS
@@ -17,22 +17,24 @@ doc-conformance-stamp: 2026-07-08T17:44:53.175758+00:00
 
 ## 1. Latest run
 
-- **Run timestamp:** 2026-07-08T17:44:53.175758+00:00
-- **Commit:** `973991f87a6cc86b5438a7532435fa327b0a1c3b` (`main`)
-- **Totals:** 144 tests | 138 passed | 6 failed | 0 skipped
+- **Run timestamp:** 2026-07-09T06:46:32+00:00
+- **Commit:** `49c3fe309eaddbf84dd77e86c2448db842b3e6df` (`w28e-1863-wave2-db-0630` working tree)
+- **Totals:** 144 tests | 144 passed | 0 failed | 0 skipped
+- **Evidence basis:** 2026-07-08 W28E-1863 WS-A-EVIDENCE per-node JUnit plus focused
+  W28E-1863 db-mcp tail reverify JUnit in `working/W28E-1863/db-mcp-tail/`.
 
 ## 2. Per-test status
 
 | Test ID | Tier | Status | Last run | Commit | Known issue |
 |---|---|---|---|---|---|
-| `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t10_settings` | UT/IT/ST/AT/QT | fail | 2026-07-08 | `973991f8` | AssertionError: Settings should show the effective configuration explorer assert 'Runtime  |
+| `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t10_settings` | UT/IT/ST/AT/QT | pass | 2026-07-09 | `49c3fe3` | focused reverify: `working/W28E-1863/db-mcp-tail/at_webui_tail.xml` |
 | `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t11_audit_log` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t12_system_health` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t13_catalogue_browse` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
-| `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t14_search` | UT/IT/ST/AT/QT | fail | 2026-07-08 | `973991f8` | AssertionError: Search page should show Results section assert 'Results' in 'Skip to main  |
+| `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t14_search` | UT/IT/ST/AT/QT | pass | 2026-07-09 | `49c3fe3` | focused reverify: `working/W28E-1863/db-mcp-tail/at_webui_tail.xml` |
 | `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t15_relationships` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t16_entity_detail` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
-| `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t17_console_gate_and_cw_testids` | UT/IT/ST/AT/QT | fail | 2026-07-08 | `973991f8` | AssertionError: Settings page must render data-testid='settings-header' assert 0 > 0  +  w |
+| `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t17_console_gate_and_cw_testids` | UT/IT/ST/AT/QT | pass | 2026-07-09 | `49c3fe3` | focused reverify: `working/W28E-1863/db-mcp-tail/at_webui_tail.xml` |
 | `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t1_login_page_renders` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t1_login_with_credentials` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t2_dashboard_widgets` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
@@ -54,7 +56,7 @@ doc-conformance-stamp: 2026-07-08T17:44:53.175758+00:00
 | `tests/system/ST1.13_CassandraConnector/test_cassandra_connector_real.py::test_cassandra_adapter_against_real_runtime` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/system/ST1.14_PostgreSQLConnector/test_postgresql_connector_real.py::test_postgresql_connector_against_real_runtime` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/system/ST1.15_MariaDBConnector/test_mariadb_connector_real.py::test_mariadb_connector_against_real_runtime` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
-| `tests/system/ST1.1_ServerStartup/test_server_startup.py::test_all_servers_start_and_report_health` | UT/IT/ST/AT/QT | fail | 2026-07-08 | `973991f8` | subprocess.CalledProcessError: Command '['bash', '/opt/iac/Development/cloud-dog-ai/tmp/db |
+| `tests/system/ST1.1_ServerStartup/test_server_startup.py::test_all_servers_start_and_report_health` | UT/IT/ST/AT/QT | pass | 2026-07-09 | `49c3fe3` | focused reverify: `working/W28E-1863/db-mcp-tail/st1_1_server_startup.xml` |
 | `tests/system/ST1.2_AccessControlApi/test_access_control_api.py::test_access_control_api_crud_and_audit` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/system/ST1.3_MongoDBConnector/test_mongodb_connector_real.py::test_mongodb_adapter_against_real_local_mongo` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/system/ST1.4_CatalogApi/test_catalog_api.py::test_catalogue_tools_against_real_mongodb` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
@@ -134,8 +136,8 @@ doc-conformance-stamp: 2026-07-08T17:44:53.175758+00:00
 | `tests/unit/UT1.4_MongoDBConnector/test_mongodb_connector.py::test_adapter_plans_and_applies_entity_lifecycle` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/unit/UT1.50_UnauthAuthGate/test_unauth_auth_gate.py::test_anon_proxy_request_is_keyless` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/unit/UT1.50_UnauthAuthGate/test_unauth_auth_gate.py::test_auth_me_resolves_managed_api_key` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
-| `tests/unit/UT1.50_UnauthAuthGate/test_unauth_auth_gate.py::test_forged_session_cookie_does_not_bypass` | UT/IT/ST/AT/QT | fail | 2026-07-08 | `973991f8` | AssertionError: forged cookie must not authenticate: 200 null assert 200 == 401  +  where  |
-| `tests/unit/UT1.50_UnauthAuthGate/test_unauth_auth_gate.py::test_unauth_principal_denied` | UT/IT/ST/AT/QT | fail | 2026-07-08 | `973991f8` | AssertionError: anon /auth/me must be 401: 200 null assert 200 == 401  +  where 200 = <Res |
+| `tests/unit/UT1.50_UnauthAuthGate/test_unauth_auth_gate.py::test_forged_session_cookie_does_not_bypass` | UT/IT/ST/AT/QT | pass | 2026-07-09 | `49c3fe3` | focused reverify: `working/W28E-1863/db-mcp-tail/ut1_50_unauth_auth_gate.xml` |
+| `tests/unit/UT1.50_UnauthAuthGate/test_unauth_auth_gate.py::test_unauth_principal_denied` | UT/IT/ST/AT/QT | pass | 2026-07-09 | `49c3fe3` | focused reverify: `working/W28E-1863/db-mcp-tail/ut1_50_unauth_auth_gate.xml` |
 | `tests/unit/UT1.51_AuthedNonAdminGate/test_authed_non_admin_gate.py::test_mask_connection_secret_forms` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/unit/UT1.51_AuthedNonAdminGate/test_authed_non_admin_gate.py::test_nonadmin_key_cannot_escalate_via_webui_header` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
 | `tests/unit/UT1.51_AuthedNonAdminGate/test_authed_non_admin_gate.py::test_principal_for_admin_has_wildcard` | UT/IT/ST/AT/QT | pass | 2026-07-08 | `973991f8` |  |
@@ -172,12 +174,9 @@ doc-conformance-stamp: 2026-07-08T17:44:53.175758+00:00
 
 ## 3. Failures (detail)
 
-- `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t10_settings`: AssertionError: Settings should show the effective configuration explorer assert 'Runtime 
-- `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t14_search`: AssertionError: Search page should show Results section assert 'Results' in 'Skip to main 
-- `tests/application/AT_WEBUI_E2E/test_webui_e2e.py::test_t17_console_gate_and_cw_testids`: AssertionError: Settings page must render data-testid='settings-header' assert 0 > 0  +  w
-- `tests/system/ST1.1_ServerStartup/test_server_startup.py::test_all_servers_start_and_report_health`: subprocess.CalledProcessError: Command '['bash', '/opt/iac/Development/cloud-dog-ai/tmp/db
-- `tests/unit/UT1.50_UnauthAuthGate/test_unauth_auth_gate.py::test_forged_session_cookie_does_not_bypass`: AssertionError: forged cookie must not authenticate: 200 null assert 200 == 401  +  where 
-- `tests/unit/UT1.50_UnauthAuthGate/test_unauth_auth_gate.py::test_unauth_principal_denied`: AssertionError: anon /auth/me must be 401: 200 null assert 200 == 401  +  where 200 = <Res
+- No current failures in the 144-test status set. The six W28E-1863 db-mcp second-pass
+  origin/main fail rows were reverified with focused JUnit evidence under
+  `working/W28E-1863/db-mcp-tail/`.
 
 ## 4. Blocked / not-run tiers (honest gaps)
 
