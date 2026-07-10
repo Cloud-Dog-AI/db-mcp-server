@@ -21,6 +21,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from datetime import datetime, timezone
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -87,6 +88,7 @@ from src.common.env_loader import resolve_env_files
 from src.common.storage_paths import ensure_directory
 from src.core.audit import AuditEventService
 from src.core.access_control.service import AccessControlService
+from src.core.change_stream import WatchService, make_audit_sink
 from src.core.connectors.service import ConnectorManager
 from src.core.connectors.mongodb import MongoDBConnectorService
 from src.core.discovery import DiscoveryService
@@ -123,6 +125,7 @@ class RuntimeContext:
     schema_changes: SchemaChangeService
     search: DiscoverySearchService
     test_data: TestDataSeedService
+    watch_service: WatchService
     env_files: list[str]
     started_at: datetime
 
@@ -144,11 +147,17 @@ class RuntimeContext:
         async def search_check() -> dict[str, Any]:
             return self.search.health_check()
 
+        async def watches_check() -> dict[str, Any]:
+            # Aggregated change-watch health (PS-102 §5.9): total/live/paused/
+            # journal-depth/inflight/throttled watchers for this process.
+            return {"status": "ok", **self.watch_service.health()}
+
         return {
             "metadata_store": metadata_check,
             "audit_store": audit_check,
             "jobs": jobs_check,
             "search": search_check,
+            "change_watches": watches_check,
         }
 
     def auth_dependency(self):
@@ -264,6 +273,7 @@ class RuntimeFactory:
             schema_changes=None,  # type: ignore[arg-type]
             search=None,  # type: ignore[arg-type]
             test_data=None,  # type: ignore[arg-type]
+            watch_service=_build_watch_service(metadata_engine, audit_logger),
             env_files=env_files,
             started_at=datetime.now(timezone.utc),
         )
@@ -285,6 +295,48 @@ class RuntimeFactory:
         _register_discovery_handlers(runtime)
 
         return runtime
+
+
+def _schedule_watch_broadcast(coro: Any) -> None:
+    """Schedule the (async) change-watch live-broadcast publish (CSTREAM-002).
+
+    The change-emit path is synchronous; the broadcaster ``publish`` is async.
+    When a request event loop is running we schedule the coroutine on it so emit
+    never blocks; otherwise the live frame is dropped (the durable journal +
+    pull-batch retrieval remain the source of truth). No busy-wait, no new loop.
+    """
+    import asyncio
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        with contextlib.suppress(Exception):
+            coro.close()
+        return
+    loop.create_task(coro)
+
+
+def _build_watch_service(metadata_engine: Engine, audit_logger: Any) -> WatchService:
+    """Construct the shared db-mcp change-watch adapter (PS-102 §4.4).
+
+    Consumes the common ``cloud_dog_api_kit.change_stream`` foundation: a durable
+    ``SqlJournal`` on the ``cloud_dog_db`` metadata engine, live fan-out via the
+    platform ``InMemoryEventBroadcaster`` (PS-102 §9 reuse — no bespoke
+    broadcaster), and audit via the shared ``AuditLogger`` (RULES §1.4).
+    """
+    broadcaster: Any | None = None
+    try:
+        from cloud_dog_api_kit.a2a.events import InMemoryEventBroadcaster
+
+        broadcaster = InMemoryEventBroadcaster()
+    except Exception:  # pragma: no cover - broadcaster surface unavailable
+        broadcaster = None
+    return WatchService(
+        engine=metadata_engine,
+        broadcaster=broadcaster,
+        audit_sink=make_audit_sink(audit_logger),
+        broadcast_scheduler=_schedule_watch_broadcast,
+    )
 
 
 def _register_discovery_handlers(runtime: RuntimeContext) -> None:

@@ -78,6 +78,20 @@ TOOL_RBAC_MAP: Dict[str, str] = {
     # Audit (admin read)
     "audit.list_events": "db:audit:read",
     "audit.get_event": "db:audit:read",
+    # Change-watch (W28E-1870-E, PS-102 §7): read verbs need data:read, mutating
+    # lifecycle verbs need data:write. Enforced per call in watch_tools against
+    # the requesting principal, scoped to the watched profile.
+    "db_watch_list": "db:data:read",
+    "db_watch_status": "db:data:read",
+    "db_watch_get_batch": "db:data:read",
+    "db_watch_ack": "db:data:read",
+    "db_watch_recover": "db:data:read",
+    "db_watch_capabilities": "db:data:read",
+    "db_watch_create": "db:data:write",
+    "db_watch_pause": "db:data:write",
+    "db_watch_resume": "db:data:write",
+    "db_watch_delete": "db:data:write",
+    "db_watch_test_event": "db:data:write",
 }
 
 

@@ -216,12 +216,45 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
         handler = _catalog_tools["catalog.list_namespaces"].handler
         return await handler(payload, _make_a2a_request())
 
+    # --- W28E-1870-E database change-watch A2A skill handlers (PS-102 §5.3) ---
+    def _watch_skill(method_name: str):
+        async def _handler(text: str, principal) -> Any:
+            payload = _parse_a2a_input(text)
+            tenant = str(payload.get("tenant_id") or payload.get("profile") or payload.get("profile_id") or "default")
+            method = getattr(runtime.watch_service, method_name)
+            try:
+                if method_name == "create_watch":
+                    return method(
+                        profile_id=str(payload.get("profile") or payload.get("profile_id") or "default"),
+                        tenant_id=tenant,
+                        actor=str(getattr(principal, "user_id", "a2a")),
+                        criteria=payload.get("criteria") if isinstance(payload.get("criteria"), dict) else None,
+                    )
+                if method_name == "list_watches":
+                    return {"watches": method(tenant_id=tenant)}
+                if method_name == "get_batch":
+                    return method(
+                        str(payload["watch_id"]),
+                        tenant_id=tenant,
+                        since_cursor=payload.get("since_cursor") or None,
+                        max_batch=int(payload["max_batch"]) if payload.get("max_batch") else None,
+                    )
+                return method(str(payload["watch_id"]), tenant_id=tenant)
+            except Exception as exc:
+                return f"{method_name} error: {exc}"
+
+        return _handler
+
     # A2A agent card and task submission router
     _a2a_skills = [
         A2ASkill(id="data_create", name="Data Create", description="Create new records in the database", handler=_handle_data_create),
         A2ASkill(id="data_query", name="Data Query", description="Query data from the database", handler=_handle_data_query),
         A2ASkill(id="data_update", name="Data Update", description="Update existing records in the database", handler=_handle_data_update),
         A2ASkill(id="schema_list", name="Schema List", description="List database schemas and table structures", handler=_handle_schema_list),
+        A2ASkill(id="db_watch_create", name="Create DB Change-Watch", description="Create a database change-watch with criteria (namespace/entity/action/value) — PS-102 CSTREAM-DB-001/002", handler=_watch_skill("create_watch")),
+        A2ASkill(id="db_watch_list", name="List DB Change-Watches", description="List the caller's database change-watches for the current tenant/profile", handler=_watch_skill("list_watches")),
+        A2ASkill(id="db_watch_status", name="DB Change-Watch Status", description="Return a change-watch status (state, journal depth, cursors, in-flight, throttle)", handler=_watch_skill("get_status")),
+        A2ASkill(id="db_watch_get_batch", name="Get DB Change Batch", description="Retrieve a bounded batch of DB change events since a cursor (backpressure-aware)", handler=_watch_skill("get_batch")),
     ]
     _skill_map: dict[str, A2ASkill] = {skill.id: skill for skill in _a2a_skills}
     _skill_permissions = {
@@ -229,13 +262,19 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
         "data_query": "data.read",
         "data_update": "data.update",
         "schema_list": "schema.read",
+        "db_watch_create": "data.create",
+        "db_watch_list": "data.read",
+        "db_watch_status": "data.read",
+        "db_watch_get_batch": "data.read",
     }
     _card = {
         "name": "db-mcp",
-        "description": "Database MCP A2A server for data operations and schema management",
+        "description": "Database MCP A2A server for data operations, schema management, and change-watch streaming",
         "url": "",
         "version": "1.0.0",
-        "capabilities": {"streaming": False, "pushNotifications": False},
+        # W28E-1870-E: the API surface exposes an SSE change-event feed
+        # (/v1/watches/{id}/stream), so streaming is advertised true (PS-102 §5.2).
+        "capabilities": {"streaming": True, "pushNotifications": False},
         "skills": [
             {"id": skill.id, "name": skill.name, "description": skill.description}
             for skill in _a2a_skills

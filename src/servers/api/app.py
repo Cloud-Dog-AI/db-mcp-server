@@ -45,6 +45,7 @@ from src.servers.api.saved_queries import create_saved_queries_router
 from src.servers.api.schema_changes import create_schema_changes_router
 from src.servers.api.source_connections import create_source_connections_router
 from src.servers.api.test_data import create_test_data_router
+from src.servers.api.watches import create_watches_router
 from cloud_dog_idam.rbac import RBACEngine as _RBACEngine  # PS-70 RBAC enforcement
 
 _rbac_engine = _RBACEngine()
@@ -606,4 +607,10 @@ def create_api_app(explicit_env_files: list[str] | None = None):
     app.include_router(create_schema_changes_router(runtime, api_base_path))
     app.include_router(create_source_connections_router(runtime, api_base_path))
     app.include_router(create_test_data_router(runtime, api_base_path))
+    # W28E-1870-E database change-watch REST surface (PS-102 §5.5 / CSTREAM-DB-001).
+    # Register on the resolved service base path and on the canonical ``/v1``
+    # (Traefik strips /api) so the surface is reachable direct and edge-routed.
+    app.include_router(create_watches_router(runtime, api_base_path))
+    if (api_base_path or "") != "/v1":
+        app.include_router(create_watches_router(runtime, "/v1"))
     return app

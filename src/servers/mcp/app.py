@@ -38,6 +38,7 @@ from src.servers.mcp.e2e_tools import build_e2e_tool_registry, e2e_tools_enabled
 from src.servers.mcp.relationship_tools import build_relationship_tool_registry
 from src.servers.mcp.schema_tools import build_schema_tool_registry
 from src.servers.mcp.search_tools import build_search_tool_registry
+from src.servers.mcp.watch_tools import build_watch_tool_registry
 from src.servers.mcp.tool_rbac_audit import (
     TOOL_RBAC_MAP,
     audit_tool_call,
@@ -77,6 +78,8 @@ def create_mcp_app(explicit_env_files: list[str] | None = None):
     tool_registry.update(build_relationship_tool_registry(runtime))
     tool_registry.update(build_audit_tool_registry(runtime))
     tool_registry.update(build_search_tool_registry(runtime))
+    # W28E-1870-E database change-watch tools (PS-102 §5.3 / CSTREAM-DB-001/002).
+    tool_registry.update(build_watch_tool_registry(runtime))
     if e2e_tools_enabled(runtime.env_files):
         tool_registry.update(build_e2e_tool_registry(runtime))
     # TD-001 (W28E-1808B): wrap every MCP tool with full NIST AU-3 audit emission

@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import json
 from typing import Any
 
 from bson.binary import Binary
@@ -63,6 +64,45 @@ def _coerce_binary_value(value: Any) -> Any:
         return Binary(raw)
 
     return {key: _coerce_binary_value(item) for key, item in value.items()}
+
+
+def _watch_capture(runtime, request, session, *, namespace, entity, action, object_ref, object_version="", values=None, row_count=None):
+    """Emit a server-mediated change event into matching live watches (CSTREAM-DB-001).
+
+    Called from the ``data.create/update/delete`` callbacks *after* the connector
+    has performed (and committed) the mutation, so the change is captured at the
+    exact point db-mcp mutates the database — no polling, ordering follows the
+    committing transaction. Never raises: change capture must not fail a
+    successful data mutation (PS-102 §6). Tenant/actor/correlation come from the
+    already-authenticated request; the watch is scoped to the mutated profile.
+    """
+    watch_service = getattr(runtime, "watch_service", None)
+    if watch_service is None:
+        return
+    profile = session.profile if isinstance(session.profile, dict) else {}
+    profile_id = str(profile.get("profile_id") or profile.get("id") or "")
+    source_type = str(profile.get("source_type") or "")
+    state = getattr(request, "state", None)
+    tenant_id = str(getattr(state, "tenant_id", None) or profile_id or "default")
+    actor = getattr(state, "username", None) or getattr(state, "user", None)
+    correlation_id = getattr(state, "correlation_id", None)
+    try:
+        watch_service.observe_change(
+            tenant_id=tenant_id,
+            profile_id=profile_id,
+            source_type=source_type,
+            namespace=str(namespace),
+            entity=str(entity),
+            action=action,
+            object_ref=str(object_ref),
+            object_version=str(object_version or ""),
+            values=values,
+            row_count=row_count,
+            actor=str(actor) if actor else None,
+            correlation_id=str(correlation_id) if correlation_id else None,
+        )
+    except Exception:  # pragma: no cover - capture must never break the mutation
+        return
 
 
 def build_content_tool_registry(runtime) -> dict[str, ToolContract]:
@@ -119,6 +159,19 @@ def build_content_tool_registry(runtime) -> dict[str, ToolContract]:
                 session.connector.create(namespace, entity, _coerce_binary_value(item))
                 for item in list(documents)
             ]
+            for source_item, result_item in zip(list(documents), created):
+                _watch_capture(
+                    runtime,
+                    request,
+                    session,
+                    namespace=namespace,
+                    entity=entity,
+                    action="created",
+                    object_ref=str(result_item.get("inserted_id", "")),
+                    object_version=str(result_item.get("inserted_id", "")),
+                    values=source_item if isinstance(source_item, dict) else None,
+                    row_count=1,
+                )
             if len(created) == 1 and not bulk_mode:
                 single = created[0]
                 single["document"] = connectors.mask_record(profile_id, single.get("document", {}))
@@ -145,12 +198,25 @@ def build_content_tool_registry(runtime) -> dict[str, ToolContract]:
         def callback(session):
             connectors.ensure_entity_allowed(session.profile, namespace, entity)
             filter_query = session.translator.translate(parse_filter(payload.get("filter")))
-            return session.connector.update(
-                namespace,
-                entity,
-                filter_query,
-                _coerce_binary_value(payload.get("update") or {}),
-            )
+            update_doc = _coerce_binary_value(payload.get("update") or {})
+            outcome = session.connector.update(namespace, entity, filter_query, update_doc)
+            modified = int(outcome.get("modified_count", 0) or 0)
+            if modified > 0:
+                # Filter-scoped bulk update: no per-row snapshot; carry the
+                # requested $set scalars (bounded) and the affected row count.
+                set_values = update_doc.get("$set") if isinstance(update_doc, dict) else None
+                _watch_capture(
+                    runtime,
+                    request,
+                    session,
+                    namespace=namespace,
+                    entity=entity,
+                    action="updated",
+                    object_ref=f"filter:{json.dumps(payload.get('filter') or {}, default=str, sort_keys=True)}",
+                    values=set_values if isinstance(set_values, dict) else (update_doc if isinstance(update_doc, dict) else None),
+                    row_count=modified,
+                )
+            return outcome
 
         return connectors.execute(
             request,
@@ -169,7 +235,20 @@ def build_content_tool_registry(runtime) -> dict[str, ToolContract]:
         def callback(session):
             connectors.ensure_entity_allowed(session.profile, namespace, entity)
             filter_query = session.translator.translate(parse_filter(payload.get("filter")))
-            return session.connector.delete(namespace, entity, filter_query)
+            outcome = session.connector.delete(namespace, entity, filter_query)
+            deleted = int(outcome.get("deleted_count", 0) or 0)
+            if deleted > 0:
+                _watch_capture(
+                    runtime,
+                    request,
+                    session,
+                    namespace=namespace,
+                    entity=entity,
+                    action="deleted",
+                    object_ref=f"filter:{json.dumps(payload.get('filter') or {}, default=str, sort_keys=True)}",
+                    row_count=deleted,
+                )
+            return outcome
 
         return connectors.execute(
             request,
