@@ -72,7 +72,11 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
     app.add_middleware(
         APIKeyAuthMiddleware,
         verify_api_key=runtime.auth.verify_api_key,
-        exempt_paths=exempt_paths_for_surface(a2a_base_path),
+        # W28E-1870-E: the A2A agent card (/.well-known/agent.json) is a public
+        # discovery document (PS-72), matching the sibling services — task
+        # execution (/tasks) stays auth-gated. Only the card is exempt.
+        exempt_paths=exempt_paths_for_surface(a2a_base_path)
+        | {"/.well-known/agent.json", join_route(a2a_base_path, "/.well-known/agent.json")},
     )
 
     @app.get("/")

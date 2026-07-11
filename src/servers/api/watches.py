@@ -101,7 +101,7 @@ def create_watches_router(runtime, base_path: str) -> APIRouter:
     async def create_watch(request: Request) -> dict:
         payload = await _body(request)
         profile_id = str(payload.get("profile") or payload.get("profile_id") or "default")
-        principal = _require(request, "data.write", profile_id)
+        principal = _require(request, "data.create", profile_id)
         try:
             return success_envelope(
                 runtime.watch_service.create_watch(
