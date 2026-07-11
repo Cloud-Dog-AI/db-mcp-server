@@ -59,7 +59,7 @@ def build_watch_tool_registry(runtime) -> dict[str, ToolContract]:
 
     async def watch_create(payload: dict[str, Any], request) -> dict[str, Any]:
         profile_id = str(payload.get("profile") or payload.get("profile_id") or "default")
-        _require(request, "data.write", profile_id)
+        _require(request, "data.create", profile_id)
         principal = access.principal_from_request(request)
         try:
             return runtime.watch_service.create_watch(
@@ -127,7 +127,7 @@ def build_watch_tool_registry(runtime) -> dict[str, ToolContract]:
 
     async def watch_pause(payload: dict[str, Any], request) -> dict[str, Any]:
         profile_id = str(payload.get("profile") or payload.get("profile_id") or "default")
-        _require(request, "data.write", profile_id)
+        _require(request, "data.create", profile_id)
         try:
             return runtime.watch_service.pause(str(payload["watch_id"]), tenant_id=_tenant_of(payload))
         except ChangeStreamError as exc:
@@ -135,7 +135,7 @@ def build_watch_tool_registry(runtime) -> dict[str, ToolContract]:
 
     async def watch_resume(payload: dict[str, Any], request) -> dict[str, Any]:
         profile_id = str(payload.get("profile") or payload.get("profile_id") or "default")
-        _require(request, "data.write", profile_id)
+        _require(request, "data.create", profile_id)
         try:
             return runtime.watch_service.resume(str(payload["watch_id"]), tenant_id=_tenant_of(payload))
         except ChangeStreamError as exc:
@@ -143,7 +143,7 @@ def build_watch_tool_registry(runtime) -> dict[str, ToolContract]:
 
     async def watch_delete(payload: dict[str, Any], request) -> dict[str, Any]:
         profile_id = str(payload.get("profile") or payload.get("profile_id") or "default")
-        _require(request, "data.write", profile_id)
+        _require(request, "data.create", profile_id)
         try:
             return runtime.watch_service.delete(str(payload["watch_id"]), tenant_id=_tenant_of(payload))
         except ChangeStreamError as exc:
@@ -151,7 +151,7 @@ def build_watch_tool_registry(runtime) -> dict[str, ToolContract]:
 
     async def watch_test_event(payload: dict[str, Any], request) -> dict[str, Any]:
         profile_id = str(payload.get("profile") or payload.get("profile_id") or "default")
-        _require(request, "data.write", profile_id)
+        _require(request, "data.create", profile_id)
         extra = {
             k: v
             for k, v in payload.items()
