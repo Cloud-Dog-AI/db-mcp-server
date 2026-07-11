@@ -243,6 +243,13 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
                         since_cursor=payload.get("since_cursor") or None,
                         max_batch=int(payload["max_batch"]) if payload.get("max_batch") else None,
                     )
+                if method_name == "test_event":
+                    return method(
+                        str(payload["watch_id"]),
+                        tenant_id=tenant,
+                        action=str(payload.get("action", "created")),
+                        object_ref=str(payload.get("object_ref", "test")),
+                    )
                 return method(str(payload["watch_id"]), tenant_id=tenant)
             except Exception as exc:
                 return f"{method_name} error: {exc}"
@@ -259,6 +266,7 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
         A2ASkill(id="db_watch_list", name="List DB Change-Watches", description="List the caller's database change-watches for the current tenant/profile", handler=_watch_skill("list_watches")),
         A2ASkill(id="db_watch_status", name="DB Change-Watch Status", description="Return a change-watch status (state, journal depth, cursors, in-flight, throttle)", handler=_watch_skill("get_status")),
         A2ASkill(id="db_watch_get_batch", name="Get DB Change Batch", description="Retrieve a bounded batch of DB change events since a cursor (backpressure-aware)", handler=_watch_skill("get_batch")),
+        A2ASkill(id="db_watch_test_event", name="Inject Test Change Event", description="Inject a deterministic synthetic change event into a watch's journal (test-mode, no external mutation) — PS-102 CSTREAM-DB", handler=_watch_skill("test_event")),
     ]
     _skill_map: dict[str, A2ASkill] = {skill.id: skill for skill in _a2a_skills}
     _skill_permissions = {
@@ -270,6 +278,7 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
         "db_watch_list": "data.read",
         "db_watch_status": "data.read",
         "db_watch_get_batch": "data.read",
+        "db_watch_test_event": "data.create",
     }
     _card = {
         "name": "db-mcp",

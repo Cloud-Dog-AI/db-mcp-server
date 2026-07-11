@@ -247,7 +247,7 @@ def create_watches_router(runtime, base_path: str) -> APIRouter:
     async def pause(watch_id: str, request: Request) -> dict:
         payload = await _body(request)
         profile_id = str(payload.get("profile") or payload.get("profile_id") or "default")
-        _require(request, "data.write", profile_id)
+        _require(request, "data.create", profile_id)
         try:
             return success_envelope(runtime.watch_service.pause(watch_id, tenant_id=_tenant_from(payload)))
         except ChangeStreamError as exc:
@@ -257,7 +257,7 @@ def create_watches_router(runtime, base_path: str) -> APIRouter:
     async def resume(watch_id: str, request: Request) -> dict:
         payload = await _body(request)
         profile_id = str(payload.get("profile") or payload.get("profile_id") or "default")
-        _require(request, "data.write", profile_id)
+        _require(request, "data.create", profile_id)
         try:
             return success_envelope(runtime.watch_service.resume(watch_id, tenant_id=_tenant_from(payload)))
         except ChangeStreamError as exc:
@@ -267,7 +267,7 @@ def create_watches_router(runtime, base_path: str) -> APIRouter:
     async def test_event(watch_id: str, request: Request) -> dict:
         payload = await _body(request)
         profile_id = str(payload.get("profile") or payload.get("profile_id") or "default")
-        _require(request, "data.write", profile_id)
+        _require(request, "data.create", profile_id)
         extra = {
             k: v
             for k, v in payload.items()
@@ -288,7 +288,7 @@ def create_watches_router(runtime, base_path: str) -> APIRouter:
 
     @router.delete("/watches/{watch_id}")
     async def delete_watch(watch_id: str, request: Request, profile: str = "default", tenant_id: str | None = None) -> dict:
-        _require(request, "data.write", profile)
+        _require(request, "data.create", profile)
         tenant = str(tenant_id or profile or "default")
         try:
             return success_envelope(runtime.watch_service.delete(watch_id, tenant_id=tenant))
