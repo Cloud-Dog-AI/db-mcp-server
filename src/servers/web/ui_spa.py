@@ -63,6 +63,8 @@ _SPA_ENTRY_ROUTES = {
     "/system/jobs",
     "/system/settings",
     "/system/about",
+    "/system/watches",  # W28E-1870-E: db change-watch page (PS-102 §10)
+    "/watches",
     "/source-connections",
     "/profiles",
     "/admin/source-connections",
