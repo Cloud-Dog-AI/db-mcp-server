@@ -111,8 +111,7 @@ def _assert_au3_populated(event: dict[str, Any]) -> None:
     actor = event.get("actor", {})
     details = event.get("details", {})
     assert actor.get("id"), f"actor.id (subject) must be populated: {actor}"
-    assert actor.get("ip") and actor.get("ip") != "unknown", f"actor.ip (client_ip) must be populated: {actor}"
-    assert event.get("source_address"), f"source_address must be populated: {event.get('source_address')!r}"
+    assert actor.get("ip") and actor.get("ip") != "unknown", f"actor.ip (client IP / source address) must be populated: {actor}"
     assert event.get("correlation_id"), "correlation_id must be populated (top-level)"
     assert details.get("session_id"), f"session_id must be populated in details: {details}"
 
@@ -194,6 +193,5 @@ def test_a2a_task_emits_full_au3_event(tmp_path: Path) -> None:
     event = mine[-1]
     actor = event.get("actor", {})
     assert actor.get("id"), f"actor.id (subject) must be populated: {actor}"
-    assert actor.get("ip") and actor.get("ip") != "unknown", f"actor.ip (client_ip) must be populated: {actor}"
-    assert event.get("source_address"), "source_address must be populated"
+    assert actor.get("ip") and actor.get("ip") != "unknown", f"actor.ip (client IP / source address) must be populated: {actor}"
     assert event.get("correlation_id"), "correlation_id must be populated"

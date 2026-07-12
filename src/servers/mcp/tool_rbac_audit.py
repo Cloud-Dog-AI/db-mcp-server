@@ -211,15 +211,19 @@ def au3_request_fields(request: Any) -> Dict[str, Any]:
     a thin adapter over the platform ``cloud_dog_logging`` schema — it does not
     reimplement any audit logic.
 
-    Returned keys:
-      - ``client_ip``      — pass to ``Actor(ip=...)`` (NIST AU-3 client IP).
-      - ``source_address`` — spread into the ``log_*`` call; binds to the platform
-        AuditLogger's ``source_address`` parameter so ``AuditEvent.source_address``
-        is emitted top-level.
-      - ``session_id``     — spread into the ``log_*`` call; lands in event ``details``.
-      - ``correlation_id`` — spread into the ``log_*`` call when present; mirrored
-        into ``details`` (the top-level ``correlation_id`` is taken from the request
-        correlation contextvar by the platform AuditLogger).
+    Returned keys (all spread into the ``log_*`` call, so they land in the event):
+      - ``client_ip``      — the NIST AU-3 client IP. Also read by the caller for
+        ``Actor(ip=...)``. Carried in ``details.client_ip`` (unredacted on every
+        ``cloud_dog_logging`` version) plus ``actor.ip`` — this is the canonical,
+        version-independent client-IP/source-address carriage.
+      - ``source_address`` — kept for compatibility: on package versions whose
+        ``AuditEvent`` exposes a top-level ``source_address`` field it is emitted
+        there; on versions without it the value is redacted in ``details`` (the
+        redaction engine masks any ``*address`` key). Rely on ``client_ip``/
+        ``actor.ip`` for the AU-3 value, not this key.
+      - ``session_id``     — lands in ``details.session_id``.
+      - ``correlation_id`` — when present, mirrored into ``details``; the top-level
+        ``correlation_id`` is taken from the request correlation contextvar.
     """
     state = getattr(request, "state", None)
     client = getattr(request, "client", None)
@@ -251,14 +255,13 @@ def emit_tool_audit(
 ) -> None:
     """Emit a full NIST AU-3 audit event for an MCP tool call via the platform AuditLogger."""
     fields = au3_request_fields(request)
-    fields.pop("client_ip", None)  # carried on actor.ip, not an event detail
     actor = _actor_from_request(request)
     target = _derive_target(tool_name, params)
     details: Dict[str, Any] = {
         "target_type": target.type,
         "target_id": target.id,
         "target_name": target.name,
-        **fields,  # source_address, session_id, [correlation_id]
+        **fields,  # client_ip, source_address, session_id, [correlation_id]
     }
     if not success and error:
         details["error_code"] = "tool_error"
@@ -298,14 +301,14 @@ def emit_a2a_audit(
     if audit_logger is None:
         return
     fields = au3_request_fields(request)
-    client_ip = fields.pop("client_ip", None)
+    client_ip = fields.get("client_ip")
     actor = actor_from_principal(principal, ip=client_ip)
     details: Dict[str, Any] = {
         "target_type": "a2a_task",
         "target_id": skill_id,
         "target_name": f"a2a.{skill_id}",
         "surface": "a2a",
-        **fields,  # source_address, session_id, [correlation_id]
+        **fields,  # client_ip, source_address, session_id, [correlation_id]
     }
     if not success and error:
         details["error_code"] = "a2a_error"

@@ -502,7 +502,7 @@ def create_api_app(explicit_env_files: list[str] | None = None):
         # (actor client_ip, source_address, session_id, correlation_id) so the
         # audit-log / recent-activity surfaces show Who/Client, not blanks.
         _au3 = au3_request_fields(request)
-        _client_ip = _au3.pop("client_ip", None)
+        _client_ip = _au3.get("client_ip")
         try:
             runtime.audit_logger.log_privileged(
                 actor=Actor(
