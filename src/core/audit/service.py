@@ -41,9 +41,8 @@ from src.common.storage_paths import (
 # auditing, so a domain event (job delete, secret reveal, RBAC change) is often
 # evicted from the tip file within seconds of being written. The browsing
 # service therefore reads across the current file plus its rotated siblings so
-# recently-emitted events remain retrievable. Cap how many rotated generations
-# we scan so a single call never has to parse the entire (potentially very
-# large) rotation set.
+# recently-emitted events remain retrievable.
+#
 # Scan the tip plus this many rotated generations at most. Under noise
 # suppression the loop normally stops far earlier (once ``want`` retained
 # events are gathered); this cap only bounds the pathological case where a
