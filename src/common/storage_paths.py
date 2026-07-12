@@ -96,6 +96,32 @@ def storage_exists(path: str) -> bool:
     return storage.exists(key)
 
 
+def list_sibling_files(path: str, *, prefix: str | None = None) -> list[str]:
+    """Return sibling file paths in the same directory as ``path``.
+
+    Used to enumerate rotated log siblings (e.g. ``audit.log.jsonl`` alongside
+    ``audit.log.jsonl.1`` / ``.2`` / ``.1.gz``). Filters to entries whose file
+    name starts with ``prefix`` (defaults to the basename of ``path``). Returns
+    normalised full path strings; missing directories yield an empty list.
+    """
+    normalised = normalise_fs_path(path)
+    base = prefix if prefix is not None else file_name(normalised)
+    parent = parent_fs_path(normalised)
+    storage = LocalStorage(root_path=parent)
+    try:
+        entries = storage.list_dir("/")
+    except Exception:  # noqa: BLE001 — a missing/unreadable dir means no siblings
+        return []
+    names: list[str] = []
+    for entry in entries:
+        if getattr(entry, "is_dir", False):
+            continue
+        name = file_name(str(getattr(entry, "path", "")))
+        if name and name.startswith(base):
+            names.append(join_fs_path(parent, name))
+    return names
+
+
 def ensure_directory(path: str) -> None:
     """Create a directory path if required."""
     normalised = normalise_fs_path(path)
