@@ -182,8 +182,61 @@ def _actor_from_request(request: Any) -> Actor:
     client = getattr(request, "client", None)
     ip = getattr(client, "host", None) if client is not None else None
     if not user_id:
-        return Actor(type="anonymous", id="anonymous", roles=None, ip=ip)
+        # W28E-1879: platform Actor type must be user/service/system — use the
+        # AuditMiddleware "system/anonymous" convention so denied/anonymous
+        # requests are still auditable (PS-AUDIT-LOG §4), not swallowed.
+        return Actor(type="system", id="anonymous", roles=None, ip=ip)
     return Actor(type="user", id=str(user_id), roles=list(roles) if roles else None, ip=ip)
+
+
+def actor_from_principal(principal: Any, *, ip: str | None = None) -> Actor:
+    """Build a PS-AUDIT-LOG Actor from a resolved access-control principal object.
+
+    Used where the authenticated subject is a principal object rather than
+    request.state (e.g. the A2A task boundary). Carries id/roles/ip so the emitted
+    AU-3 event names the real subject and client IP (W28E-1879 / DM-X-19).
+    """
+    user_id = getattr(principal, "user_id", None) or getattr(principal, "username", None)
+    roles = getattr(principal, "roles", None)
+    if not user_id:
+        return Actor(type="system", id="anonymous", roles=None, ip=ip)
+    return Actor(type="user", id=str(user_id), roles=list(roles) if roles else None, ip=ip)
+
+
+def au3_request_fields(request: Any) -> Dict[str, Any]:
+    """Return the NIST AU-3 request-context fields for a platform AuditLogger call.
+
+    This is the single, shared source of AU-3 request context consumed by the MCP,
+    REST, and A2A audit emit paths (W28E-1879: DM-AL-09 / DM-D-12 / DM-X-19). It is
+    a thin adapter over the platform ``cloud_dog_logging`` schema — it does not
+    reimplement any audit logic.
+
+    Returned keys:
+      - ``client_ip``      — pass to ``Actor(ip=...)`` (NIST AU-3 client IP).
+      - ``source_address`` — spread into the ``log_*`` call; binds to the platform
+        AuditLogger's ``source_address`` parameter so ``AuditEvent.source_address``
+        is emitted top-level.
+      - ``session_id``     — spread into the ``log_*`` call; lands in event ``details``.
+      - ``correlation_id`` — spread into the ``log_*`` call when present; mirrored
+        into ``details`` (the top-level ``correlation_id`` is taken from the request
+        correlation contextvar by the platform AuditLogger).
+    """
+    state = getattr(request, "state", None)
+    client = getattr(request, "client", None)
+    client_ip = getattr(client, "host", None) if client is not None else None
+    correlation_id = getattr(state, "correlation_id", None) if state is not None else None
+    session_id = (
+        getattr(state, "session_id", None) or getattr(state, "api_key_id", None)
+        if state is not None else None
+    )
+    fields: Dict[str, Any] = {
+        "client_ip": client_ip,
+        "source_address": client_ip,
+        "session_id": session_id,
+    }
+    if correlation_id:
+        fields["correlation_id"] = correlation_id
+    return fields
 
 
 def emit_tool_audit(
@@ -197,23 +250,16 @@ def emit_tool_audit(
     error: str = "",
 ) -> None:
     """Emit a full NIST AU-3 audit event for an MCP tool call via the platform AuditLogger."""
-    state = getattr(request, "state", None)
-    correlation_id = getattr(state, "correlation_id", None) if state is not None else None
-    session_id = (
-        getattr(state, "session_id", None) or getattr(state, "api_key_id", None)
-        if state is not None else None
-    )
+    fields = au3_request_fields(request)
+    fields.pop("client_ip", None)  # carried on actor.ip, not an event detail
     actor = _actor_from_request(request)
     target = _derive_target(tool_name, params)
     details: Dict[str, Any] = {
         "target_type": target.type,
         "target_id": target.id,
         "target_name": target.name,
-        "source_address": actor.ip,
-        "session_id": session_id,
+        **fields,  # source_address, session_id, [correlation_id]
     }
-    if correlation_id:
-        details["correlation_id"] = correlation_id
     if not success and error:
         details["error_code"] = "tool_error"
         details["error_message"] = error
@@ -228,6 +274,53 @@ def emit_tool_audit(
         )
     except Exception:  # noqa: BLE001 — audit must never break the tool call
         logger.exception(f"mcp_tool_audit emit failed tool={tool_name}")
+
+
+def emit_a2a_audit(
+    audit_logger: Any,
+    *,
+    request: Any,
+    principal: Any,
+    skill_id: str,
+    input_text: str,
+    success: bool,
+    duration_ms: float,
+    error: str = "",
+) -> None:
+    """Emit a full NIST AU-3 audit event for an A2A task via the platform AuditLogger.
+
+    Closes DM-X-19: the A2A surface was previously un-audited (its skills call the
+    MCP tool handlers via a synthetic request that bypasses ``wrap_tool_contract``).
+    This emits one AU-3-complete event per task at the dispatch boundary, using the
+    REAL inbound request (client IP / correlation / session) plus the resolved
+    principal (actor id/roles).
+    """
+    if audit_logger is None:
+        return
+    fields = au3_request_fields(request)
+    client_ip = fields.pop("client_ip", None)
+    actor = actor_from_principal(principal, ip=client_ip)
+    details: Dict[str, Any] = {
+        "target_type": "a2a_task",
+        "target_id": skill_id,
+        "target_name": f"a2a.{skill_id}",
+        "surface": "a2a",
+        **fields,  # source_address, session_id, [correlation_id]
+    }
+    if not success and error:
+        details["error_code"] = "a2a_error"
+        details["error_message"] = error[:200]
+    try:
+        audit_logger.log_tool_call(
+            actor,
+            f"a2a.{skill_id}",
+            {"input_chars": len(input_text or "")},
+            "success" if success else "failure",
+            int(duration_ms),
+            **details,
+        )
+    except Exception:  # noqa: BLE001 — audit must never break the task
+        logger.exception(f"a2a_audit emit failed skill={skill_id}")
 
 
 def wrap_tool_contract(runtime: Any, contract: ToolContract) -> ToolContract:

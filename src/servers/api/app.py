@@ -34,6 +34,7 @@ from cloud_dog_api_kit import create_app, success_envelope
 from cloud_dog_api_kit.errors import UnauthorisedError
 from cloud_dog_logging import Actor, Target
 from cloud_dog_logging.middleware.audit import AuditMiddleware
+from src.servers.mcp.tool_rbac_audit import au3_request_fields
 
 from src.common.base_paths import configured_base_path, exempt_paths_for_surface
 from src.common.http import APIKeyAuthMiddleware
@@ -497,17 +498,24 @@ def create_api_app(explicit_env_files: list[str] | None = None):
     async def audit_config_reveal(request: Request) -> dict:
         """Audit an admin reveal of masked Settings secrets."""
         principal = _current_principal(request)
+        # W28E-1879 (DM-AL-09 / DM-D-12): populate the NIST AU-3 request context
+        # (actor client_ip, source_address, session_id, correlation_id) so the
+        # audit-log / recent-activity surfaces show Who/Client, not blanks.
+        _au3 = au3_request_fields(request)
+        _client_ip = _au3.pop("client_ip", None)
         try:
             runtime.audit_logger.log_privileged(
                 actor=Actor(
                     type="user",
                     id=str(principal.get("user_id") or principal.get("username") or "unknown"),
                     roles=list(principal.get("roles") or []),
+                    ip=_client_ip,
                 ),
                 action="config.reveal",
                 target=Target(type="config", id="effective-runtime"),
                 outcome="success",
                 command_text="settings reveal secrets",
+                **_au3,
                 secret_paths=[
                     path
                     for path, meta in _build_config_source_map(_mask_runtime_config(runtime.config.data))[0].items()
@@ -577,14 +585,23 @@ def create_api_app(explicit_env_files: list[str] | None = None):
             raise UnauthorisedError(message="Forbidden: delete requires admin")
         deleted = _delete_job(runtime, job_id)
         if deleted:
-            runtime.audit_logger.log_crud(
-                actor=Actor(type="user", id=principal.user_id, roles=principal.roles),
-                action="delete",
-                target=Target(type="job", id=job_id),
-                outcome="success",
-                job_type=getattr(job, "job_type", None),
-                job_status=getattr(getattr(job, "status", None), "value", None),
-            )
+            # W28E-1879 (DM-AL-09 / DM-D-12): NIST AU-3 request context on the
+            # job-delete audit event (client_ip, source_address, session_id,
+            # correlation_id) — previously only actor id/roles were recorded.
+            _au3 = au3_request_fields(request)
+            _client_ip = _au3.pop("client_ip", None)
+            try:
+                runtime.audit_logger.log_crud(
+                    actor=Actor(type="user", id=principal.user_id, roles=principal.roles, ip=_client_ip),
+                    action="delete",
+                    target=Target(type="job", id=job_id),
+                    outcome="success",
+                    **_au3,
+                    job_type=getattr(job, "job_type", None),
+                    job_status=getattr(getattr(job, "status", None), "value", None),
+                )
+            except Exception:  # noqa: BLE001 — audit must never break the delete
+                pass
         return success_envelope({"deleted": deleted, "job_id": job_id})
 
     app.include_router(router)

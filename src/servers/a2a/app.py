@@ -21,6 +21,7 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 
 from fastapi import Request, WebSocket, WebSocketDisconnect
@@ -36,6 +37,7 @@ from src.common.runtime import RuntimeFactory, build_health_router
 from src.servers.mcp.catalog_tools import build_catalog_tool_registry
 from src.servers.mcp.content_tools import build_content_tool_registry
 from src.servers.mcp.schema_tools import build_schema_tool_registry
+from src.servers.mcp.tool_rbac_audit import emit_a2a_audit
 from cloud_dog_idam.rbac import RBACEngine as _RBACEngine  # PS-70 RBAC enforcement
 
 _rbac_engine = _RBACEngine()
@@ -328,6 +330,13 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
                 status_code=404,
             )
 
+        # W28E-1879 (DM-X-19): emit one NIST AU-3-complete audit event per A2A
+        # task at the dispatch boundary, using the REAL inbound request (client IP,
+        # correlation, session) plus the resolved principal. The A2A surface was
+        # previously un-audited unlike the direct /mcp surface.
+        _start = time.monotonic()
+        _success = True
+        _error = ""
         try:
             required_permission = _skill_permissions.get(skill_id)
             if required_permission is not None:
@@ -345,17 +354,32 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
             else:
                 result_text = f"Skill '{skill_id}' acknowledged (no handler configured)"
         except UnauthorisedError as exc:
+            _success = False
+            _error = str(exc)
             return JSONResponse({
                 "id": task_id,
                 "status": "failed",
                 "error": str(exc),
             }, status_code=403)
         except Exception as exc:
+            _success = False
+            _error = str(exc)
             return JSONResponse({
                 "id": task_id,
                 "status": "failed",
                 "error": str(exc),
             })
+        finally:
+            emit_a2a_audit(
+                getattr(runtime, "audit_logger", None),
+                request=request,
+                principal=principal,
+                skill_id=skill_id,
+                input_text=input_text,
+                success=_success,
+                duration_ms=(time.monotonic() - _start) * 1000,
+                error=_error,
+            )
 
         return JSONResponse({
             "id": task_id,
