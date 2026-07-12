@@ -184,13 +184,19 @@ def build_search_tool_registry(runtime) -> dict[str, ToolContract]:
 
     async def rebuild(payload: dict[str, Any], request) -> dict[str, Any]:
         requested = [str(item) for item in payload.get("profile_ids", [])]
+        # Async-submission opt-in: when the caller passes "wait": false the tool
+        # submits the discovery.rebuild job and returns the queued Job ID
+        # immediately instead of blocking on the inline connector round-trip.
+        # Direct/integration callers omit the flag and keep the synchronous
+        # completion contract.
+        wait = bool(payload.get("wait", True))
         return _ensure_awaitable(
             await _run(
                 request,
                 permission="index.manage",
                 audit_action="index.rebuild",
                 audit_target_id=",".join(requested) or "all-profiles",
-                callback=lambda principal: search.rebuild(principal=principal, profile_ids=requested or None),
+                callback=lambda principal: search.rebuild(principal=principal, profile_ids=requested or None, wait=wait),
             )
         )
 

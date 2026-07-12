@@ -243,8 +243,17 @@ class DiscoverySearchService:
             "entity_status": asdict(result["entity_status"]),
         }
 
-    def rebuild(self, *, principal: Any, profile_ids: list[str] | None = None) -> dict[str, Any]:
-        """Queue and execute a full rebuild across accessible profiles."""
+    def rebuild(self, *, principal: Any, profile_ids: list[str] | None = None, wait: bool = True) -> dict[str, Any]:
+        """Queue and execute a full rebuild across accessible profiles.
+
+        When ``wait`` is True (the default, and the behaviour every direct/
+        integration caller relies on) the rebuild runs inline and the response
+        reports the terminal job status plus per-profile results. When ``wait``
+        is False the job is only SUBMITTED and the response returns immediately
+        with the freshly-queued ``job_id`` and status — the async-submission
+        contract the WebUI MCP console uses to render a jobs-page link without
+        blocking the interactive request for the full connector round-trip.
+        """
         requested_profiles = profile_ids or self._resolve_accessible_profiles(principal)
         request = JobRequest(
             job_type="discovery.rebuild",
@@ -254,6 +263,15 @@ class DiscoverySearchService:
             request_source="mcp",
         )
         job_id = self._runtime.job_queue.submit(request)
+
+        if not wait:
+            submitted = self._runtime.job_queue.get(job_id)
+            return {
+                "job_id": job_id,
+                "job_status": submitted.status.value if submitted else "queued",
+                "profiles": [],
+                "submitted": True,
+            }
 
         def rebuild_all() -> list[dict[str, Any]]:
             self._repository.clear_all()
