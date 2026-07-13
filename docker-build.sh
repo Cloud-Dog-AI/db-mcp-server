@@ -107,6 +107,15 @@ BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 SOURCE_COMMIT="${SOURCE_COMMIT:-${VCS_REF}}"
 SOURCE_BRANCH="${SOURCE_BRANCH:-$(git -C "${SCRIPT_DIR}" rev-parse --abbrev-ref HEAD 2>/dev/null || printf 'unknown')}"
 
+LOCAL_IMAGE_REF="${FOLDER}/${CONTAINER}:${EFFECTIVE_TAG}"
+BUILD_IMAGE_REF="${LOCAL_IMAGE_REF}"
+if [[ "${VARIANT}" == "dev" && -n "${REGISTRY}" && -z "${PUBLICATION_TAG_SUFFIX}" ]]; then
+  # Build directly under the sanctioned internal registry name.  Besides
+  # avoiding a redundant retag, this prevents tooling from rendering an
+  # unqualified local name as a misleading docker.io boundary in build proof.
+  BUILD_IMAGE_REF="${REGISTRY}/${LOCAL_IMAGE_REF}"
+fi
+
 # ── PyPI Configuration ───────────────────────────────────────────
 # Default index depends on variant:
 #   public → public PyPI (single index, no extra-index-url; PS-97 §3.3 / §4).
@@ -166,24 +175,23 @@ EOF
     echo "pip.conf: public variant, anonymous single-index access (${PYPI_HOST})."
   fi
 else
-  # Dev variant — internal Dockerfile uses public PyPI as primary index plus the
-  # internal mirror as extra-index-url for platform packages.
+  # Dev/deployment variant — one Cloud-Dog-controlled index only.  The internal
+  # repository proxies approved public dependencies, so no direct public PyPI
+  # fallback is necessary or permitted for the supply-chain closure path.
   if [[ -n "${PYPI_USERNAME}" ]] && [[ -n "${PYPI_PASSWORD}" ]]; then
     cat > "${SCRIPT_DIR}/${PIP_CONF}" << EOF
 [global]
-extra-index-url = https://${PYPI_USERNAME_URLENCODED}:${PYPI_PASSWORD_URLENCODED}@${PIP_INDEX_URL#https://}
+index-url = https://${PYPI_USERNAME_URLENCODED}:${PYPI_PASSWORD_URLENCODED}@${PIP_INDEX_URL#https://}
 trusted-host = ${PYPI_HOST}
-               files.pythonhosted.org
 EOF
-    echo "pip.conf: dev variant, authenticated mirror access (${PYPI_HOST})."
+    echo "pip.conf: dev variant, authenticated single-index access (${PYPI_HOST})."
   else
     cat > "${SCRIPT_DIR}/${PIP_CONF}" << EOF
 [global]
-extra-index-url = ${PIP_INDEX_URL}
+index-url = ${PIP_INDEX_URL}
 trusted-host = ${PYPI_HOST}
-               files.pythonhosted.org
 EOF
-    echo "pip.conf: dev variant, anonymous mirror access (${PYPI_HOST})."
+    echo "pip.conf: dev variant, anonymous single-index access (${PYPI_HOST})."
   fi
 fi
 chmod 600 "${SCRIPT_DIR}/${PIP_CONF}"
@@ -214,17 +222,15 @@ DOCKER_BUILDKIT=1 docker buildx build \
   --build-arg BUILD_DATE="${BUILD_DATE}" \
   --build-arg SOURCE_COMMIT="${SOURCE_COMMIT}" \
   --build-arg SOURCE_BRANCH="${SOURCE_BRANCH}" \
-  -t "${FOLDER}/${CONTAINER}:${EFFECTIVE_TAG}" \
+  -t "${BUILD_IMAGE_REF}" \
   "${SCRIPT_DIR}" 2>&1 | tee "${SCRIPT_DIR}/docker-build.log"
 
 BUILD_STATUS=${PIPESTATUS[0]}
 
 if [[ ${BUILD_STATUS} -eq 0 ]]; then
-  echo "Build OK: ${FOLDER}/${CONTAINER}:${EFFECTIVE_TAG} (variant=${VARIANT})"
+  echo "Build OK: ${BUILD_IMAGE_REF} (variant=${VARIANT})"
   if [[ "${VARIANT}" == "dev" && -n "${REGISTRY}" && -z "${PUBLICATION_TAG_SUFFIX}" ]]; then
-    docker tag "${FOLDER}/${CONTAINER}:${EFFECTIVE_TAG}" \
-      "${REGISTRY}/${FOLDER}/${CONTAINER}:${EFFECTIVE_TAG}"
-    echo "Tagged: ${REGISTRY}/${FOLDER}/${CONTAINER}:${EFFECTIVE_TAG}"
+    echo "Tagged: ${BUILD_IMAGE_REF}"
   elif [[ -n "${PUBLICATION_TAG_SUFFIX}" ]]; then
     echo "Registry tag skipped for publication suffix '${PUBLICATION_TAG_SUFFIX}'."
   else

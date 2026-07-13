@@ -46,10 +46,11 @@ def test_python_version_file_pins_313() -> None:
 
 
 def test_container_and_local_commands_use_python_313_contract() -> None:
-    for dockerfile in ("Dockerfile", "Dockerfile.public"):
-        text = (REPO_ROOT / dockerfile).read_text(encoding="utf-8")
-        assert "python:3.13-slim" in text
-        assert "python:3.12" not in text
+    internal = (REPO_ROOT / "Dockerfile").read_text(encoding="utf-8")
+    public = (REPO_ROOT / "Dockerfile.public").read_text(encoding="utf-8")
+    assert "registry.cloud-dog.net:443/cloud-dog/python-runtime@sha256:" in internal
+    assert "python:3.13-slim" in public
+    assert "python:3.12" not in internal + public
     makefile = (REPO_ROOT / "Makefile").read_text(encoding="utf-8")
     assert "PYTHON ?= .venv/bin/python" in makefile
     assert "lint:" in makefile
@@ -63,3 +64,7 @@ def test_docker_build_percent_encodes_private_index_credentials() -> None:
     assert 'urllib.parse.quote(os.environ["PYPI_VALUE"], safe="")' in build_script
     assert "${PYPI_USERNAME_URLENCODED}:${PYPI_PASSWORD_URLENCODED}@" in build_script
     assert "${PYPI_USERNAME}:${PYPI_PASSWORD}@" not in build_script
+    assert 'BUILD_IMAGE_REF="${REGISTRY}/${LOCAL_IMAGE_REF}"' in build_script
+    dev_block = build_script.split('else\n  # Dev/deployment variant', 1)[1]
+    assert "extra-index-url" not in dev_block
+    assert "files.pythonhosted.org" not in dev_block

@@ -1,6 +1,4 @@
-# syntax=docker/dockerfile:1
-FROM python:3.13-slim
-ARG CUSTOM_CA_CERT=custom-ca.crt
+FROM registry.cloud-dog.net:443/cloud-dog/python-runtime@sha256:e23c4110eb0c8a2995635a97dee0fff83d5b729de611dfb1e31850c67b33ec60
 ARG VCS_REF=unknown
 ARG BUILD_DATE=unknown
 # W28E-1863 fix-wave-d (WSC-014): build-identity provenance. SOURCE_COMMIT defaults
@@ -25,14 +23,10 @@ ENV PIP_NO_INPUT=1
 
 # Install platform packages from internal PyPI via BuildKit-mounted pip.conf.
 ARG PYPI_URL=https://pypi.cloud-dog.net/simple
-COPY ${CUSTOM_CA_CERT} /usr/local/share/ca-certificates/cloud-dog-corporate-ca.crt
 RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
-    apt-get update && apt-get install -y --no-install-recommends ca-certificates curl && \
-    update-ca-certificates && rm -rf /var/lib/apt/lists/* && \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
       --trusted-host pypi.cloud-dog.net \
-      --trusted-host files.pythonhosted.org \
       "cloud-dog-config==0.3.4" \
       "cloud-dog-logging==0.4.0" \
       "cloud-dog-api-kit[change-stream-db]==0.14.0" \
@@ -46,9 +40,7 @@ COPY . /app
 RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
       pip install --no-cache-dir \
       --trusted-host pypi.cloud-dog.net \
-      --trusted-host files.pythonhosted.org \
-      -e . && \
-      rm -f /app/custom-ca.crt
+      -e .
 
 EXPOSE 8086 8087 8088 8089
 
