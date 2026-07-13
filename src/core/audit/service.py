@@ -80,9 +80,7 @@ class AuditEventService:
         # browse surface shows actionable events. An explicit event_type filter
         # (including "http.read") opts back into that specific stream.
         suppress = _NOISE_EVENT_TYPES if not event_type else frozenset()
-        events = self._read_events(want=want, suppress=suppress)
-        if event_type:
-            events = [item for item in events if str(item.get("event_type")) == event_type]
+        events = self._read_events(want=want, suppress=suppress, event_type=event_type)
         return list(reversed(events[-want:]))
 
     def get_event(self, request: Request, *, event_id: str) -> dict[str, Any]:
@@ -98,7 +96,11 @@ class AuditEventService:
         raise NotFoundError(message=f"Audit event not found: {event_id}")
 
     def _read_events(
-        self, *, want: int = 500, suppress: frozenset[str] = frozenset()
+        self,
+        *,
+        want: int = 500,
+        suppress: frozenset[str] = frozenset(),
+        event_type: str | None = None,
     ) -> list[dict[str, Any]]:
         """Return audit events newest-last across the current + rotated logs.
 
@@ -124,6 +126,15 @@ class AuditEventService:
                 batch = [ev for ev in batch if str(ev.get("event_type")) not in suppress]
                 if not batch:
                     # File was all-noise; keep scanning deeper rotations.
+                    continue
+            if event_type:
+                # Apply an explicit filter *before* deciding whether enough rows
+                # have been retained. Multi-process rotation can leave the newest
+                # matching domain event in .2 while .1 contains more than ``want``
+                # unrelated request/tool events; filtering only after this loop
+                # would stop at .1 and incorrectly return an empty result.
+                batch = [ev for ev in batch if str(ev.get("event_type")) == event_type]
+                if not batch:
                     continue
             newest_last_batches.append(batch)
             retained += len(batch)

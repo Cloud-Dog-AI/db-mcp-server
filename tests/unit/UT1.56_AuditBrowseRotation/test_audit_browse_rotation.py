@@ -93,11 +93,14 @@ def test_domain_event_surfaced_across_rotation_despite_http_read_flood(tmp_path:
     _write(tmp_path / "audit.log.jsonl.3", range(0, 200))
     (tmp_path / "audit.log.jsonl.2").write_text(
         "\n".join(
-            [*[_event(i) for i in range(200, 260)],
-             _event(9001, "job.delete", "delete", target={"type": "job", "id": "job-xyz"}),
-             _event(9002, "admin.config.reveal", "config.reveal", command_text="settings reveal secrets"),
-             *[_event(i) for i in range(260, 320)]]
-        ) + "\n",
+            [
+                *[_event(i) for i in range(200, 260)],
+                _event(9001, "job.delete", "delete", target={"type": "job", "id": "job-xyz"}),
+                _event(9002, "admin.config.reveal", "config.reveal", command_text="settings reveal secrets"),
+                *[_event(i) for i in range(260, 320)],
+            ]
+        )
+        + "\n",
         encoding="utf-8",
     )
     _write(tmp_path / "audit.log.jsonl.1", range(400, 600))
@@ -127,6 +130,24 @@ def test_http_read_trail_still_available_on_explicit_request(tmp_path: Path) -> 
     events = service.list_events(request=None, limit=25, event_type="http.read")
     assert len(events) == 25
     assert all(e["event_type"] == "http.read" for e in events)
+
+
+@pytest.mark.UT
+@pytest.mark.webui
+@pytest.mark.req("AC-02")
+def test_explicit_event_filter_scans_past_nonmatching_full_rotation(tmp_path: Path) -> None:
+    """A filtered lookup reaches .2 even when .1 alone exceeds the requested limit."""
+    service, tip = _service(tmp_path)
+    _write(tip, range(800, 820), event_type="tool.call", action="call")
+    _write(tmp_path / "audit.log.jsonl.1", range(200, 800), event_type="tool.call", action="call")
+    (tmp_path / "audit.log.jsonl.2").write_text(
+        _event(9002, "admin.config.reveal", "config.reveal", command_text="settings reveal secrets") + "\n",
+        encoding="utf-8",
+    )
+
+    events = service.list_events(request=None, limit=25, event_type="admin.config.reveal")
+
+    assert [event["seq"] for event in events] == [9002]
 
 
 @pytest.mark.UT
@@ -166,9 +187,7 @@ def test_missing_and_single_file_behaviour(tmp_path: Path) -> None:
     """Absent log → empty; single (unrotated) file still parses (integration-test shape)."""
     service, tip = _service(tmp_path)
     assert service.list_events(request=None, limit=50) == []
-    tip.write_text(
-        _event(1) + "\n" + _event(2, "job.delete", "delete") + "\n", encoding="utf-8"
-    )
+    tip.write_text(_event(1) + "\n" + _event(2, "job.delete", "delete") + "\n", encoding="utf-8")
     events = service.list_events(request=None, limit=50)
     assert any(e["event_type"] == "job.delete" for e in events)
 
@@ -179,9 +198,7 @@ def test_missing_and_single_file_behaviour(tmp_path: Path) -> None:
 def test_get_event_finds_event_across_rotation(tmp_path: Path) -> None:
     """get_event resolves a correlation id that has rotated off the tip."""
     tip = tmp_path / "audit.log.jsonl"
-    (tmp_path / "audit.log.jsonl.2").write_text(
-        _event(4242, "job.delete", "delete") + "\n", encoding="utf-8"
-    )
+    (tmp_path / "audit.log.jsonl.2").write_text(_event(4242, "job.delete", "delete") + "\n", encoding="utf-8")
     _write(tip, range(0, 30))
     service = AuditEventService(_FakeRuntime(str(tip)))
     found = service.get_event(request=None, event_id="c4242")
