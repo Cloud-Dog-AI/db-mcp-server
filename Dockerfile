@@ -37,7 +37,7 @@ RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
       "cloud-dog-llm==0.4.0" \
       "cloud-dog-db[nosql,sql]" \
       cloud-dog-jobs \
-      cloud-dog-storage==0.1.4
+      cloud-dog-storage==0.1.8
 
 COPY . /app
 RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
