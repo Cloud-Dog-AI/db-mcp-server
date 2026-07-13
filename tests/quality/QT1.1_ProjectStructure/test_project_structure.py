@@ -95,6 +95,8 @@ def test_w28a_862_platform_versions_and_payload_sources_are_current() -> None:
     root = Path(__file__).resolve().parents[3]
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     lock = (root / "requirements.lock").read_text(encoding="utf-8")
+    internal_dockerfile = (root / "Dockerfile").read_text(encoding="utf-8")
+    public_dockerfile = (root / "Dockerfile.public").read_text(encoding="utf-8")
     for expected in (
         "cloud_dog_db[nosql,sql]==0.3.2",
         "cloud_dog_jobs==0.4.2",
@@ -107,6 +109,13 @@ def test_w28a_862_platform_versions_and_payload_sources_are_current() -> None:
         "cloud-dog-logging==0.4.1",
     ):
         assert expected in lock
+    for expected in (
+        "cloud-dog-db[nosql,sql]==0.3.2",
+        "cloud-dog-jobs==0.4.2",
+        "cloud-dog-logging==0.4.1",
+    ):
+        assert expected in internal_dockerfile
+        assert expected in public_dockerfile
 
     vault_helper = (root / "scripts" / "validate-vault.sh").read_text(encoding="utf-8")
     elasticsearch = (
