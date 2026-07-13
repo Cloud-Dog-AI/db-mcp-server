@@ -121,7 +121,7 @@ The W28A-871 matrix had 5 GAP + 4 PARTIAL items (A4, C2, D2, D3, E3, B2, C1, E2,
 - Connector-specific tests need TWO env files: `--env tests/env-ST --env tests/env-{connector}`
   - Example: `pytest tests/system/ST1.14_PostgreSQLConnector/ --env tests/env-ST --env tests/env-postgresql`
 - The connector env files set `CLOUD_DOG__CONNECTORS__{CONNECTOR}__DEFAULT_URI`
-- db-mcp uses `venv/` not `.venv/` — check before running
+- Historical note superseded by §7.10: db-mcp now requires a Python 3.13 project-local `.venv/`.
 
 ### 3.2 MongoDB Test URI Mismatch (W28A-965 fix)
 IT1.2 was failing because the test inserted data into a LOCAL test container (`mongodb://127.0.0.1:27018`) but the server connected to the env-IT MongoDB (`mongodb://mongo0.app.vpc0.cloud-dog.net:27017`). **Different MongoDB instances.**
@@ -194,7 +194,7 @@ All credentials from Vault at `dev.databases.providers.*`. **Never spin up local
 ### 4.5 Docker Build
 - Build script: `bash docker-build.sh`
 - Registry: `registry.cloud-dog.net:443/cloud-dog/db-mcp-server:latest`
-- Image uses `python:3.12-slim`, needs Vault CA cert at build time
+- Historical note superseded by §7.10: the sanctioned image uses `python:3.13-slim` and `docker-build.sh` installs the corporate CA in every stage.
 - Terraform target: `docker_image.dbmcpserver` + `docker_container.dbmcpserver0`
 
 ### 4.6 Multi-Agent Conflicts
@@ -308,3 +308,11 @@ While uplifted from 31→243 lines (W28A-997), the doc could benefit from more d
 **Key rule:** When Traefik strips `/api`, the API server's `base_path` must NOT include `/api`. Use `/v1`, not `/api/v1`. This applies to every service where Traefik has a `stripprefix.prefixes=/api` middleware.
 
 **Diagnostic:** If `curl /api/api/v1/endpoint` returns 200 but `curl /api/v1/endpoint` returns 404, the base_path includes the Traefik-stripped prefix.
+
+### 7.10 Python 3.13 is a whole-project contract (2026-07-13)
+
+W28R-3011 showed that changing only `FROM python:3.13-slim` is incomplete. Keep
+`.python-version`, `pyproject.toml` `requires-python`, Ruff `target-version`,
+`server_control.sh`, seed scripts, build/test/deploy docs, public multi-stage
+site-packages paths, and runtime-contract tests aligned to Python 3.13. Local
+tests must run from `.venv/bin/python` created by `python3.13 -m venv .venv`.

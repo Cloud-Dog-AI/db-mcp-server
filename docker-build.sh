@@ -63,6 +63,20 @@ CONTAINER="db-mcp-server"
 FOLDER="cloud-dog"
 REGISTRY="${REGISTRY:-}"
 PIP_CONF=".pip.conf.build"
+CUSTOM_CA_CERT_SOURCE="${CUSTOM_CA_CERT:-/usr/local/share/ca-certificates/cloud-dog.net.ca.crt}"
+CUSTOM_CA_CONTEXT="${SCRIPT_DIR}/custom-ca.crt"
+
+cleanup_build_secrets() {
+  rm -f "${SCRIPT_DIR}/${PIP_CONF}" "${CUSTOM_CA_CONTEXT}"
+}
+trap cleanup_build_secrets EXIT
+
+if [[ ! -f "${CUSTOM_CA_CERT_SOURCE}" ]]; then
+  echo "ERROR: corporate CA certificate not found: ${CUSTOM_CA_CERT_SOURCE}" >&2
+  exit 2
+fi
+cp "${CUSTOM_CA_CERT_SOURCE}" "${CUSTOM_CA_CONTEXT}"
+chmod 644 "${CUSTOM_CA_CONTEXT}"
 
 PUBLICATION_TAG_SUFFIX="${PUBLICATION_TAG_SUFFIX:-}"
 if [[ -n "${PUBLICATION_TAG_SUFFIX}" ]]; then
@@ -86,12 +100,12 @@ echo "=========================================="
 echo "Docker Build: ${FOLDER}/${CONTAINER}:${EFFECTIVE_TAG} (variant=${VARIANT}, dockerfile=${DOCKERFILE})"
 echo "=========================================="
 
-VCS_REF="$(git -C "${SCRIPT_DIR}" rev-parse HEAD 2>/dev/null || printf 'unknown')"
+VCS_REF="${VCS_REF:-$(git -C "${SCRIPT_DIR}" rev-parse HEAD 2>/dev/null || printf 'unknown')}"
 BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 # W28E-1863 fix-wave-d (WSC-014): propagate build identity to the image so the
 # Dockerfile can stamp OCI ref.name + runtime ENV for _build_identity() / /version.
-SOURCE_COMMIT="${VCS_REF}"
-SOURCE_BRANCH="$(git -C "${SCRIPT_DIR}" rev-parse --abbrev-ref HEAD 2>/dev/null || printf 'unknown')"
+SOURCE_COMMIT="${SOURCE_COMMIT:-${VCS_REF}}"
+SOURCE_BRANCH="${SOURCE_BRANCH:-$(git -C "${SCRIPT_DIR}" rev-parse --abbrev-ref HEAD 2>/dev/null || printf 'unknown')}"
 
 # ── PyPI Configuration ───────────────────────────────────────────
 # Default index depends on variant:
@@ -109,8 +123,28 @@ else
   echo "       The public-build path is: ./docker-build.sh latest --variant public" >&2
   exit 2
 fi
+# Vault stores the repository root.  pip requires the PEP 503 simple API; make
+# both root and already-normalized caller values resolve to the same endpoint.
+PIP_INDEX_URL="${PIP_INDEX_URL%/}"
+if [[ ! "${PIP_INDEX_URL}" =~ /simple$ ]]; then
+  PIP_INDEX_URL="${PIP_INDEX_URL}/simple"
+fi
 PYPI_USERNAME="${PYPI_USERNAME:-}"
 PYPI_PASSWORD="${PYPI_PASSWORD:-}"
+
+# Credentials are URL userinfo, so characters such as @, :, /, %, and # must
+# be percent-encoded before constructing an authenticated index URL.  Keep the
+# encoded values in memory only; the generated config is removed by the EXIT
+# trap and is consumed through BuildKit's secret mount.
+if [[ -n "${PYPI_USERNAME}" ]] && [[ -n "${PYPI_PASSWORD}" ]]; then
+  PYPI_USERNAME_URLENCODED="$(PYPI_VALUE="${PYPI_USERNAME}" python3 -c \
+    'import os, urllib.parse; print(urllib.parse.quote(os.environ["PYPI_VALUE"], safe=""))')"
+  PYPI_PASSWORD_URLENCODED="$(PYPI_VALUE="${PYPI_PASSWORD}" python3 -c \
+    'import os, urllib.parse; print(urllib.parse.quote(os.environ["PYPI_VALUE"], safe=""))')"
+else
+  PYPI_USERNAME_URLENCODED=""
+  PYPI_PASSWORD_URLENCODED=""
+fi
 
 PYPI_HOST="$(python3 -c "from urllib.parse import urlsplit; print(urlsplit('${PIP_INDEX_URL}').hostname or 'pypi.org')")"
 
@@ -119,7 +153,7 @@ if [[ "${VARIANT}" == "public" ]]; then
   if [[ -n "${PYPI_USERNAME}" ]] && [[ -n "${PYPI_PASSWORD}" ]]; then
     cat > "${SCRIPT_DIR}/${PIP_CONF}" << EOF
 [global]
-index-url = https://${PYPI_USERNAME}:${PYPI_PASSWORD}@${PIP_INDEX_URL#https://}
+index-url = https://${PYPI_USERNAME_URLENCODED}:${PYPI_PASSWORD_URLENCODED}@${PIP_INDEX_URL#https://}
 trusted-host = ${PYPI_HOST}
 EOF
     echo "pip.conf: public variant, authenticated single-index access (${PYPI_HOST})."
@@ -137,7 +171,7 @@ else
   if [[ -n "${PYPI_USERNAME}" ]] && [[ -n "${PYPI_PASSWORD}" ]]; then
     cat > "${SCRIPT_DIR}/${PIP_CONF}" << EOF
 [global]
-extra-index-url = https://${PYPI_USERNAME}:${PYPI_PASSWORD}@${PIP_INDEX_URL#https://}
+extra-index-url = https://${PYPI_USERNAME_URLENCODED}:${PYPI_PASSWORD_URLENCODED}@${PIP_INDEX_URL#https://}
 trusted-host = ${PYPI_HOST}
                files.pythonhosted.org
 EOF
@@ -169,6 +203,7 @@ DOCKER_BUILDKIT=1 docker buildx build \
   --secret id=pip_conf,src="${SCRIPT_DIR}/${PIP_CONF}" \
   --build-arg PUBLIC_PYPI_INDEX_URL="${PIP_INDEX_URL}" \
   --build-arg PIP_INDEX_URL="${PIP_INDEX_URL}" \
+  --build-arg CUSTOM_CA_CERT=custom-ca.crt \
   --build-arg HTTP_PROXY="${HTTP_PROXY:-}" \
   --build-arg HTTPS_PROXY="${HTTPS_PROXY:-}" \
   --build-arg NO_PROXY="${NO_PROXY:-}" \
@@ -199,5 +234,4 @@ else
   echo "Build FAILED — see docker-build.log"
 fi
 
-rm -f "${SCRIPT_DIR}/${PIP_CONF}"
 exit ${BUILD_STATUS}

@@ -49,7 +49,7 @@ platform package, and the drivers are pulled transitively through its
 - `cloud-dog-db[nosql]` — MongoDB, CouchDB, Couchbase, Cassandra,
   Elasticsearch, OpenSearch, pgvector
 
-`Dockerfile.public` installs `cloud-dog-db[nosql,sql]>=0.3.0`, which is the only
+`Dockerfile.public` installs `cloud-dog-db[nosql,sql]==0.3.1`, which is the only
 supported way to obtain the drivers. Do not add the raw drivers to a build.
 
 ## Prerequisites
@@ -98,12 +98,12 @@ endpoints need not be reachable.
 
 ```bash
 # Linux / macOS
-python3 -m venv .venv
+python3.13 -m venv .venv
 . .venv/bin/activate
 pip install --upgrade pip
 
 # Windows (PowerShell)
-#   py -3.12 -m venv .venv
+#   py -3.13 -m venv .venv
 #   .venv\Scripts\Activate.ps1
 #   python -m pip install --upgrade pip
 

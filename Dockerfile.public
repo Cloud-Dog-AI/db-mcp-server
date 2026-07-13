@@ -20,7 +20,9 @@
 # cloud_dog_db[nosql,sql] OPTIONAL EXTRAS (W28E-606 / §1.4). Do not add them directly.
 
 # ── Builder ──────────────────────────────────────────────────────
-FROM python:3.12-slim AS builder
+FROM python:3.13-slim AS builder
+
+ARG CUSTOM_CA_CERT=custom-ca.crt
 
 ARG HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy
 ENV HTTP_PROXY=${HTTP_PROXY} HTTPS_PROXY=${HTTPS_PROXY} NO_PROXY=${NO_PROXY} \
@@ -43,12 +45,14 @@ ARG PUBLIC_PYPI_INDEX_URL=https://pypi.org/simple
 
 WORKDIR /app
 
+COPY ${CUSTOM_CA_CERT} /usr/local/share/ca-certificates/cloud-dog-corporate-ca.crt
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates gcc git \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Public build — no private CA overlay. System ca-certificates trust store is
-# sufficient for public or boundary-provided package indexes.
+# The caller-supplied trust anchor is installed into the system bundle so a
+# single-index boundary mirror works without disabling TLS verification.
 
 COPY pyproject.toml README.md ./
 COPY src/ ./src/
@@ -62,13 +66,14 @@ RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
     if [ ! -s /etc/pip.conf ]; then export PIP_INDEX_URL="${PUBLIC_PYPI_INDEX_URL}"; fi && \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
-      "cloud-dog-config==0.3.4" cloud-dog-logging "cloud-dog-api-kit==0.13.0" \
-      "cloud-dog-idam==0.5.3" "cloud-dog-llm==0.4.0" "cloud-dog-jobs>=0.3.0" "cloud-dog-db[nosql,sql]>=0.3.0" \
+      "cloud-dog-config==0.3.4" "cloud-dog-logging==0.4.0" "cloud-dog-api-kit[change-stream-db]==0.14.0" \
+      "cloud-dog-idam==0.5.3" "cloud-dog-llm==0.4.0" "cloud-dog-jobs==0.4.1" "cloud-dog-db[nosql,sql]==0.3.1" \
       "cloud-dog-storage==0.1.8" && \
     pip install --no-cache-dir .
 
 # ── Final ────────────────────────────────────────────────────────
-FROM python:3.12-slim
+FROM python:3.13-slim
+ARG CUSTOM_CA_CERT=custom-ca.crt
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.vendor="Cloud-Dog, Viewdeck Engineering Limited"
 
@@ -76,15 +81,17 @@ ARG HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy
 ENV HTTP_PROXY=${HTTP_PROXY} HTTPS_PROXY=${HTTPS_PROXY} NO_PROXY=${NO_PROXY} \
     http_proxy=${http_proxy} https_proxy=${https_proxy} no_proxy=${no_proxy}
 
+COPY ${CUSTOM_CA_CERT} /usr/local/share/ca-certificates/cloud-dog-corporate-ca.crt
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl netcat-openbsd procps net-tools \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Public runtime — no private CA overlay.
+# Preserve the same verified system trust contract in the runtime stage.
 
 WORKDIR /app
 
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY src/ ./src/
@@ -97,12 +104,12 @@ RUN mkdir -p config
 # pyproject.toml is the project-root marker used by src.common.storage_paths.
 # find_project_root(); without it in the runtime stage repo_root() falls back to
 # /app/src/common and defaults.yaml cannot be resolved at startup (W28A-861-R3).
-COPY pyproject.toml defaults.yaml server_control.sh ./
+COPY pyproject.toml defaults.yaml server_control.sh docker-entrypoint.sh ./
 COPY start_api_server.py start_web_server.py start_mcp_server.py start_a2a_server.py ./
 COPY ui/dist/ ./ui/dist/
 
 RUN mkdir -p /app/logs /app/data /app/.pids && \
-    chmod +x /app/server_control.sh /app/start_*.py
+    chmod +x /app/server_control.sh /app/docker-entrypoint.sh /app/start_*.py
 
 RUN useradd --system --create-home --uid 10001 appuser && \
     chown -R appuser:appuser /app
@@ -117,4 +124,5 @@ EXPOSE 8086 8087 8088 8089
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
   CMD curl -fsS http://127.0.0.1:8086/health || exit 1
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["bash", "-lc", "touch /app/env && ./server_control.sh --env /app/env start all && tail -F logs/*.log"]

@@ -787,10 +787,10 @@ def test_t10_settings(authenticated_page):
 
     body = page.locator("body").inner_text()
 
-    assert "Runtime configuration" in body, "Settings should show the effective configuration explorer"
     assert "Effective configuration" in body, "Settings should expose the runtime configuration tree"
-    assert "Path" in body and "Type" in body and "Value" in body, \
-        "Settings should expose configuration key table columns"
+    assert page.locator("[data-testid='settings-panel']").count() > 0, \
+        "Settings should use the shared SettingsPanel"
+    page.locator("[data-testid='ps81-json-explorer']").wait_for(state="visible", timeout=15000)
     assert page.locator("[data-testid='settings-key-count']").count() > 0, \
         "Settings should show configuration key counts"
     assert (
@@ -930,8 +930,9 @@ def test_t14_search(authenticated_page):
     assert page.locator("select").count() > 0, \
         "Search page should have a mode selector (Metadata/Content)"
 
-    # Results section
-    assert "Results" in body, "Search page should show Results section"
+    # Shared SearchPanel/DataTable results surface
+    assert page.locator("[aria-label='Search results']").count() > 0, \
+        "Search page should show the labelled results surface"
 
     assert "Matched components" in body, \
         "Search page should show Matched components panel"
@@ -1065,16 +1066,17 @@ def test_t17_console_gate_and_cw_testids(authenticated_page):
     assert page.locator("[data-testid='settings-page']").count() > 0, \
         "Settings page must render data-testid='settings-page'"
 
-    # db-mcp page-scoped: settings header present
-    assert page.locator("[data-testid='settings-header']").count() > 0, \
-        "Settings page must render data-testid='settings-header'"
+    # Shared PS-73 settings panel header/surface present.
+    assert page.locator("[data-testid='settings-panel']").count() > 0, \
+        "Settings page must render the shared settings-panel"
 
     # db-mcp page-scoped: key-count widget renders a real value, not empty
     key_count_el = page.locator("[data-testid='settings-key-count']")
     assert key_count_el.count() > 0, \
         "Settings page must render data-testid='settings-key-count' (non-empty state)"
     key_count_text = key_count_el.first.inner_text().strip()
-    assert key_count_text.isdigit() and int(key_count_text) > 0, (
+    key_count_match = re.search(r"\d+", key_count_text)
+    assert key_count_match and int(key_count_match.group()) > 0, (
         f"data-testid='settings-key-count' must show a positive integer; got: '{key_count_text}'"
     )
 
@@ -1082,8 +1084,7 @@ def test_t17_console_gate_and_cw_testids(authenticated_page):
     assert page.locator("[data-testid='settings-search']").count() > 0, \
         "Settings page must render data-testid='settings-search' (input)"
 
-    # PS-77 CW-T8 equivalent: runtime config card present
-    assert page.locator("[data-testid='settings-card-runtime']").count() > 0, \
-        "Settings page must render data-testid='settings-card-runtime'"
+    # PS-81 runtime configuration explorer is the canonical config surface.
+    page.locator("[data-testid='ps81-json-explorer']").wait_for(state="visible", timeout=15000)
 
     _screenshot(page, "t17_console_gate_and_cw_testids")

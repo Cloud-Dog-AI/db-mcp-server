@@ -9,7 +9,7 @@ template-last-updated: 2026-06-12
 template-owner: platform-standards
 
 project: db-mcp-server
-doc-last-updated: 2026-06-18T00:00:00Z
+doc-last-updated: 2026-07-13T00:00:00Z
 doc-git-commit: 58fb399bb2ba144e262f97293103a7a0a19ba05d
 doc-git-branch: main
 doc-source-shas: []
@@ -23,14 +23,15 @@ doc-conformance-stamp: 2026-06-18T00:00:00Z
 `db-mcp-server` - database access and catalog service with API, Web, MCP, and A2A servers.
 
 ## Prerequisites
-- Python 3.12+
+- Python 3.13 (the project-local and container runtime floor)
 - Node.js 20+ and npm 10+ for the UI bundle
 - Docker
 
 ## Development Setup
 ```bash
-python3 -m venv .venv
+python3.13 -m venv .venv
 source .venv/bin/activate
+python --version  # must report Python 3.13.x
 pip install --upgrade pip
 pip install -e ".[dev]"
 ```
@@ -63,10 +64,11 @@ ENV
 
 ## Run Tests
 ```bash
-.venv/bin/python -m pytest tests/quality -v
-.venv/bin/python -m pytest tests/unit -v
-.venv/bin/python -m pytest tests/system -v
-.venv/bin/python -m pytest tests/integration -v
+.venv/bin/python -m pytest tests/quality --env tests/env-QT -v
+.venv/bin/python -m pytest tests/unit --env tests/env-UT -v
+.venv/bin/python -m pytest tests/system --env tests/env-ST -v
+.venv/bin/python -m pytest tests/integration --env tests/env-IT -v
+.venv/bin/python -m pytest tests/application --env tests/env-AT -v
 ```
 
 ## Build
@@ -88,11 +90,18 @@ public variant for publication (single public index, no internal hosts):
 PUBLICATION_TAG_SUFFIX=github-test ./docker-build.sh latest --variant public
 ```
 
-Equivalent direct Docker invocation:
+The sanctioned path copies the corporate CA into the build context, mounts the
+single-index pip configuration as a BuildKit secret, and removes both afterwards.
+Do not bypass it with a direct `docker build` for internal delivery.
+
+Equivalent public-boundary invocation requires the same temporary CA preparation:
 ```bash
+cp /usr/local/share/ca-certificates/cloud-dog.net.ca.crt ./custom-ca.crt
 DOCKER_BUILDKIT=1 docker build --network host -f ./Dockerfile.public \
+  --build-arg CUSTOM_CA_CERT=custom-ca.crt \
   --build-arg PUBLIC_PYPI_INDEX_URL=https://pypi.org/simple \
   -t registry.example.com/team/db-mcp-server:latest .
+rm -f ./custom-ca.crt
 ```
 
 See [EXTERNAL-BUILD.md](EXTERNAL-BUILD.md) for the full external-builder guide.

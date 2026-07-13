@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-FROM python:3.12-slim
+FROM python:3.13-slim
+ARG CUSTOM_CA_CERT=custom-ca.crt
 ARG VCS_REF=unknown
 ARG BUILD_DATE=unknown
 # W28E-1863 fix-wave-d (WSC-014): build-identity provenance. SOURCE_COMMIT defaults
@@ -24,28 +25,33 @@ ENV PIP_NO_INPUT=1
 
 # Install platform packages from internal PyPI via BuildKit-mounted pip.conf.
 ARG PYPI_URL=https://pypi.cloud-dog.net/simple
+COPY ${CUSTOM_CA_CERT} /usr/local/share/ca-certificates/cloud-dog-corporate-ca.crt
 RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
-    apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* && \
+    apt-get update && apt-get install -y --no-install-recommends ca-certificates curl && \
+    update-ca-certificates && rm -rf /var/lib/apt/lists/* && \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
       --trusted-host pypi.cloud-dog.net \
       --trusted-host files.pythonhosted.org \
       "cloud-dog-config==0.3.4" \
-      cloud-dog-logging \
-      "cloud-dog-api-kit[change-stream-db]>=0.14.0" \
+      "cloud-dog-logging==0.4.0" \
+      "cloud-dog-api-kit[change-stream-db]==0.14.0" \
       "cloud-dog-idam==0.5.3" \
       "cloud-dog-llm==0.4.0" \
-      "cloud-dog-db[nosql,sql]" \
-      cloud-dog-jobs \
-      cloud-dog-storage==0.1.8
+      "cloud-dog-db[nosql,sql]==0.3.1" \
+      "cloud-dog-jobs==0.4.1" \
+      "cloud-dog-storage==0.1.8"
 
 COPY . /app
 RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
       pip install --no-cache-dir \
       --trusted-host pypi.cloud-dog.net \
       --trusted-host files.pythonhosted.org \
-      -e ".[dev]"
+      -e . && \
+      rm -f /app/custom-ca.crt
 
 EXPOSE 8086 8087 8088 8089
 
+RUN chmod +x /app/docker-entrypoint.sh
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["bash", "-lc", "./server_control.sh --env tests/env-ST start all && tail -f logs/api.log logs/web.log logs/mcp.log logs/a2a.log"]

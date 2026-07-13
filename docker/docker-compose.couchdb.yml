@@ -21,7 +21,7 @@ services:
       start_period: 20s
 
   couchdb-seed:
-    image: python:3.12-slim
+    image: python:3.13-slim
     container_name: db-mcp-couchdb-seed
     restart: "no"
     depends_on:

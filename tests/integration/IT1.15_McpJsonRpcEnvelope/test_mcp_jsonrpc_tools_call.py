@@ -26,20 +26,27 @@ Verifies that the db-mcp-server MCP surface:
   2. Returns a well-formed JSON-RPC response with "result" and "content[0].type" == "text".
   3. Rejects an anonymous tools/call with HTTP 401.
 
-Must be real + well-formed per T-TST-MCP-EXAMPLE.py.  Need not pass live (servers not
-started in this tier); the test is structurally correct and will succeed when the live
-stack is running under tests/env-IT.
+Must be real + well-formed per T-TST-MCP-EXAMPLE.py. The module owns the approved
+local API/MCP lifecycle under tests/env-IT so the tier is independently executable.
 """
 
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import httpx
 import pytest
 
-from tests.helpers.core_tools_runtime import MCP_BASE_URL
-from tests.helpers.server_runtime import resolved_api_key
+from tests.helpers.core_tools_runtime import (
+    API_BASE_URL,
+    MCP_BASE_URL,
+    create_profile,
+    start_servers,
+    stop_servers,
+    wait_for,
+)
+from tests.helpers.server_runtime import active_env_file, resolved_api_key
 
 # ---------------------------------------------------------------------------
 # Helpers — canonical MCP JSON-RPC transport (T-TST-MCP-EXAMPLE.py §1.1, §1.9)
@@ -94,9 +101,33 @@ def _mcp_initialize(token: str) -> None:
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="module")
-def admin_token() -> str:
+def live_mcp_stack():
+    """Run the API and MCP surfaces required by the literal transport checks."""
+    root = Path(__file__).resolve().parents[3]
+    env_file = active_env_file(default_tier="IT")
+    start_servers(root, env_file, surfaces=("api", "mcp"))
+    try:
+        wait_for(f"{API_BASE_URL}/health")
+        wait_for(f"{MCP_BASE_URL}/health")
+        yield
+    finally:
+        stop_servers(root, env_file)
+
+
+@pytest.fixture(scope="module")
+def admin_token(live_mcp_stack) -> str:
     """Return the admin API key from the active test env file."""
     return resolved_api_key(default_tier="IT")
+
+
+@pytest.fixture(scope="module")
+def catalogue_profile_id(live_mcp_stack) -> str:
+    """Create an authorised real profile for the successful tools/call path."""
+    return create_profile(
+        base_url=API_BASE_URL,
+        profile_name="it-jsonrpc-catalogue-profile",
+        allowed_permissions=["catalog.read"],
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -145,7 +176,7 @@ def test_mcp_jsonrpc_tools_list_returns_catalogue(admin_token: str) -> None:
 @pytest.mark.IT
 @pytest.mark.mcp
 @pytest.mark.req("FR-005")
-def test_mcp_jsonrpc_tools_call_catalog_list_namespaces(admin_token: str) -> None:
+def test_mcp_jsonrpc_tools_call_catalog_list_namespaces(admin_token: str, catalogue_profile_id: str) -> None:
     """IT1.15b: JSON-RPC tools/call envelope for catalog.list_namespaces returns well-formed result.
 
     REQ: FR-005 — Catalogue and metadata discovery exposed via MCP.
@@ -153,9 +184,8 @@ def test_mcp_jsonrpc_tools_call_catalog_list_namespaces(admin_token: str) -> Non
 
     The test issues a literal JSON-RPC 2.0 {"jsonrpc":"2.0","method":"tools/call",...}
     envelope to POST /mcp and asserts the response carries a well-formed JSON-RPC
-    "result" with content[0].type == "text".  The profile_id is omitted intentionally
-    (causing a validation error or empty result) so the test works without a live
-    MongoDB backend while still exercising the full JSON-RPC dispatch path.
+    "result" with content[0].type == "text". A real profile is created through
+    the API so this proves the successful catalogue dispatch path.
     """
     _mcp_initialize(admin_token)
     resp = _mcp_post(admin_token, {
@@ -164,16 +194,14 @@ def test_mcp_jsonrpc_tools_call_catalog_list_namespaces(admin_token: str) -> Non
         "method": "tools/call",
         "params": {
             "name": "catalog.list_namespaces",
-            "arguments": {},
+            "arguments": {"profile_id": catalogue_profile_id},
         },
     })
     assert resp.status_code == 200, (
         f"tools/call catalog.list_namespaces: expected 200, got {resp.status_code} {resp.text[:300]}"
     )
     msg = _parse_sse(resp)
-    # The server may return either a success result or a JSON-RPC error envelope for
-    # missing arguments; both are valid JSON-RPC 2.0 responses (the transport contract
-    # is what this test validates, not the tool business logic).
+    # The real authorised profile makes this a successful business and transport path.
     assert "jsonrpc" in msg, f"Response missing 'jsonrpc' field: {msg}"
     assert msg.get("jsonrpc") == "2.0", f"Expected jsonrpc: '2.0', got: {msg.get('jsonrpc')}"
     assert "id" in msg, f"Response missing 'id' field: {msg}"
@@ -203,7 +231,7 @@ def test_mcp_jsonrpc_tools_call_catalog_list_namespaces(admin_token: str) -> Non
 @pytest.mark.mcp
 @pytest.mark.negative
 @pytest.mark.req("FR-020")
-def test_mcp_jsonrpc_tools_call_anon_denied_401() -> None:
+def test_mcp_jsonrpc_tools_call_anon_denied_401(live_mcp_stack) -> None:
     """IT1.15c: anonymous JSON-RPC tools/call is rejected with HTTP 401.
 
     REQ: FR-020 — MCP surface enforces API-key authentication; anon denied.

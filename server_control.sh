@@ -52,9 +52,7 @@ TARGET="${2:-all}"
 
 mkdir -p .pids logs data
 
-if [ -x "venv/bin/python" ]; then
-  PYTHON_BIN="venv/bin/python"
-elif [ -x ".venv/bin/python" ]; then
+if [ -x ".venv/bin/python" ]; then
   PYTHON_BIN=".venv/bin/python"
 else
   PYTHON_BIN="python3"

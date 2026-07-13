@@ -25,6 +25,8 @@ from __future__ import annotations
 
 import sys
 
+from src.common.runtime_contract import enforce_runtime
+
 
 def _normalise_path(value: str) -> str:
     raw = str(value or "").replace("\\", "/")
@@ -96,4 +98,5 @@ def _inject_workspace_package_paths() -> None:
             sys.path.insert(0, candidate_str)
 
 
+enforce_runtime()
 _inject_workspace_package_paths()

@@ -18,7 +18,7 @@ services:
       start_period: 10s
 
   mongodb-seed:
-    image: python:3.12-slim
+    image: python:3.13-slim
     container_name: db-mcp-mongodb-seed
     restart: "no"
     network_mode: host

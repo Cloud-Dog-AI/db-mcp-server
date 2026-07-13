@@ -19,8 +19,6 @@ from __future__ import annotations
 
 import json
 import os
-import socket
-import subprocess
 import time
 from pathlib import Path
 from typing import Any
@@ -62,44 +60,23 @@ API_KEY = os.environ.get("DB_MCP_UI_API_KEY", "test-api-key")
 PROFILE_NAME = os.environ.get("DB_MCP_UI_PROFILE_NAME", "ui-e2e-profile")
 NAMESPACE = os.environ.get("DB_MCP_UI_NAMESPACE", "dbmcp_ui_e2e")
 HEADERS = {"X-API-Key": API_KEY}
-MONGO_TEST_CONTAINER = "db-mcp-server-test-mongo6"
-MONGO_TEST_URI = "mongodb://127.0.0.1:27018"
-
-
-def _port_open(host: str, port: int) -> bool:
-    sock = socket.socket()
-    sock.settimeout(1.0)
-    try:
-        sock.connect((host, port))
-        return True
-    except OSError:
-        return False
-    finally:
-        sock.close()
-
-
 def ensure_real_mongodb() -> str:
-    if _port_open("127.0.0.1", 27018):
-        client = MongoClient(MONGO_TEST_URI, serverSelectionTimeoutMS=3000)
-        try:
-            client.admin.command("ping")
-            return MONGO_TEST_URI
-        finally:
-            client.close()
-
-    subprocess.run(["docker", "rm", "-f", MONGO_TEST_CONTAINER], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    subprocess.run(["docker", "run", "-d", "--name", MONGO_TEST_CONTAINER, "--network", "host", "mongo:6.0", "--bind_ip", "127.0.0.1", "--port", "27018"], check=True, stdout=subprocess.DEVNULL)
-
-    deadline = time.time() + 45
-    while time.time() < deadline:
-        try:
-            client = MongoClient(MONGO_TEST_URI, serverSelectionTimeoutMS=2000)
-            client.admin.command("ping")
-            client.close()
-            return MONGO_TEST_URI
-        except Exception:
-            time.sleep(1)
-    raise RuntimeError("MongoDB test container did not become ready")
+    """Use the configured shared MongoDB; local backend containers are forbidden."""
+    mongo_uri = str(
+        os.environ.get("DB_MCP_TEST_MONGODB_URI")
+        or _runtime_config().get("connectors.mongodb.default_uri")
+        or ""
+    ).strip()
+    if not mongo_uri:
+        raise RuntimeError("Shared MongoDB URI is not configured for the WebUI test tier")
+    client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+    try:
+        client.admin.command("ping")
+    except Exception as exc:
+        raise RuntimeError("Configured shared MongoDB is not reachable") from exc
+    finally:
+        client.close()
+    return mongo_uri
 
 
 def seed_mongodb(*, uri: str, db_name: str) -> str:
@@ -259,7 +236,6 @@ def main() -> None:
         "profile_id": created["profile_id"],
         "profile_name": PROFILE_NAME,
         "namespace": NAMESPACE,
-        "mongo_uri": mongo_uri,
         "sync_result": sync_result,
     }
     working = ROOT / "working"

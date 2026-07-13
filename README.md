@@ -9,7 +9,7 @@ template-last-updated: 2026-06-12
 template-owner: platform-standards
 
 project: db-mcp-server
-doc-last-updated: 2026-06-18T00:00:00Z
+doc-last-updated: 2026-07-13T00:00:00Z
 doc-git-commit: 58fb399bb2ba144e262f97293103a7a0a19ba05d
 doc-git-branch: main
 doc-source-shas: []
@@ -26,7 +26,7 @@ doc-conformance-stamp: 2026-06-18T00:00:00Z
 Prerequisites:
 
 - Docker 24 or newer with BuildKit enabled
-- Python 3.12 if you run the package locally
+- Python 3.13 if you run the package locally (`.python-version` is authoritative)
 - Public package source: `https://pypi.org/simple` (single index; no `--extra-index-url`)
 
 Build the public image (see [EXTERNAL-BUILD.md](EXTERNAL-BUILD.md) for the full
@@ -54,8 +54,9 @@ The smoke run uses [.env.example](.env.example) and probes:
 ## Local Development
 
 ```bash
-python3 -m venv .venv
+python3.13 -m venv .venv
 . .venv/bin/activate
+python --version  # must report Python 3.13.x
 pip install --upgrade pip
 # Single public index; the cloud_dog_db[nosql,sql] extras pull the DB drivers.
 pip install -e ".[dev]" --index-url https://pypi.org/simple
@@ -63,6 +64,8 @@ pip install -e ".[dev]" --index-url https://pypi.org/simple
 
 The Cloud-Dog platform packages must be resolvable from the index you use. See
 [EXTERNAL-BUILD.md](EXTERNAL-BUILD.md) for the public package-source strategy.
+The runtime floor is enforced by `pyproject.toml`, Ruff's `py313` target, and an
+import-time preflight; Python 3.10/3.11/3.12 are not supported development or test runtimes.
 
 Runtime configuration is loaded from the env file passed to `server_control.sh`, then from shell environment variables, then from `defaults.yaml`.
 

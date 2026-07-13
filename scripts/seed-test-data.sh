@@ -5,8 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TARGET="${1:-all}"
 
 resolve_python() {
-  if [[ -x "${ROOT_DIR}/venv/bin/python" ]]; then
-    printf '%s\n' "${ROOT_DIR}/venv/bin/python"
+  if [[ -x "${ROOT_DIR}/.venv/bin/python" ]]; then
+    printf '%s\n' "${ROOT_DIR}/.venv/bin/python"
     return
   fi
   if command -v python3 >/dev/null 2>&1; then
@@ -19,8 +19,8 @@ resolve_python() {
 python_bin="$(resolve_python)"
 
 resolve_pip() {
-  if [[ -x "${ROOT_DIR}/venv/bin/pip" ]]; then
-    printf '%s\n' "${ROOT_DIR}/venv/bin/pip"
+  if [[ -x "${ROOT_DIR}/.venv/bin/pip" ]]; then
+    printf '%s\n' "${ROOT_DIR}/.venv/bin/pip"
     return
   fi
   "${python_bin}" -m pip --version >/dev/null 2>&1 || return 1

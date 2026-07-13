@@ -9,7 +9,7 @@ template-last-updated: 2026-06-12
 template-owner: platform-standards
 
 project: db-mcp-server
-doc-last-updated: 2026-06-18T00:00:00Z
+doc-last-updated: 2026-07-13T00:00:00Z
 doc-git-commit: 58fb399bb2ba144e262f97293103a7a0a19ba05d
 doc-git-branch: main
 doc-source-shas: []
@@ -71,8 +71,9 @@ docker run -d --name db-mcp \
 
 ## Option 2: Direct (no Docker)
 ```bash
-python3 -m venv .venv
+python3.13 -m venv .venv
 source .venv/bin/activate
+python --version  # must report Python 3.13.x
 pip install -e ".[dev]"
 ./server_control.sh --env env.example start all
 ```

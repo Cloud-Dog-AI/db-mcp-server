@@ -6,27 +6,27 @@ build-backend = "hatchling.build"
 name = "db-mcp-server"
 version = "0.1.1RC1"
 description = "Cloud-Dog AI db-mcp-server runtime skeleton."
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 license = { text = "Apache-2.0" }
 authors = [
   { name = "Cloud-Dog, Viewdeck Engineering Limited" }
 ]
 dependencies = [
   "cloud_dog_config==0.3.4",
-  "cloud_dog_logging>=0.3.3",
+  "cloud_dog_logging==0.4.0",
   # W28E-1870-E: adopt the common cross-service change-streaming foundation
   # (PS-102). The [change-stream-db] extra pulls the durable SqlJournal deps
   # (cloud_dog_db + sqlalchemy, already present) — no bespoke journal/cursor/queue.
-  "cloud_dog_api_kit[change-stream-db]>=0.14.0",
+  "cloud_dog_api_kit[change-stream-db]==0.14.0",
   "cloud_dog_idam==0.5.3",
   "cloud_dog_llm==0.4.0",
-  "cloud_dog_jobs>=0.3.0",
+  "cloud_dog_jobs==0.4.1",
   # W28A-861-R3 / W28E-606: all SQL + NoSQL backend access goes through
   # cloud_dog_db. The DB drivers (pymongo, CouchDB, couchbase, cassandra-driver,
   # elasticsearch, opensearch-py, psycopg, PyMySQL) and SQLAlchemy are pulled
   # transitively via the [nosql] and [sql] OPTIONAL EXTRAS — db-mcp-server
   # lists none of them as direct dependencies (§1.4).
-  "cloud_dog_db[nosql,sql]>=0.3.0",
+  "cloud_dog_db[nosql,sql]==0.3.1",
   "cloud-dog-storage==0.1.8",
   "alembic>=1.13.0",
   "argon2-cffi>=23.1.0",
@@ -45,11 +45,11 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # DB drivers (incl. cassandra-driver) come via cloud_dog_db[nosql,sql] above.
-  "pytest>=8.0.0",
+  "pytest>=8.0.0,<10.0",
   "pytest-asyncio>=0.23.0",
   "pytest-timeout>=2.3.0",
   "pytest-cov>=4.1.0",
-  "ruff>=0.3.0",
+  "ruff>=0.12.0,<1.0",
   "mypy>=1.8.0",
   "playwright>=1.44.0",
 ]
@@ -67,6 +67,10 @@ markers = [
   "db: requires live database/search backend",
   "mcp: requires live MCP runtime",
 ]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]

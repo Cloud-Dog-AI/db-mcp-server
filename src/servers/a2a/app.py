@@ -219,8 +219,6 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
             return f"Found {len(profiles)} database profiles:\n" + "\n".join(names)
         except Exception as exc:
             return f"Error listing schemas: {exc}"
-        handler = _catalog_tools["catalog.list_namespaces"].handler
-        return await handler(payload, _make_a2a_request())
 
     # --- W28E-1870-E database change-watch A2A skill handlers (PS-102 §5.3) ---
     def _watch_skill(method_name: str):

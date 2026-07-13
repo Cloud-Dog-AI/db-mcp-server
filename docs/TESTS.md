@@ -3,7 +3,7 @@ template-id: T-TST
 template-version: 1.1
 applies-to: docs/TESTS.md
 project: db-mcp-server
-doc-last-updated: 2026-06-17T00:00:00Z
+doc-last-updated: 2026-07-13T00:00:00Z
 doc-git-commit: d064aa17d3a6570cb01e86bbf63e4632b37fb355
 doc-git-branch: main
 doc-age-policy: 90d
@@ -32,14 +32,19 @@ Multi-connector discovery and governance control plane for profiles, catalogue b
 
 ## Standard Commands
 
+All commands must run from the project-local Python 3.13 environment. Create it
+with `python3.13 -m venv .venv`; the runtime-contract tests and import preflight
+fail under Python 3.10/3.11/3.12.
+
 ```bash
-python3 -m pytest tests/quality --env tests/env-QT -q
-python3 -m pytest tests/unit --env tests/env-UT -q
-python3 -m pytest tests/system --env tests/env-ST -q
-python3 -m pytest tests/integration --env tests/env-IT -q
-python3 -m pytest tests/application --env tests/env-AT -q
-python3 -m pytest tests/system/ST1.14_PostgreSQLConnector --env tests/env-ST --env tests/env-postgresql -q
-python3 -m pytest tests/system/ST1.15_MariaDBConnector --env tests/env-ST --env tests/env-mariadb -q
+.venv/bin/python --version
+.venv/bin/python -m pytest tests/quality --env tests/env-QT -q
+.venv/bin/python -m pytest tests/unit --env tests/env-UT -q
+.venv/bin/python -m pytest tests/system --env tests/env-ST -q
+.venv/bin/python -m pytest tests/integration --env tests/env-IT -q
+.venv/bin/python -m pytest tests/application --env tests/env-AT -q
+.venv/bin/python -m pytest tests/system/ST1.14_PostgreSQLConnector --env tests/env-ST --env tests/env-postgresql -q
+.venv/bin/python -m pytest tests/system/ST1.15_MariaDBConnector --env tests/env-ST --env tests/env-mariadb -q
 ```
 
 ## W28A-871 Requirements Coverage Matrix
