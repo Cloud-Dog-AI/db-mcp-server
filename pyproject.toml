@@ -13,20 +13,20 @@ authors = [
 ]
 dependencies = [
   "cloud_dog_config==0.3.4",
-  "cloud_dog_logging==0.4.0",
+  "cloud_dog_logging==0.4.1",
   # W28E-1870-E: adopt the common cross-service change-streaming foundation
   # (PS-102). The [change-stream-db] extra pulls the durable SqlJournal deps
   # (cloud_dog_db + sqlalchemy, already present) — no bespoke journal/cursor/queue.
   "cloud_dog_api_kit[change-stream-db]==0.14.0",
   "cloud_dog_idam==0.5.3",
   "cloud_dog_llm==0.4.0",
-  "cloud_dog_jobs==0.4.1",
+  "cloud_dog_jobs==0.4.2",
   # W28A-861-R3 / W28E-606: all SQL + NoSQL backend access goes through
   # cloud_dog_db. The DB drivers (pymongo, CouchDB, couchbase, cassandra-driver,
   # elasticsearch, opensearch-py, psycopg, PyMySQL) and SQLAlchemy are pulled
   # transitively via the [nosql] and [sql] OPTIONAL EXTRAS — db-mcp-server
   # lists none of them as direct dependencies (§1.4).
-  "cloud_dog_db[nosql,sql]==0.3.1",
+  "cloud_dog_db==0.3.2",
   "cloud-dog-storage==0.1.8",
   "alembic>=1.13.0",
   "argon2-cffi>=23.1.0",
