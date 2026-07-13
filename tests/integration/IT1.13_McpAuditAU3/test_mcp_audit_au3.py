@@ -131,7 +131,7 @@ async def test_mcp_tool_call_emits_full_au3_audit_event() -> None:
     assert actor.get("id") == "u-admin", f"actor.id must be populated: {actor}"
     assert actor.get("roles") == ["admin"], f"actor.roles must be populated: {actor}"
     assert actor.get("ip") == "203.0.113.7", f"actor.ip (client_ip) must be populated: {actor}"
-    # cloud-dog-logging 0.4.0 carries the canonical source address in Actor.ip
+    # cloud-dog-logging carries the canonical source address in Actor.ip
     # and details.client_ip. A legacy top-level source_address is intentionally
     # absent; detail keys ending in "address" are redacted by the package.
     assert details.get("client_ip") == "203.0.113.7", "details.client_ip must be populated"

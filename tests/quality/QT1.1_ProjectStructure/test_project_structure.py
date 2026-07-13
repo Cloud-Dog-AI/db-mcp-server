@@ -85,6 +85,36 @@ def test_required_platform_package_declarations_are_present() -> None:
     }
 
     assert expected <= dependency_names
+
+
+@pytest.mark.QT
+@pytest.mark.mcp
+@pytest.mark.req("FR-026")
+def test_w28a_862_platform_versions_and_payload_sources_are_current() -> None:
+    """Prevent stale package pins and private payload metadata from returning."""
+    root = Path(__file__).resolve().parents[3]
+    pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
+    lock = (root / "requirements.lock").read_text(encoding="utf-8")
+    for expected in (
+        "cloud_dog_db[nosql,sql]==0.3.2",
+        "cloud_dog_jobs==0.4.2",
+        "cloud_dog_logging==0.4.1",
+    ):
+        assert expected in pyproject
+    for expected in (
+        "cloud_dog_db[nosql,sql]==0.3.2",
+        "cloud-dog-jobs==0.4.2",
+        "cloud-dog-logging==0.4.1",
+    ):
+        assert expected in lock
+
+    vault_helper = (root / "scripts" / "validate-vault.sh").read_text(encoding="utf-8")
+    elasticsearch = (
+        root / "src" / "core" / "connectors" / "elasticsearch" / "adapter.py"
+    ).read_text(encoding="utf-8")
+    assert "/opt/iac/" not in vault_helper
+    assert "https://elastic:pass@" not in elasticsearch
+    assert "scheme://[user:pass@]" not in elasticsearch
 @pytest.mark.QT
 @pytest.mark.mcp
 @pytest.mark.req("FR-026")  # W28E-1808A semantic binding (replaced legacy probe marker)
