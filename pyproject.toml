@@ -26,7 +26,7 @@ dependencies = [
   # elasticsearch, opensearch-py, psycopg, PyMySQL) and SQLAlchemy are pulled
   # transitively via the [nosql] and [sql] OPTIONAL EXTRAS — db-mcp-server
   # lists none of them as direct dependencies (§1.4).
-  "cloud_dog_db==0.3.2",
+  "cloud_dog_db[nosql,sql]==0.3.2",
   "cloud-dog-storage==0.1.8",
   "alembic>=1.13.0",
   "argon2-cffi>=23.1.0",
