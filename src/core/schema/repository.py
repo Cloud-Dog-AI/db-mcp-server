@@ -23,7 +23,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from sqlalchemy import Column, Engine, MetaData, String, Table, Text, delete, desc, select
+from cloud_dog_db.sql import Column, Engine, MetaData, String, Table, Text, delete, desc, select
 
 from src.core.access_control.models import serialise_datetime
 from src.core.schema.models import SchemaChangeRecord

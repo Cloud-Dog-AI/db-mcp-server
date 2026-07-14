@@ -21,9 +21,10 @@
 from __future__ import annotations
 
 import json
-import sqlite3
 from dataclasses import asdict
 from typing import Any, Iterable
+
+from cloud_dog_db.sql import SQLiteConnection, SQLiteRow, connect_sqlite
 
 from src.common.storage_paths import ensure_directory, normalise_fs_path, parent_fs_path
 from src.core.search.models import DiscoveryDocument, EntityIndexStatus, ProfileIndexStatus
@@ -288,13 +289,11 @@ class DiscoveryIndexRepository:
             )
             connection.commit()
 
-    def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(str(self._path))
-        connection.row_factory = sqlite3.Row
-        return connection
+    def _connect(self) -> SQLiteConnection:
+        return connect_sqlite(str(self._path))
 
     @staticmethod
-    def _insert_document(connection: sqlite3.Connection, document: DiscoveryDocument) -> None:
+    def _insert_document(connection: SQLiteConnection, document: DiscoveryDocument) -> None:
         connection.execute(
             """
             INSERT OR REPLACE INTO discovery_documents (
@@ -363,7 +362,7 @@ class DiscoveryIndexRepository:
         )
 
     @staticmethod
-    def _upsert_profile_status(connection: sqlite3.Connection, status: ProfileIndexStatus) -> None:
+    def _upsert_profile_status(connection: SQLiteConnection, status: ProfileIndexStatus) -> None:
         connection.execute(
             "INSERT OR REPLACE INTO profile_index_status (profile_id, payload) VALUES (?, ?)",
             (
@@ -373,7 +372,7 @@ class DiscoveryIndexRepository:
         )
 
     @staticmethod
-    def _upsert_entity_status(connection: sqlite3.Connection, status: EntityIndexStatus) -> None:
+    def _upsert_entity_status(connection: SQLiteConnection, status: EntityIndexStatus) -> None:
         connection.execute(
             """
             INSERT OR REPLACE INTO entity_index_status (profile_id, namespace, entity, payload)
@@ -388,7 +387,7 @@ class DiscoveryIndexRepository:
         )
 
     @staticmethod
-    def _row_to_document(row: sqlite3.Row) -> dict[str, Any]:
+    def _row_to_document(row: SQLiteRow) -> dict[str, Any]:
         payload = dict(row)
         payload["match_fields"] = json.loads(payload.get("match_fields") or "[]")
         payload["payload"] = json.loads(payload.get("payload") or "{}")

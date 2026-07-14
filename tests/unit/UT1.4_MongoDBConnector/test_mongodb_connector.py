@@ -163,7 +163,7 @@ class FakeMongoClient:
 
 @pytest.fixture(autouse=True)
 def fake_mongo(monkeypatch):
-    monkeypatch.setattr("src.core.connectors.mongodb.adapter.MongoClient", FakeMongoClient)
+    monkeypatch.setattr("cloud_dog_db.nosql.connectors.mongodb.MongoClient", FakeMongoClient)
     FakeMongoClient.list_database_names_calls = 0
     MongoDBConnector._namespace_cache.clear()
 @pytest.mark.UT

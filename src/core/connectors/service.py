@@ -25,14 +25,9 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from fastapi import Request
-from cassandra import DriverException as CassandraDriverException
-from elasticsearch import ApiError as ElasticsearchApiError
-from opensearchpy.exceptions import OpenSearchException
-from pymongo.errors import PyMongoError
-from requests import RequestException
-from sqlalchemy.exc import SQLAlchemyError
 
 from cloud_dog_api_kit.errors import InternalError, UnauthorisedError, ValidationError
+from cloud_dog_db.connectors import database_driver_exceptions
 from cloud_dog_logging import Actor, Target
 
 from src.core.connectors.cassandra import CassandraConnector
@@ -44,6 +39,8 @@ from src.core.connectors.opensearch import OpenSearchConnector
 from src.core.connectors.postgresql import PostgreSQLConnector
 from src.core.connectors.relational import _build_uri
 from src.core.filters import CassandraFilterTranslator, CouchDBFilterTranslator, ElasticsearchFilterTranslator, MongoDBFilterTranslator, OpenSearchFilterTranslator, RelationalFilterTranslator
+
+_CONNECTOR_ERRORS = database_driver_exceptions()
 
 
 @dataclass(slots=True)
@@ -162,7 +159,7 @@ class ConnectorManager:
         try:
             self._enforce_tool_scope(session.profile, audit_action)
             result = callback(session)
-        except (PyMongoError, RequestException, OpenSearchException, ElasticsearchApiError, CassandraDriverException, SQLAlchemyError) as exc:
+        except _CONNECTOR_ERRORS as exc:
             self._runtime.audit_logger.log_tool_call(
                 actor=Actor(type="user", id=principal.user_id, roles=principal.roles),
                 tool=audit_action,

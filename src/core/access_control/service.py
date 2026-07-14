@@ -30,8 +30,7 @@ from datetime import timedelta
 from typing import Any
 
 from fastapi import Request
-from sqlalchemy import Engine
-from sqlalchemy.orm import sessionmaker
+from cloud_dog_db.sql import Engine, sessionmaker
 
 from cloud_dog_api_kit.errors import (
     ConflictError,

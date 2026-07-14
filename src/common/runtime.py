@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from dataclasses import dataclass
 from typing import Any, Callable
 
-from sqlalchemy import Engine
+from cloud_dog_db.sql import Engine
 
 from cloud_dog_api_kit.auth import create_auth_dependency
 from cloud_dog_api_kit.routers.health import create_health_router

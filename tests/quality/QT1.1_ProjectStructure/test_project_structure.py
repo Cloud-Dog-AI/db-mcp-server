@@ -98,19 +98,19 @@ def test_w28a_862_platform_versions_and_payload_sources_are_current() -> None:
     internal_dockerfile = (root / "Dockerfile").read_text(encoding="utf-8")
     public_dockerfile = (root / "Dockerfile.public").read_text(encoding="utf-8")
     for expected in (
-        "cloud_dog_db[nosql,sql]==0.3.2",
+        "cloud_dog_db[nosql,sql]==0.3.3",
         "cloud_dog_jobs==0.4.2",
         "cloud_dog_logging==0.4.1",
     ):
         assert expected in pyproject
     for expected in (
-        "cloud_dog_db[nosql,sql]==0.3.2",
+        "cloud_dog_db[nosql,sql]==0.3.3",
         "cloud-dog-jobs==0.4.2",
         "cloud-dog-logging==0.4.1",
     ):
         assert expected in lock
     for expected in (
-        "cloud-dog-db[nosql,sql]==0.3.2",
+        "cloud-dog-db[nosql,sql]==0.3.3",
         "cloud-dog-jobs==0.4.2",
         "cloud-dog-logging==0.4.1",
     ):

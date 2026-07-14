@@ -264,7 +264,7 @@ class FakeCluster:
 def fake_cassandra(monkeypatch):
     """Replace the Cassandra Cluster with the in-memory fake."""
     monkeypatch.setattr(
-        "src.core.connectors.cassandra.adapter.Cluster",
+        "cloud_dog_db.nosql.connectors.cassandra.Cluster",
         FakeCluster,
     )
 @pytest.mark.UT

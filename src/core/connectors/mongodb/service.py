@@ -25,12 +25,14 @@ from typing import Any
 from urllib.parse import quote_plus
 
 from fastapi import Request
-from pymongo.errors import PyMongoError
 
 from cloud_dog_api_kit.errors import InternalError, NotFoundError, ValidationError
+from cloud_dog_db.connectors import database_driver_exceptions
 from cloud_dog_logging import Actor, Target
 
 from src.core.connectors.mongodb.adapter import MongoDBConnector
+
+_CONNECTOR_ERRORS = database_driver_exceptions()
 
 
 @dataclass(slots=True)
@@ -92,7 +94,7 @@ class MongoDBConnectorService:
         )
         try:
             connector.validate_profile()
-        except PyMongoError as exc:
+        except _CONNECTOR_ERRORS as exc:
             connector.close()
             raise InternalError(message=f"MongoDB connection failed: {exc}") from exc
         return MongoProfileSession(profile=profile, connector=connector)
@@ -117,7 +119,7 @@ class MongoDBConnectorService:
         session = self.for_profile(profile_id)
         try:
             result = callback(session.connector, session.profile)
-        except PyMongoError as exc:
+        except _CONNECTOR_ERRORS as exc:
             self._runtime.audit_logger.log_tool_call(
                 actor=Actor(type="user", id=principal.user_id, roles=principal.roles),
                 tool=audit_action,

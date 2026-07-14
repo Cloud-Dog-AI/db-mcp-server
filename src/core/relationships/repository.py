@@ -24,7 +24,7 @@ import json
 from dataclasses import asdict
 from typing import Any
 
-from sqlalchemy import Engine, MetaData, Table, Column, String, Text, delete, select
+from cloud_dog_db.sql import Column, Engine, MetaData, String, Table, Text, delete, select
 
 from src.core.access_control.models import coerce_datetime, serialise_datetime
 from src.core.relationships.models import RelationshipRecord

@@ -24,7 +24,7 @@ import json
 from dataclasses import asdict
 from typing import Any
 
-from sqlalchemy import Boolean, DateTime, Engine, Integer, MetaData, Table, Column, String, Text, select, update, delete
+from cloud_dog_db.sql import Boolean, Column, DateTime, Engine, Integer, MetaData, String, Table, Text, delete, select, update
 
 from src.core.access_control.models import (
     AccessApiKey,

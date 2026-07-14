@@ -231,7 +231,7 @@ def _matches(document: dict[str, object], query: dict[str, object]) -> bool:
 
 @pytest.fixture(autouse=True)
 def fake_opensearch(monkeypatch):
-    monkeypatch.setattr("src.core.connectors.opensearch.adapter.OpenSearch", FakeOpenSearch)
+    monkeypatch.setattr("cloud_dog_db.nosql.connectors.opensearch.OpenSearch", FakeOpenSearch)
 @pytest.mark.UT
 @pytest.mark.mcp
 @pytest.mark.req("FR-015")

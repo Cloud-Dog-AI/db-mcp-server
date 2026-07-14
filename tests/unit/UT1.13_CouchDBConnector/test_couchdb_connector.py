@@ -188,7 +188,7 @@ class FakeSession:
 
 @pytest.fixture(autouse=True)
 def fake_session(monkeypatch):
-    monkeypatch.setattr("src.core.connectors.couchdb.adapter.requests.Session", FakeSession)
+    monkeypatch.setattr("cloud_dog_db.nosql.connectors.couchdb.requests.Session", FakeSession)
 @pytest.mark.UT
 @pytest.mark.mcp
 @pytest.mark.req("FR-014")

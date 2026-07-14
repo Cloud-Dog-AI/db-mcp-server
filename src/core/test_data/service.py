@@ -20,8 +20,6 @@
 
 from __future__ import annotations
 
-import json
-import sqlite3
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse
@@ -29,6 +27,7 @@ from urllib.parse import urlparse
 from fastapi import Request
 
 from cloud_dog_api_kit.errors import UnauthorisedError, ValidationError
+from cloud_dog_db.connectors import build_source_connector
 from cloud_dog_logging import Actor, Target
 
 _BLOCKED_RUNTIME_PROFILES = {"production", "prod", "live"}
@@ -178,181 +177,80 @@ class TestDataSeedService:
         raise ValidationError(message=f"Unknown dataset_id: {dataset_id}")
 
 
-def _sqlite_path(uri: str) -> str:
-    parsed = urlparse(uri)
-    if parsed.scheme not in {"sqlite", "sqlite+pysqlite"}:
-        raise ValidationError(message=f"Unsupported SQLite URI: {parsed.scheme}")
-    if parsed.path in {"", "/:memory:"}:
-        return ":memory:"
-    return parsed.path
-
-
-def _seed_sqlite(uri: str) -> _SeedResult:
-    path = _sqlite_path(uri)
-    with sqlite3.connect(path) as connection:
-        connection.execute("PRAGMA foreign_keys = ON")
-        connection.executescript(
-            """
-            DROP TABLE IF EXISTS orders;
-            DROP TABLE IF EXISTS users;
-            CREATE TABLE users (
-              id INTEGER PRIMARY KEY,
-              email TEXT NOT NULL UNIQUE,
-              display_name TEXT,
-              created_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-            CREATE INDEX idx_users_email ON users(email);
-            CREATE TABLE orders (
-              id INTEGER PRIMARY KEY,
-              user_id INTEGER NOT NULL REFERENCES users(id),
-              amount NUMERIC NOT NULL,
-              status TEXT NOT NULL,
-              created_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-            CREATE INDEX idx_orders_user_id ON orders(user_id);
-            CREATE INDEX idx_orders_status ON orders(status);
-            """
-        )
-        connection.executemany(
-            "INSERT INTO users (id, email, display_name) VALUES (?, ?, ?)",
-            [(item["id"], item["email"], item["display_name"]) for item in _USERS],
-        )
-        connection.executemany(
-            "INSERT INTO orders (id, user_id, amount, status) VALUES (?, ?, ?, ?)",
-            [(item["id"], item["user_id"], item["amount"], item["status"]) for item in _ORDERS],
-        )
-        counts = _sqlite_counts(connection)
-    return _SeedResult(target=path, counts=counts)
-
-
-def _sqlite_counts(connection: sqlite3.Connection) -> dict[str, int]:
-    return {
-        "users": int(connection.execute("SELECT COUNT(*) FROM users").fetchone()[0]),
-        "orders": int(connection.execute("SELECT COUNT(*) FROM orders").fetchone()[0]),
-    }
-
-
-def _seed_postgres(uri: str) -> _SeedResult:
-    import psycopg
-
-    with psycopg.connect(uri, connect_timeout=30) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute("DROP SCHEMA IF EXISTS w28a871 CASCADE")
-            cursor.execute("CREATE SCHEMA w28a871")
-            cursor.execute("SET search_path TO w28a871")
-            cursor.execute(
-                """
-                CREATE TABLE users (
-                  id SERIAL PRIMARY KEY,
-                  email VARCHAR(255) NOT NULL UNIQUE,
-                  display_name VARCHAR(120),
-                  created_at TIMESTAMPTZ DEFAULT NOW()
-                )
-                """
-            )
-            cursor.execute("CREATE INDEX idx_users_email ON users(email)")
-            cursor.execute(
-                """
-                CREATE TABLE orders (
-                  id SERIAL PRIMARY KEY,
-                  user_id INTEGER NOT NULL REFERENCES users(id),
-                  amount NUMERIC(10,2) NOT NULL,
-                  status VARCHAR(20) NOT NULL,
-                  created_at TIMESTAMPTZ DEFAULT NOW()
-                )
-                """
-            )
-            cursor.execute("CREATE INDEX idx_orders_user_id ON orders(user_id)")
-            cursor.execute("CREATE INDEX idx_orders_status ON orders(status)")
-            cursor.executemany(
-                "INSERT INTO users (id, email, display_name) VALUES (%s, %s, %s)",
-                [(item["id"], item["email"], item["display_name"]) for item in _USERS],
-            )
-            cursor.executemany(
-                "INSERT INTO orders (id, user_id, amount, status) VALUES (%s, %s, %s, %s)",
-                [(item["id"], item["user_id"], item["amount"], item["status"]) for item in _ORDERS],
-            )
-            cursor.execute("SELECT COUNT(*) FROM users")
-            user_count = int(cursor.fetchone()[0])
-            cursor.execute("SELECT COUNT(*) FROM orders")
-            order_count = int(cursor.fetchone()[0])
-        connection.commit()
-    return _SeedResult(target="schema:w28a871", counts={"users": user_count, "orders": order_count})
-
-
-def _mysql_connection_kwargs(uri: str) -> tuple[dict[str, Any], str]:
-    parsed = urlparse(uri)
-    if parsed.scheme not in {"mysql", "mariadb"}:
-        raise ValidationError(message=f"Unsupported MySQL URI: {parsed.scheme}")
-    database = parsed.path.strip("/") or "w28a871"
-    return (
+def _apply_schema_change(connector: Any, operation: str, namespace: str, entity: str = "", **parameters: Any) -> None:
+    connector.schema_change_apply(
         {
-            "host": parsed.hostname,
-            "port": parsed.port or 3306,
-            "user": parsed.username,
-            "password": parsed.password,
-            "connect_timeout": 30,
-            "charset": "utf8mb4",
-            "autocommit": False,
-        },
-        database,
+            "operation": operation,
+            "namespace": namespace,
+            "entity": entity,
+            "parameters": parameters,
+        }
     )
 
 
-def _seed_mysql(uri: str) -> _SeedResult:
-    import pymysql
+def _replace_entity(connector: Any, namespace: str, entity: str, **parameters: Any) -> None:
+    existing = {str(item.get("name")) for item in connector.list_entities(namespace)}
+    if entity in existing:
+        _apply_schema_change(connector, "drop_entity", namespace, entity)
+    _apply_schema_change(connector, "create_entity", namespace, entity, **parameters)
 
-    kwargs, database = _mysql_connection_kwargs(uri)
-    if not database.replace("_", "").isalnum():
-        raise ValidationError(message=f"Unsupported MySQL database name: {database}")
-    connection = pymysql.connect(**kwargs)
+
+def _seed_relational(uri: str, dialect: str, namespace: str, target: str) -> _SeedResult:
+    connector = build_source_connector(dialect, uri=uri, timeout_seconds=30)
     try:
-        with connection.cursor() as cursor:
-            cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{database}`")
-            cursor.execute(f"USE `{database}`")
-            cursor.execute("DROP TABLE IF EXISTS `orders`")
-            cursor.execute("DROP TABLE IF EXISTS `users`")
-            cursor.execute(
-                """
-                CREATE TABLE users (
-                  id INT AUTO_INCREMENT PRIMARY KEY,
-                  email VARCHAR(255) NOT NULL UNIQUE,
-                  display_name VARCHAR(120),
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-                """
-            )
-            cursor.execute("CREATE INDEX idx_users_email ON users(email)")
-            cursor.execute(
-                """
-                CREATE TABLE orders (
-                  id INT AUTO_INCREMENT PRIMARY KEY,
-                  user_id INT NOT NULL,
-                  amount DECIMAL(10,2) NOT NULL,
-                  status VARCHAR(20) NOT NULL,
-                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                  CONSTRAINT fk_orders_user_id FOREIGN KEY (user_id) REFERENCES users(id)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-                """
-            )
-            cursor.execute("CREATE INDEX idx_orders_user_id ON orders(user_id)")
-            cursor.execute("CREATE INDEX idx_orders_status ON orders(status)")
-            cursor.executemany(
-                "INSERT INTO users (id, email, display_name) VALUES (%s, %s, %s)",
-                [(item["id"], item["email"], item["display_name"]) for item in _USERS],
-            )
-            cursor.executemany(
-                "INSERT INTO orders (id, user_id, amount, status) VALUES (%s, %s, %s, %s)",
-                [(item["id"], item["user_id"], item["amount"], item["status"]) for item in _ORDERS],
-            )
-            cursor.execute("SELECT COUNT(*) FROM users")
-            user_count = int(cursor.fetchone()[0])
-            cursor.execute("SELECT COUNT(*) FROM orders")
-            order_count = int(cursor.fetchone()[0])
-        connection.commit()
+        if dialect == "postgresql":
+            _apply_schema_change(connector, "drop_namespace", namespace)
+            _apply_schema_change(connector, "create_namespace", namespace)
+        else:
+            for entity in ("orders", "users"):
+                existing = {str(item.get("name")) for item in connector.list_entities(namespace)}
+                if entity in existing:
+                    _apply_schema_change(connector, "drop_entity", namespace, entity)
+        _replace_entity(
+            connector,
+            namespace,
+            "users",
+            columns={"id": "integer", "email": "string", "display_name": "string"},
+            primary_key="id",
+        )
+        _replace_entity(
+            connector,
+            namespace,
+            "orders",
+            columns={"id": "integer", "user_id": "integer", "amount": "float", "status": "string"},
+            primary_key="id",
+        )
+        for item in _USERS:
+            connector.create(namespace, "users", dict(item))
+        for item in _ORDERS:
+            connector.create(namespace, "orders", dict(item))
+        counts = {
+            "users": connector.count(namespace, "users"),
+            "orders": connector.count(namespace, "orders"),
+        }
     finally:
-        connection.close()
-    return _SeedResult(target=f"database:{database}", counts={"users": user_count, "orders": order_count})
+        connector.close()
+    return _SeedResult(target=target, counts=counts)
+
+
+def _seed_sqlite(uri: str) -> _SeedResult:
+    parsed = urlparse(uri)
+    if parsed.scheme not in {"sqlite", "sqlite+pysqlite"}:
+        raise ValidationError(message=f"Unsupported SQLite URI: {parsed.scheme}")
+    path = ":memory:" if parsed.path in {"", "/:memory:"} else parsed.path
+    return _seed_relational(uri, "sqlite", "main", path)
+
+
+def _seed_postgres(uri: str) -> _SeedResult:
+    return _seed_relational(uri, "postgresql", "w28a871", "schema:w28a871")
+
+
+def _seed_mysql(uri: str) -> _SeedResult:
+    parsed = urlparse(uri)
+    database = parsed.path.strip("/") or "w28a871"
+    if parsed.scheme not in {"mysql", "mariadb"} or not database.replace("_", "").isalnum():
+        raise ValidationError(message=f"Unsupported MySQL URI or database: {parsed.scheme}/{database}")
+    return _seed_relational(uri, "mariadb", database, f"database:{database}")
 
 
 def _mongodb_database(uri: str) -> str:
@@ -361,106 +259,59 @@ def _mongodb_database(uri: str) -> str:
 
 
 def _seed_mongodb(uri: str) -> _SeedResult:
-    from pymongo import MongoClient
-
     database = _mongodb_database(uri)
-    client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+    connector = build_source_connector("mongodb", uri=uri, timeout_ms=5000)
     try:
-        db = client[database]
-        db.users.drop()
-        db.orders.drop()
-        db.users.insert_many(
-            [
-                {
-                    "_id": item["id"],
-                    "id": item["id"],
-                    "email": item["email"],
-                    "display_name": item["display_name"],
-                }
-                for item in _USERS
-            ]
+        _replace_entity(connector, database, "users")
+        _replace_entity(connector, database, "orders")
+        for item in _USERS:
+            connector.create(database, "users", {"_id": item["id"], **item})
+        for item in _ORDERS:
+            connector.create(database, "orders", {"_id": item["id"], **item})
+        _apply_schema_change(
+            connector,
+            "create_index",
+            database,
+            "users",
+            keys=[{"field": "email", "direction": "asc"}],
+            name="idx_users_email",
+            unique=True,
         )
-        db.orders.insert_many(
-            [
-                {
-                    "_id": item["id"],
-                    "id": item["id"],
-                    "user_id": item["user_id"],
-                    "amount": item["amount"],
-                    "status": item["status"],
-                }
-                for item in _ORDERS
-            ]
-        )
-        db.users.create_index("email", name="idx_users_email", unique=True)
-        db.orders.create_index("user_id", name="idx_orders_user_id")
-        db.orders.create_index("status", name="idx_orders_status")
         counts = {
-            "users": int(db.users.count_documents({})),
-            "orders": int(db.orders.count_documents({})),
+            "users": connector.count(database, "users"),
+            "orders": connector.count(database, "orders"),
         }
     finally:
-        client.close()
+        connector.close()
     return _SeedResult(target=f"database:{database}", counts=counts)
 
 
 def _seed_elasticsearch(uri: str) -> _SeedResult:
-    import requests
-
-    base_url = uri.rstrip("/")
-    session = requests.Session()
+    connector = build_source_connector("elasticsearch", uri=uri, timeout_seconds=30)
     try:
+        namespace = str(connector.list_namespaces()[0]["name"])
         users_index = "w28a871-users"
         orders_index = "w28a871-orders"
-        for index in (users_index, orders_index):
-            session.delete(f"{base_url}/{index}", timeout=30)
-        session.put(
-            f"{base_url}/{users_index}",
-            json={
-                "settings": {"number_of_replicas": 0},
-                "mappings": {
-                    "properties": {
-                        "id": {"type": "integer"},
-                        "email": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
-                        "display_name": {"type": "text"},
-                        "created_at": {"type": "date", "format": "strict_date_optional_time"},
-                    }
-                },
-            },
-            timeout=30,
-        ).raise_for_status()
-        session.put(
-            f"{base_url}/{orders_index}",
-            json={
-                "settings": {"number_of_replicas": 0},
-                "mappings": {
-                    "properties": {
-                        "id": {"type": "integer"},
-                        "user_id": {"type": "integer"},
-                        "amount": {"type": "double"},
-                        "status": {"type": "keyword"},
-                        "created_at": {"type": "date", "format": "strict_date_optional_time"},
-                    }
-                },
-            },
-            timeout=30,
-        ).raise_for_status()
-        lines = []
+        _replace_entity(
+            connector,
+            namespace,
+            users_index,
+            settings={"number_of_replicas": 0},
+            properties={"id": {"type": "integer"}, "email": {"type": "text"}, "display_name": {"type": "text"}},
+        )
+        _replace_entity(
+            connector,
+            namespace,
+            orders_index,
+            settings={"number_of_replicas": 0},
+            properties={"id": {"type": "integer"}, "user_id": {"type": "integer"}, "amount": {"type": "double"}, "status": {"type": "keyword"}},
+        )
         for item in _USERS:
-            lines.append(json.dumps({"index": {"_index": users_index, "_id": item["id"]}}))
-            lines.append(json.dumps(item))
+            connector.create(namespace, users_index, {"_id": item["id"], **item})
         for item in _ORDERS:
-            lines.append(json.dumps({"index": {"_index": orders_index, "_id": item["id"]}}))
-            lines.append(json.dumps(item))
-        session.post(
-            f"{base_url}/_bulk",
-            data="\n".join(lines) + "\n",
-            headers={"Content-Type": "application/x-ndjson"},
-            timeout=60,
-        ).raise_for_status()
-        session.post(f"{base_url}/_refresh", timeout=30).raise_for_status()
+            connector.create(namespace, orders_index, {"_id": item["id"], **item})
     finally:
-        session.close()
+        connector.close()
     return _SeedResult(
         target="indices:w28a871-users,w28a871-orders",
         counts={"users": len(_USERS), "orders": len(_ORDERS)},

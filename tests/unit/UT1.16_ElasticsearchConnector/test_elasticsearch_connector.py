@@ -253,7 +253,7 @@ def _matches(document: dict[str, object], query: dict[str, object]) -> bool:
 def fake_elasticsearch(monkeypatch):
     """Replace the Elasticsearch client constructor with the in-memory fake."""
     monkeypatch.setattr(
-        "src.core.connectors.elasticsearch.adapter.Elasticsearch",
+        "cloud_dog_db.nosql.connectors.elasticsearch.Elasticsearch",
         FakeElasticsearch,
     )
 @pytest.mark.UT

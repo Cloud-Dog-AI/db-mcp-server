@@ -49,7 +49,7 @@ platform package, and the drivers are pulled transitively through its
 - `cloud-dog-db[nosql]` — MongoDB, CouchDB, Couchbase, Cassandra,
   Elasticsearch, OpenSearch, pgvector
 
-`Dockerfile.public` installs `cloud-dog-db[nosql,sql]==0.3.2`, which is the only
+`Dockerfile.public` installs `cloud-dog-db[nosql,sql]==0.3.3`, which is the only
 supported way to obtain the drivers. Do not add the raw drivers to a build.
 
 ## Prerequisites

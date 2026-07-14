@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 
@@ -43,9 +42,6 @@ def _tier_from_env_file(env_file: str) -> str:
 
 def e2e_tools_enabled(env_files: list[str] | None = None) -> bool:
     """Return true only for explicit local/system test tiers."""
-    process_tier = os.getenv("TEST_ENV_TIER", "").strip().upper()
-    if process_tier in _ENABLED_TEST_TIERS:
-        return True
     for env_file in env_files or []:
         if _tier_from_env_file(env_file).upper() in _ENABLED_TEST_TIERS:
             return True
