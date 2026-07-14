@@ -23,9 +23,9 @@ click==8.4.2
 cloud-dog-api-kit==0.14.0
 cloud-dog-config==0.3.4
 cloud_dog_db[nosql,sql]==0.3.2
-cloud-dog-idam==0.5.3
+cloud-dog-idam==0.5.4
 cloud-dog-jobs==0.4.2
-cloud-dog-llm==0.4.0
+cloud-dog-llm==0.4.1
 cloud-dog-logging==0.4.1
 cloud_dog_storage==0.1.8
 couchbase==4.6.2
