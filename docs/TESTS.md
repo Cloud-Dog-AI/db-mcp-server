@@ -3,11 +3,11 @@ template-id: T-TST
 template-version: 1.1
 applies-to: docs/TESTS.md
 project: db-mcp-server
-doc-last-updated: 2026-07-14T00:00:00Z
-doc-git-commit: d064aa17d3a6570cb01e86bbf63e4632b37fb355
+doc-last-updated: 2026-07-14
+doc-git-commit: 7da1fe4abe8926735c08c6e61db5df6de1e38a29
 doc-git-branch: main
 doc-age-policy: 90d
-doc-conformance-stamp: 2026-06-17T00:00:00Z
+doc-conformance-stamp: 2026-07-14T17:44:23Z
 req-trace-version: 1.0
 total-tests: 146
 coverage-percent: 100
@@ -15,18 +15,13 @@ coverage-percent: 100
 
 # Tests
 
-## W28R-3011 recent evidence
+## Evidence disposition
 
-The two qualifying R6 WebUI runs below are imported from mutable evidence branch commit `74eb15529b10387fc945b4bf9b504494cce4109b`. No immutable R6 final-proof tag exists, so both records are **PROVISIONAL / LANE NOT ACCEPTED**.
+No W28R-3011 result is canonically imported. The R6 local and deployed browser logs preserve timestamps and 18/18 totals, but their command fields add non-executable explanatory prose or describe a flow, and neither binds exact service environment/source provenance. Retained R5 Python 3.13.14 JUnits (222/222), local browser JUnit (140/140), and deployed browser JUnit (140/140) lack their original literal command/environment tuples; R6 parser replay does not turn them into new test runs.
 
-| Lane | Environment/configuration | Runtime | Original UTC timestamp | Tested source | Exact command | Evidence | Totals and runtime | Status |
-|---|---|---|---|---|---|---|---|---|
-| `W28R-3011` | Runtime auth detection; clean managed local stack; UI harness commit `04ddb4da435e796b99662f52c8e3232c53f087ce` | N/A (Node/Playwright) | `2026-07-14T12:30:55Z` | db-mcp-server `e308bec871dbef170ecfbf73c7eb725b1845e05b` (`main`) | `pnpm exec playwright test tests/e2e/w28a-230b-forensic.spec.ts --reporter=line,junit --workers=1 --retries=0 (runtime auth detection, clean managed stack)` | `origin/w28r-3011-evidence@74eb15529b10387fc945b4bf9b504494cce4109b:working/evidence/W28R-3011/current/raw/r6/webui/local/local-forensic.junit.xml` plus adjacent raw log and `raw/r6/drift/r6-drift-preflight-final.log` | 18 tests; 18 passed; 0 failed; 0 errors; 0 skipped; `152.76783600000002s` | PROVISIONAL / LANE NOT ACCEPTED |
-| `W28R-3011` | Deployed `https://dbmcpserver0.cloud-dog.net`; effective credentials resolved in-process from deployed runtime config and not logged; UI harness commit `04ddb4da435e796b99662f52c8e3232c53f087ce` | N/A (Node/Playwright) | `2026-07-14T12:39:24Z` | db-mcp-server `e308bec871dbef170ecfbf73c7eb725b1845e05b` (`main`) | `pnpm exec playwright test tests/e2e/w28a-230b-forensic.spec.ts --reporter=line,junit --workers=1 --retries=0 against https://dbmcpserver0.cloud-dog.net (effective credentials resolved in-process from deployed runtime config; values not logged)` | `origin/w28r-3011-evidence@74eb15529b10387fc945b4bf9b504494cce4109b:working/evidence/W28R-3011/current/raw/r6/webui/deployed/deployed-forensic.junit.xml` plus adjacent raw log and `raw/r6/drift/r6-drift-preflight-final.log` | 18 tests; 18 passed; 0 failed; 0 errors; 0 skipped; `70.068791s` | PROVISIONAL / LANE NOT ACCEPTED |
+CPython 3.12 is separately **NOT RUN**. CPython 3.13 and Node/Playwright totals are **NOT IMPORTED**. Failed authentication-mode, managed-port, deployed-authorization, module-resolution, screenshot-collision, and replay-parser attempts remain recorded in `TEST-STATUS.md` rather than being hidden by final green totals.
 
-- CPython 3.12 — NOT RUN for W28R-3011.
-- CPython 3.13 — R5 artefacts were observed but not imported because their raw ledger does not preserve exact foreground commands and environment/configuration; no qualifying CPython 3.13 run is recorded for this lane.
-- Requirements — unchanged; the imported browser spec does not carry exact test-to-requirement identifiers, so suite totals cannot update requirement last-verified fields.
+Every supplied candidate is classified in [TEST-CANDIDATE-DISPOSITION.tsv](TEST-CANDIDATE-DISPOSITION.tsv); the ledger contains exactly the 59 supplied inventory rows.
 
 ## Service Scope
 Multi-connector discovery and governance control plane for profiles, catalogue browsing, entity detail, structured data access, search, relationship management, schema planning, RBAC, and PS-77 Web UI administration.
