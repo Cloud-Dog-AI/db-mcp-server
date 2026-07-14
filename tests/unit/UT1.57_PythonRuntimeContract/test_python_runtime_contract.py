@@ -13,17 +13,22 @@ import pytest
 
 from src.common.runtime_contract import MIN_PYTHON, enforce_runtime, runtime_ok
 
-pytestmark = [pytest.mark.UT, pytest.mark.internal, pytest.mark.req("FR-027")]
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
+@pytest.mark.UT
+@pytest.mark.internal
+@pytest.mark.req("FR-027")
 def test_current_interpreter_satisfies_python_313_floor() -> None:
     assert MIN_PYTHON == (3, 13)
     assert sys.version_info[:2] >= MIN_PYTHON
     assert runtime_ok()
 
 
+@pytest.mark.UT
+@pytest.mark.internal
+@pytest.mark.req("FR-027")
 def test_pre_313_is_rejected_and_supported_versions_pass() -> None:
     for version in ((3, 12, 13), (3, 11, 9), (3, 10, 0)):
         assert not runtime_ok(version)
@@ -34,6 +39,9 @@ def test_pre_313_is_rejected_and_supported_versions_pass() -> None:
         enforce_runtime(version)
 
 
+@pytest.mark.UT
+@pytest.mark.internal
+@pytest.mark.req("FR-027")
 def test_project_metadata_and_ruff_target_python_313() -> None:
     metadata = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert metadata["project"]["requires-python"] == ">=3.13"
@@ -41,10 +49,16 @@ def test_project_metadata_and_ruff_target_python_313() -> None:
     assert "make lint" in (REPO_ROOT / "docs" / "BUILD.md").read_text(encoding="utf-8")
 
 
+@pytest.mark.UT
+@pytest.mark.internal
+@pytest.mark.req("FR-027")
 def test_python_version_file_pins_313() -> None:
     assert (REPO_ROOT / ".python-version").read_text(encoding="utf-8").strip() == "3.13"
 
 
+@pytest.mark.UT
+@pytest.mark.internal
+@pytest.mark.req("FR-027")
 def test_container_and_local_commands_use_python_313_contract() -> None:
     internal = (REPO_ROOT / "Dockerfile").read_text(encoding="utf-8")
     public = (REPO_ROOT / "Dockerfile.public").read_text(encoding="utf-8")
@@ -57,6 +71,9 @@ def test_container_and_local_commands_use_python_313_contract() -> None:
     assert "runtime-preflight:" in makefile
 
 
+@pytest.mark.UT
+@pytest.mark.internal
+@pytest.mark.req("FR-027")
 def test_docker_build_percent_encodes_private_index_credentials() -> None:
     build_script = (REPO_ROOT / "docker-build.sh").read_text(encoding="utf-8")
     assert '[[ ! "${PIP_INDEX_URL}" =~ /simple$ ]]' in build_script

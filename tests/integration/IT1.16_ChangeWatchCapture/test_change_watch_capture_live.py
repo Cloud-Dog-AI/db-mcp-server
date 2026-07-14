@@ -36,7 +36,6 @@ from sqlalchemy import create_engine
 from src.core.change_stream import WatchService
 from tests.helpers.mongo_runtime import _env_value, cleanup_database
 
-pytestmark = [pytest.mark.integration, pytest.mark.IT, pytest.mark.db, pytest.mark.internal]
 
 
 def _mongo_uri() -> str:
@@ -57,6 +56,10 @@ def _reachable(uri: str) -> bool:
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.integration
+@pytest.mark.IT
+@pytest.mark.db
+@pytest.mark.internal
 def test_live_mongodb_crud_emits_change_events(tmp_path) -> None:
     uri = _mongo_uri()
     if not _reachable(uri):

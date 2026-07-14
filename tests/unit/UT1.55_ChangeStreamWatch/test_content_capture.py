@@ -35,7 +35,6 @@ from src.core.change_stream import WatchService
 from src.core.filters import MongoDBFilterTranslator, RelationalFilterTranslator
 from src.servers.mcp.content_tools import build_content_tool_registry
 
-pytestmark = [pytest.mark.unit, pytest.mark.UT, pytest.mark.mcp, pytest.mark.asyncio]
 
 
 class _FakeConnector:
@@ -89,6 +88,10 @@ def _request(tenant="t1", user="alice"):
 
 @pytest.mark.parametrize("source_type", ["postgresql", "mariadb", "mongodb", "couchdb", "opensearch", "elasticsearch", "cassandra"])
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.asyncio
 async def test_insert_update_delete_emit_events_per_source_type(source_type) -> None:
     runtime = _runtime(source_type)
     tools = build_content_tool_registry(runtime)
@@ -122,6 +125,10 @@ async def test_insert_update_delete_emit_events_per_source_type(source_type) -> 
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.asyncio
 async def test_capture_is_noop_without_matching_watch() -> None:
     runtime = _runtime("postgresql")
     tools = build_content_tool_registry(runtime)
@@ -137,6 +144,10 @@ async def test_capture_is_noop_without_matching_watch() -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.mcp
+@pytest.mark.asyncio
 async def test_capture_never_breaks_a_successful_mutation() -> None:
     # A broken watch service must not fail the data mutation (capture is best-effort).
     class _Boom:

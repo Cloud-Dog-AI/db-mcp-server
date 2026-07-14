@@ -25,7 +25,6 @@ import pytest
 from cloud_dog_api_kit.change_stream.errors import InvalidCriteria
 from src.core.change_stream.criteria import ChangeCandidate, match, validate_criteria
 
-pytestmark = [pytest.mark.unit, pytest.mark.UT, pytest.mark.internal]
 
 
 def _candidate(**kw) -> ChangeCandidate:
@@ -35,11 +34,17 @@ def _candidate(**kw) -> ChangeCandidate:
 
 
 @pytest.mark.req("CSTREAM-DB-002")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_empty_criteria_matches_everything() -> None:
     assert match({}, _candidate()) == {"all": True}
 
 
 @pytest.mark.req("CSTREAM-DB-002")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_namespace_and_entity_exact_match() -> None:
     got = match({"namespace": "public", "entity": "orders"}, _candidate())
     assert got == {"namespace": "public", "entity": "orders"}
@@ -48,6 +53,9 @@ def test_namespace_and_entity_exact_match() -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-002")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_entity_list_and_pattern() -> None:
     assert match({"entity": ["orders", "users"]}, _candidate()) is not None
     assert match({"entity_pattern": "ord*"}, _candidate()) == {"entity_pattern": "orders"}
@@ -56,12 +64,18 @@ def test_entity_list_and_pattern() -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-002")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_action_filter() -> None:
     assert match({"action": "created"}, _candidate(action="created")) is not None
     assert match({"action": ["updated", "deleted"]}, _candidate(action="created")) is None
 
 
 @pytest.mark.req("CSTREAM-DB-002")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_value_criteria_exact_and_regex() -> None:
     cand = _candidate(values={"status": "shipped", "region": "eu"})
     assert match({"value": {"status": "shipped"}}, cand) == {"value": {"status": "shipped"}}
@@ -72,6 +86,9 @@ def test_value_criteria_exact_and_regex() -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-002")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_value_criteria_never_matches_binary_or_missing_snapshot() -> None:
     # Binary / non-scalar row values are excluded from value matching (safe/bounded).
     cand = _candidate(values={"blob": b"\x00\x01", "big": {"nested": 1}})
@@ -82,6 +99,9 @@ def test_value_criteria_never_matches_binary_or_missing_snapshot() -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-002")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_validate_rejects_unknown_field_and_bad_regex_and_action() -> None:
     with pytest.raises(InvalidCriteria):
         validate_criteria({"nope": 1})

@@ -36,7 +36,6 @@ from cloud_dog_api_kit.change_stream.errors import (
 )
 from src.core.change_stream import WatchService
 
-pytestmark = [pytest.mark.unit, pytest.mark.UT, pytest.mark.internal]
 
 
 @pytest.fixture()
@@ -58,6 +57,9 @@ def _create(service, *, tenant="t1", profile="p1", **kw):
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_lifecycle_create_list_status_pause_resume_delete(service) -> None:
     watch = _create(service)
     wid = watch["watch_id"]
@@ -70,6 +72,9 @@ def test_lifecycle_create_list_status_pause_resume_delete(service) -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_tenant_isolation_is_hard_not_found(service) -> None:
     wid = _create(service, tenant="t1")["watch_id"]
     # a different tenant cannot see or act on the watch — existence not leaked.
@@ -81,12 +86,18 @@ def test_tenant_isolation_is_hard_not_found(service) -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-002")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_invalid_criteria_rejected_at_create(service) -> None:
     with pytest.raises(InvalidCriteria):
         _create(service, criteria={"unsupported": 1})
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_server_mediated_capture_and_batch_and_ack(service) -> None:
     wid = _create(service, criteria={"namespace": "public", "entity": "orders", "action": ["created"]})["watch_id"]
     emitted = service.observe_change(
@@ -123,6 +134,9 @@ def test_server_mediated_capture_and_batch_and_ack(service) -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_paused_watch_receives_no_new_events(service) -> None:
     wid = _create(service)["watch_id"]
     service.pause(wid, tenant_id="t1")
@@ -133,6 +147,9 @@ def test_paused_watch_receives_no_new_events(service) -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_backpressure_blocks_unacked_batches(service) -> None:
     wid = _create(service, max_inflight=1)["watch_id"]
     for i in range(3):
@@ -146,6 +163,9 @@ def test_backpressure_blocks_unacked_batches(service) -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_recover_returns_resumable_cursor(service) -> None:
     wid = _create(service)["watch_id"]
     service.observe_change(
@@ -158,6 +178,9 @@ def test_recover_returns_resumable_cursor(service) -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_test_event_injects_synthetic_event(service) -> None:
     wid = _create(service)["watch_id"]
     out = service.test_event(wid, tenant_id="t1", action="created", object_ref="probe")
@@ -167,6 +190,9 @@ def test_test_event_injects_synthetic_event(service) -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_durable_journal_survives_service_restart(engine) -> None:
     # first service object writes; a fresh service object over the SAME engine
     # still reads the journalled backlog (CSTREAM-007 durability).
@@ -186,6 +212,9 @@ def test_durable_journal_survives_service_restart(engine) -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-003")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_native_cdc_support_is_honest(service) -> None:
     support = service.native_cdc_support()
     assert set(support) >= {"postgresql", "mariadb", "mongodb", "couchdb", "opensearch", "elasticsearch", "cassandra"}
@@ -196,6 +225,9 @@ def test_native_cdc_support_is_honest(service) -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_in_memory_fallback_without_engine() -> None:
     # No engine -> bounded in-memory journal; the adapter still functions.
     svc = WatchService(engine=None)

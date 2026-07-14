@@ -29,7 +29,6 @@ from src.servers.api.watches import create_watches_router
 from src.servers.mcp.tool_rbac_audit import TOOL_RBAC_MAP
 from src.servers.mcp.watch_tools import build_watch_tool_registry
 
-pytestmark = [pytest.mark.unit, pytest.mark.UT, pytest.mark.internal]
 
 _WATCH_TOOLS = {
     "db_watch_create",
@@ -54,6 +53,9 @@ def _runtime():
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_mcp_watch_tool_family_registered() -> None:
     tools = build_watch_tool_registry(_runtime())
     assert _WATCH_TOOLS.issubset(set(tools))
@@ -62,6 +64,9 @@ def test_mcp_watch_tool_family_registered() -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_mcp_watch_tools_have_rbac_map_entries() -> None:
     for name in _WATCH_TOOLS:
         assert name in TOOL_RBAC_MAP
@@ -71,6 +76,9 @@ def test_mcp_watch_tools_have_rbac_map_entries() -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_rest_router_registers_all_watch_routes() -> None:
     router = create_watches_router(_runtime(), "/v1")
     paths = {(route.path, tuple(sorted(route.methods))) for route in router.routes}
@@ -89,6 +97,9 @@ def test_rest_router_registers_all_watch_routes() -> None:
 
 
 @pytest.mark.req("CSTREAM-DB-001")
+@pytest.mark.unit
+@pytest.mark.UT
+@pytest.mark.internal
 def test_a2a_card_advertises_streaming_true_and_watch_skills() -> None:
     # The A2A card literal lives in the app factory; assert on the source contract
     # so we prove the advertisement flip without booting the full runtime.

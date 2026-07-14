@@ -3,11 +3,11 @@ template-id: T-RCM
 template-version: 1.0
 applies-to: docs/REQ-COVERAGE.md
 project: db-mcp-server
-doc-last-updated: 2026-07-14T16:08:12.686674+00:00
-doc-git-commit: e308bec871dbef170ecfbf73c7eb725b1845e05b
+doc-last-updated: 2026-07-14T17:16:38.352676+00:00
+doc-git-commit: 16bee6f21647ec1269a94a219b4e4f0cd751901d
 doc-git-branch: HEAD
 doc-age-policy: 30d
-doc-conformance-stamp: 2026-07-14T16:08:12.686674+00:00
+doc-conformance-stamp: 2026-07-14T17:16:38.352676+00:00
 generated-by: scripts/generate-req-coverage.py
 ---
 
@@ -18,9 +18,9 @@ generated-by: scripts/generate-req-coverage.py
 
 ## 1. Latest generation
 
-- **Generated at:** 2026-07-14T16:08:12.686674+00:00
+- **Generated at:** 2026-07-14T17:16:38.352676+00:00
 - **Source REQ commit:** d101e34
-- **Source TEST commit:** a9a6ee4
+- **Source TEST commit:** 16bee6f
 
 ## 2. Coverage summary
 
@@ -77,5 +77,5 @@ generated-by: scripts/generate-req-coverage.py
 | FR-024 | api, mcp | should | tests/unit/UT1.19_JobLifecycle/test_job_lifecycle.py, tests/unit/UT1.19_JobLifecycle/test_job_lifecycle.py, tests/unit/UT1.19_JobLifecycle/test_job_lifecycle.py, tests/unit/UT1.19_JobLifecycle/test_job_lifecycle.py, tests/unit/UT1.23_JobsApi/test_jobs_api.py, tests/unit/UT1.23_JobsApi/test_jobs_api.py | — | — | — | COVERED-BOUND |
 | FR-025 | api | must | tests/system/ST1.1_ServerStartup/test_server_startup.py | — | — | — | COVERED-BOUND |
 | FR-026 | internal | should | tests/quality/QT1.1_ProjectStructure/test_project_structure.py, tests/quality/QT1.1_ProjectStructure/test_project_structure.py, tests/quality/QT1.1_ProjectStructure/test_project_structure.py, tests/quality/QT1.1_ProjectStructure/test_project_structure.py, tests/quality/QT1.1_ProjectStructure/test_project_structure.py | — | — | — | COVERED-BOUND |
-| FR-027 | api, a2a | must | tests/e2e/test_w28a746_live_preprod_contract.py, tests/e2e/test_w28a746_live_preprod_contract.py, tests/smoke/test_w28a746_b_method_idam.py, tests/smoke/test_w28a746_b_method_idam.py | — | — | — | COVERED-BOUND |
+| FR-027 | api, a2a | must | tests/unit/UT1.57_PythonRuntimeContract/test_python_runtime_contract.py, tests/unit/UT1.57_PythonRuntimeContract/test_python_runtime_contract.py, tests/unit/UT1.57_PythonRuntimeContract/test_python_runtime_contract.py, tests/unit/UT1.57_PythonRuntimeContract/test_python_runtime_contract.py, tests/unit/UT1.57_PythonRuntimeContract/test_python_runtime_contract.py, tests/unit/UT1.57_PythonRuntimeContract/test_python_runtime_contract.py, tests/unit/UT1.58_PlatformBoundary/test_platform_boundary.py, tests/e2e/test_w28a746_live_preprod_contract.py, tests/e2e/test_w28a746_live_preprod_contract.py, tests/smoke/test_w28a746_b_method_idam.py, tests/smoke/test_w28a746_b_method_idam.py | — | — | — | COVERED-BOUND |
 | FR-028 | api, mcp | must | tests/unit/UT1.30_ApiA2aAuditAU3/test_au3_emitters.py, tests/unit/UT1.30_ApiA2aAuditAU3/test_au3_emitters.py, tests/unit/UT1.30_ApiA2aAuditAU3/test_au3_emitters.py, tests/unit/UT1.30_ApiA2aAuditAU3/test_au3_emitters.py, tests/unit/UT1.30_ApiA2aAuditAU3/test_au3_emitters.py, tests/unit/UT1.30_ApiA2aAuditAU3/test_au3_emitters.py, tests/system/ST1.2_AccessControlApi/test_access_control_api.py, tests/integration/IT1.14_ApiA2aAuditAU3/test_api_a2a_audit_au3.py, tests/integration/IT1.14_ApiA2aAuditAU3/test_api_a2a_audit_au3.py, tests/integration/IT1.14_ApiA2aAuditAU3/test_api_a2a_audit_au3.py, tests/integration/IT1.13_McpAuditAU3/test_mcp_audit_au3.py | — | — | — | COVERED-BOUND |
