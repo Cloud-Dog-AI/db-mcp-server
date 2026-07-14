@@ -2,25 +2,25 @@
 template-id: T-RCM
 template-version: 1.0
 applies-to: docs/REQ-COVERAGE.md
-project: db-mcp-server
-doc-last-updated: 2026-07-14T17:46:11.733723+00:00
-doc-git-commit: 7da1fe4abe8926735c08c6e61db5df6de1e38a29
-doc-git-branch: codex/traceability-db-20260714
+project: db-mcp
+doc-last-updated: 2026-07-14T23:50:36.695678+00:00
+doc-git-commit: 8d161eb971f156042522641b25fe6b252bddf897
+doc-git-branch: HEAD
 doc-age-policy: 30d
-doc-conformance-stamp: 2026-07-14T17:46:11.733723+00:00
+doc-conformance-stamp: 2026-07-14T23:50:36.695678+00:00
 generated-by: scripts/generate-req-coverage.py
 ---
 
-# db-mcp-server — REQ-COVERAGE
+# db-mcp — REQ-COVERAGE
 
 > **Template version:** T-RCM v1.0 — script-generated, do not hand-edit.
-> Re-generate via: `scripts/generate-req-coverage.py db-mcp-server`
+> Re-generate via: `scripts/generate-req-coverage.py db-mcp`
 
 ## 1. Latest generation
 
-- **Generated at:** 2026-07-14T17:46:11.733723+00:00
+- **Generated at:** 2026-07-14T23:50:36.695678+00:00
 - **Source REQ commit:** d101e34
-- **Source TEST commit:** 16bee6f
+- **Source TEST commit:** 88b1ad0
 
 ## 2. Coverage summary
 

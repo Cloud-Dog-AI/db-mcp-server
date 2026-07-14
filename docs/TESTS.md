@@ -253,3 +253,13 @@ gate runs a real browser AFTER the final deployed digest is live.
   pageerror + blank `#root` + 5xx is asserted with zero tolerance).
 - **Evidence output location:** `working/preprod-deploy-smoke/` (gitignored test
   output: JUnit `preprod-deploy-smoke.junit.xml`, HTML report, traces, screenshots).
+
+## W28E-1882 deployed WebUI final
+
+- **Run timestamp (UTC):** `2026-07-14T21:20:17.869Z`
+- **Tested source:** `39cbed348c00813df55639c41aaf70ee687965a3` (`main`)
+- **Runtime:** N/A (Node/Playwright)
+- **Environment:** deployed preprod with approved runtime/Vault credentials
+- **Command:** `bash /opt/iac/Development/cloud-dog-ai/tmp/W28E-1882/run-dbmcp.sh FINAL`
+- **Result:** PASS — 140 tests, 0 failures, 0 errors, 0 skipped
+- **Evidence:** `W28E-1882-FINAL-PROOF-R2:working/evidence/W28E-1882/current/raw/db-mcp/db-mcp.FINAL.junit.xml`

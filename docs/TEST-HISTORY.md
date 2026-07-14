@@ -23,6 +23,15 @@ doc-conformance-stamp: 2026-07-14T17:44:23Z
 
 ## Runs (most recent first)
 
+### 2026-07-14T21:20:17.869Z — W28E-1882
+- Commit: `39cbed348c00813df55639c41aaf70ee687965a3` (main)
+- Runtime: N/A (Node/Playwright)
+- Environment: `deployed preprod; approved runtime/Vault credentials; service E2E_BASE_URL`
+- Command: `bash /opt/iac/Development/cloud-dog-ai/tmp/W28E-1882/run-dbmcp.sh FINAL`
+- Evidence: `W28E-1882-FINAL-PROOF-R2:working/evidence/W28E-1882/current/raw/db-mcp/db-mcp.FINAL.junit.xml`
+- Totals: 140 / P 140 / F 0 / E 0 / S 0
+- Delta: new-fails 0 | newly-green 0
+
 ### 2026-07-14T17:44:23Z - W28R-3011 traceability correction
 - Timestamp source: `date -u +%Y-%m-%dT%H:%M:%SZ` captured `2026-07-14T17:44:23Z` (epoch `1784051063`).
 - Commit: `7da1fe4abe8926735c08c6e61db5df6de1e38a29` (`origin/main` documentation review baseline)
