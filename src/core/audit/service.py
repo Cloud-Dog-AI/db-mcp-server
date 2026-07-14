@@ -115,7 +115,16 @@ class AuditEventService:
         that trail pushed off the tip.
         """
         base_path = str(self._runtime.config.get("log.audit_log", "logs/audit.log.jsonl"))
-        files = self._rotation_files(base_path)[:_MAX_ROTATIONS_SCANNED]  # newest → oldest
+        # Bound by numeric *generation*, not by number of sibling files. A
+        # generation can legitimately have both ``.N`` and ``.N.gz`` during
+        # compression (and multi-process rotation can leave useful records in
+        # either one). Counting those siblings as separate rotations used to
+        # exclude an in-window ``.3`` event whenever ``.1.gz`` existed.
+        files = [
+            path
+            for path in self._rotation_files(base_path)
+            if self._rotation_generation(path) <= _MAX_ROTATIONS_SCANNED
+        ]  # newest → oldest
         newest_last_batches: list[list[dict[str, Any]]] = []
         retained = 0
         for path in files:
@@ -164,6 +173,12 @@ class AuditEventService:
             return (int(match.group(1)), 1 if path.endswith(".gz") else 0)
 
         return sorted(candidates, key=rank)
+
+    @staticmethod
+    def _rotation_generation(path: str) -> int:
+        """Return numeric rotation generation (tip file is generation zero)."""
+        match = _ROTATION_SUFFIX.search(file_name(path))
+        return int(match.group(1)) if match else 0
 
     def _read_events_file(self, path: str) -> list[dict[str, Any]]:
         """Parse one JSONL audit file (plain or gzip) into a newest-last list."""

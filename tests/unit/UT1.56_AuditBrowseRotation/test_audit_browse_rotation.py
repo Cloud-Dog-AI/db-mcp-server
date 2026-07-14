@@ -183,6 +183,27 @@ def test_gzip_rotation_is_read(tmp_path: Path) -> None:
 @pytest.mark.UT
 @pytest.mark.webui
 @pytest.mark.req("AC-02")
+def test_plain_and_gzip_siblings_do_not_consume_separate_generation_slots(tmp_path: Path) -> None:
+    """A ``.1.gz`` sibling must not exclude an in-window event in ``.3``."""
+    service, tip = _service(tmp_path)
+    _write(tip, range(900, 910), event_type="tool.call", action="call")
+    _write(tmp_path / "audit.log.jsonl.1", range(800, 810), event_type="tool.call", action="call")
+    with gzip.open(tmp_path / "audit.log.jsonl.1.gz", "wt", encoding="utf-8") as fh:
+        fh.write(_event(799, "tool.call", "call") + "\n")
+    _write(tmp_path / "audit.log.jsonl.2", range(700, 710), event_type="tool.call", action="call")
+    (tmp_path / "audit.log.jsonl.3").write_text(
+        _event(9003, "admin.config.reveal", "config.reveal", command_text="settings reveal secrets") + "\n",
+        encoding="utf-8",
+    )
+
+    events = service.list_events(request=None, limit=500, event_type="admin.config.reveal")
+
+    assert [event["seq"] for event in events] == [9003]
+
+
+@pytest.mark.UT
+@pytest.mark.webui
+@pytest.mark.req("AC-02")
 def test_missing_and_single_file_behaviour(tmp_path: Path) -> None:
     """Absent log → empty; single (unrotated) file still parses (integration-test shape)."""
     service, tip = _service(tmp_path)
