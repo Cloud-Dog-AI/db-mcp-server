@@ -27,7 +27,7 @@ RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
       --trusted-host pypi.cloud-dog.net \
-      "cloud-dog-config==0.3.4" \
+      "cloud-dog-config==0.3.5" \
       "cloud-dog-logging==0.4.1" \
       "cloud-dog-api-kit[change-stream-db]==0.14.1" \
       "cloud-dog-idam==0.5.4" \

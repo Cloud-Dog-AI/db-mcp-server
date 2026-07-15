@@ -13,7 +13,7 @@ authors = [
   { name = "Cloud-Dog, Viewdeck Engineering Limited" }
 ]
 dependencies = [
-  "cloud_dog_config==0.3.4",
+  "cloud_dog_config==0.3.5",
   "cloud_dog_logging==0.4.1",
   # W28E-1870-E: adopt the common cross-service change-streaming foundation
   # (PS-102). The [change-stream-db] extra pulls the durable SqlJournal deps
