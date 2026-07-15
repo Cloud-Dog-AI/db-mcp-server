@@ -29,7 +29,7 @@ RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
       --trusted-host pypi.cloud-dog.net \
       "cloud-dog-config==0.3.4" \
       "cloud-dog-logging==0.4.1" \
-      "cloud-dog-api-kit[change-stream-db]==0.14.0" \
+      "cloud-dog-api-kit[change-stream-db]==0.14.1" \
       "cloud-dog-idam==0.5.4" \
       "cloud-dog-llm==0.4.1" \
       "cloud-dog-db[nosql,sql]==0.3.3" \
