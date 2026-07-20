@@ -69,8 +69,8 @@ Source: `src/servers/web/ui_spa.py` (`_SPA_ENTRY_ROUTES`)
 | Username | Default password | Flat role | IDAM principal |
 |----------|-----------------|-----------|---------------|
 | `admin` | From `CLOUD_DOG__WEB_LOGIN__PASSWORD` (Vault) | admin | `flat-admin` |
-| `read-write` | `BlueRiverChair` (estate default) | read-write | `flat-read-write` |
-| `read-only` | `GreenRiverDesk` (estate default) | read-only | `flat-read-only` |
+| `read-write` | `web_login.read_write_password`, else falls back to the resolved admin password | read-write | `flat-read-write` |
+| `read-only` | `web_login.read_only_password`, else falls back to the resolved admin password | read-only | `flat-read-only` |
 
 Source: `src/servers/web/app.py` (`_flat_accounts`, `auth_login`)
 

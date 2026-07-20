@@ -28,9 +28,12 @@ pytestmark = [pytest.mark.integration, pytest.mark.security]
 
 BASE_URL = os.environ.get("W28A746_LIVE_BASE_URL", "https://dbmcpserver0.cloud-dog.net").rstrip("/")
 ADMIN_USERNAME = os.environ.get("E2E_WEB_USERNAME", "admin")
-ADMIN_PASSWORD = os.environ.get("E2E_WEB_PASSWORD", "OrangeRiverTable")
+# W28A-SEC-R17: no credential literals in source. The preprod admin password is
+# supplied via env (E2E_WEB_PASSWORD, from Vault/TF-env). read-only falls back to
+# the admin password (the service's admin-fallback), so it needs no literal either.
+ADMIN_PASSWORD = os.environ.get("E2E_WEB_PASSWORD", "")
 READ_ONLY_USERNAME = os.environ.get("E2E_READ_ONLY_USERNAME", "read-only")
-READ_ONLY_PASSWORD = os.environ.get("E2E_READ_ONLY_PASSWORD", "GreenRiverDesk")
+READ_ONLY_PASSWORD = os.environ.get("E2E_READ_ONLY_PASSWORD", "") or ADMIN_PASSWORD
 @pytest.mark.AT
 @pytest.mark.mcp
 @pytest.mark.req("FR-027")

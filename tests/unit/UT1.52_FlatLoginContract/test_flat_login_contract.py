@@ -36,11 +36,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 ENV_UT = str(PROJECT_ROOT / "tests" / "env-UT")
 _COOKIE_NAME = "db_web_session"
 
-# env-UT admin password; read-write/read-only use the in-code estate-canonical
-# demo defaults so all three flat roles log in without a Terraform/Vault write.
+# env-UT sets only the admin password (test-password). W28A-SEC-R17 scrubbed the
+# in-code demo literals: read-write/read-only now FALL BACK TO THE RESOLVED ADMIN
+# PASSWORD when their own config keys are unset, so all three flat roles log in
+# without a Terraform/Vault write and without shipping a public literal.
 ADMIN_CREDS = ("admin", "test-password")
-READ_WRITE_CREDS = ("read-write", "BlueRiverChair")
-READ_ONLY_CREDS = ("read-only", "GreenRiverDesk")
+READ_WRITE_CREDS = ("read-write", "test-password")
+READ_ONLY_CREDS = ("read-only", "test-password")
 
 WRITE_PATH = "/webapi/v1/profiles"
 
@@ -105,8 +107,8 @@ def test_three_flat_roles_login_by_username_password(web_app, creds, role) -> No
 def test_bad_password_is_unauthorized(web_app) -> None:
     client = TestClient(web_app, raise_server_exceptions=False)
     assert _login(client, "admin", "wrong-password").status_code == 401
-    assert _login(client, "read-only", "BlueRiverChair").status_code == 401
-    assert _login(client, "ghost", "GreenRiverDesk").status_code == 401
+    assert _login(client, "read-only", "not-the-password").status_code == 401
+    assert _login(client, "ghost", "any-password").status_code == 401
 @pytest.mark.UT
 @pytest.mark.mcp
 @pytest.mark.req("CS-007")

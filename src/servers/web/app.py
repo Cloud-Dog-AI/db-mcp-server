@@ -227,16 +227,18 @@ def create_web_app(explicit_env_files: list[str] | None = None):
     _admin_password = str(runtime.config.get("web_login.password", "") or "")
     _service_api_key = str(runtime.config.get("auth.api_key", "") or "").strip()
 
-    # W28A-732-R5 (login-contract reopen): the platform flat WebUI login contract —
+    # W28A-SEC-R17 (credential-literal scrub): the platform flat WebUI login contract —
     # three username/password roles admin / read-write / read-only. admin keeps its
-    # Vault/TF-env credential (CLOUD_DOG_WEB_LOGIN_*); read-write/read-only carry the
-    # estate-canonical in-code demo defaults (BlueRiverChair / GreenRiverDesk) —
-    # mirroring git-mcp (W28A-731-R5), chat-client (727) and notification-agent (730) —
-    # so all three flat roles log in out-of-the-box without a Terraform/Vault write.
+    # Vault/TF-env credential (CLOUD_DOG_WEB_LOGIN_*). read-write/read-only take their
+    # own config keys (web_login.read_write_password / web_login.read_only_password)
+    # when set, otherwise they FALL BACK TO THE RESOLVED ADMIN PASSWORD — never a
+    # hardcoded/public literal. This keeps all three flat roles logging in
+    # out-of-the-box (admin pw is env-injected in preprod) without a Terraform/Vault
+    # write, and is strictly more secure than shipping a public demo default.
     _rw_username = str(runtime.config.get("web_login.read_write_username", "read-write") or "read-write").strip() or "read-write"
-    _rw_password = str(runtime.config.get("web_login.read_write_password", "") or "").strip() or "BlueRiverChair"
+    _rw_password = str(runtime.config.get("web_login.read_write_password", "") or "").strip() or _admin_password
     _ro_username = str(runtime.config.get("web_login.read_only_username", "read-only") or "read-only").strip() or "read-only"
-    _ro_password = str(runtime.config.get("web_login.read_only_password", "") or "").strip() or "GreenRiverDesk"
+    _ro_password = str(runtime.config.get("web_login.read_only_password", "") or "").strip() or _admin_password
     # username -> (password, flat-role, forwarded-IDAM-principal). The forwarded
     # principal is the seeded IDAM user (src/core/access_control FLAT_DEMO_ROLES) whose
     # OWN RBAC the API tier resolves (W28A-889-B-R2) — so read-only data writes are
