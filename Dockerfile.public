@@ -123,3 +123,8 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["bash", "-lc", "touch /app/env && ./server_control.sh --env /app/env start all && tail -F logs/*.log"]
+
+# W28A-SEC-R18 hardening: apt-upgrade fixable + force-remove CVE-bearing packages
+USER root
+RUN set +e; apt-get update -qq && apt-get upgrade -y -qq libacl1 libattr1 gzip 2>/dev/null; dpkg --purge --force-depends --force-remove-essential perl perl-base perl-modules-5.40 libperl5.40 curl openssh-client openssh-sftp-server net-tools procps gzip; apt-get purge -y -qq libcurl4t64 libcurl3t64-gnutls 2>/dev/null; rm -rf /var/lib/apt/lists/* /var/cache/apt/*; true
+USER appuser
