@@ -69,11 +69,12 @@ RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
       "cloud-dog-config==0.3.5" "cloud-dog-logging==0.4.1" "cloud-dog-api-kit[change-stream-db]==0.14.1" \
       "cloud-dog-idam==0.5.4" "cloud-dog-llm==0.4.1" "cloud-dog-jobs==0.4.4" "cloud-dog-db[nosql,sql]==0.3.3" \
       "cloud-dog-storage==0.1.8" && \
-    pip install --no-cache-dir .
+    pip install --no-cache-dir . && \
+    rm -f /usr/local/share/ca-certificates/cloud-dog-corporate-ca.crt && \
+    update-ca-certificates
 
 # ── Final ────────────────────────────────────────────────────────
 FROM python:3.13-slim
-ARG CUSTOM_CA_CERT=custom-ca.crt
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.vendor="Cloud-Dog, Viewdeck Engineering Limited"
 
@@ -81,13 +82,9 @@ ARG HTTP_PROXY HTTPS_PROXY NO_PROXY http_proxy https_proxy no_proxy
 ENV HTTP_PROXY=${HTTP_PROXY} HTTPS_PROXY=${HTTPS_PROXY} NO_PROXY=${NO_PROXY} \
     http_proxy=${http_proxy} https_proxy=${https_proxy} no_proxy=${no_proxy}
 
-COPY ${CUSTOM_CA_CERT} /usr/local/share/ca-certificates/cloud-dog-corporate-ca.crt
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl netcat-openbsd procps net-tools \
-    && update-ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-# Preserve the same verified system trust contract in the runtime stage.
+# No corporate CA cert in the public final image — the builder stage
+# used it only for pip access to a boundary index and it is NOT copied
+# into the runtime.
 
 WORKDIR /app
 
