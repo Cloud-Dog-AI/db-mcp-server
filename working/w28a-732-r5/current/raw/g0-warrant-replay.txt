@@ -1,8 +1,0 @@
-GATE0_WARRANT_REPLAY 2026-06-11T12:58:37+01:00
-/opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards/RULES.md LINES=1192 SHA256_12=1e04c26f8f81 newest-anchor=1183:## Section 15 — Mandatory Reading read=2026-06-11T11:58:37Z
-/opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards/AGENT-LESSONS.md LINES=2600 SHA256_12=93be6845aa2e newest-anchor=2586:## §6.107 — `cloud_dog_llm` version pinning — 0.2.1 thinking-loop fix (consolidated from sql-agent §7 + chat-client §5 + index-retriever §5.2) read=2026-06-11T11:58:37Z
-/opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards/AGENT-BOOTSTRAP-DIRECTIVE.md LINES=714 SHA256_12=651d0179fc81 newest-anchor=704:## 10. What NOT to Do read=2026-06-11T11:58:37Z
-/opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards/PLATFORM-TLS-PROXY-GUIDANCE.md LINES=145 SHA256_12=abf232091aec newest-anchor=137:## Quick Checklist for Agents read=2026-06-11T11:58:37Z
-/opt/iac/Development/cloud-dog-ai/db-mcp-server/RULES.md LINES=122 SHA256_12=cd93a032a2ad newest-anchor=120:### Local incident record placeholder read=2026-06-11T11:58:37Z
-/opt/iac/Development/cloud-dog-ai/db-mcp-server/AGENT-LESSONS.md LINES=284 SHA256_12=bf61e4f84c66 newest-anchor=272:### 7.9 Traefik stripprefix / base_path alignment fix (2026-05-06) read=2026-06-11T11:58:37Z
-VAULT_OK token_lookup_status=200

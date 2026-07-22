@@ -1,8 +1,0 @@
-# publish-all-services.sh determinism (W28A-861-R5 re-open, Task 3)
-# filter-tree.sh deterministic: 8/8 complete-tree runs.
-# FIXED publish (fail-closed filter-exit + manifest-aware completeness gate): 3/3 runs ->
-run 1:   PASSED: 2  FAILED: 0 | imap root-files=5/5 db root-files=5/5 | OK-pushes=2/2 | COMPLETE+PUSHED
-run 2:   PASSED: 2  FAILED: 0 | imap root-files=5/5 db root-files=5/5 | OK-pushes=2/2 | COMPLETE+PUSHED
-run 3:   PASSED: 2  FAILED: 0 | imap root-files=5/5 db root-files=5/5 | OK-pushes=2/2 | COMPLETE+PUSHED
-# gate proof: COMPLETE tree -> PASS (no false positive); INCOMPLETE (pyproject removed) -> FAIL (blocks publish).
-# fix: cdci branch fix/W28A-861-R5-cdci-publish-gate @ bc47e44 (for FF).

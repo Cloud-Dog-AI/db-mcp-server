@@ -1,6 +1,0 @@
-py_compile (local python Python 3.10.12) over src/**/*.py + start_*.py
-PY_COMPILE: OK (all source files compile)
-
-bash -n docker-build.sh:
-  SYNTAX OK
-pyproject.toml: parsed OK on python3.12 (server2); 0 direct nosql/sql driver deps; cloud_dog_db[nosql,sql]>=0.3.0

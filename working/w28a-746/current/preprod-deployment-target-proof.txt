@@ -1,6 +1,0 @@
-Deployment target proof:
-- Terraform directory: /opt/iac/cloud-dog-repo/terraform/server0.viewdeck.com/27 MLAgents
-- Targeted resources: docker_image.dbmcpserver, docker_container.dbmcpserver0
-- Apply raw artifact: raw/terraform-apply.log
-- Remote Docker API proof: raw/live/main-deployed-proof.log
-- No SSH was used.

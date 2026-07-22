@@ -1,6 +1,0 @@
-check	result	raw_artifact
-unauth_auth_me_401	PASS	raw/live/live-e2e-pytest-rerun2.log
-admin_login_auth_me_profiles	PASS	raw/live/live-e2e-pytest-rerun2.log
-read_only_write_denied	PASS	raw/live/live-e2e-pytest-rerun2.log
-webmcp_tools	PASS	raw/live/live-e2e-pytest-rerun2.log
-weba2a_health	PASS	raw/live/live-e2e-pytest-rerun2.log

@@ -1,2 +1,0 @@
-DB_MCP_TEST_CASSANDRA_HOST=cassandra0.app.vpc0.cloud-dog.net
-DB_MCP_TEST_CASSANDRA_PORT=9042

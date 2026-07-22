@@ -1,5 +1,0 @@
-check	result	raw_artifact
-login_screenshot	PASS	preprod-webui-smoke/screenshots/00-login.png
-authenticated_dashboard	PASS	preprod-webui-smoke/screenshots/01-authenticated-dashboard.png
-route_screenshots_20	PASS	preprod-webui-smoke/screenshot-manifest.tsv
-fatal_console_network_zero	PASS	preprod-console-network-errors.json

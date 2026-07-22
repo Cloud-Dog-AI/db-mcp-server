@@ -1,2 +1,0 @@
-DB_MCP_TEST_MONGODB_URI=mongodb://admin:mongo-test-p4ssw0rd@mongo0.app.vpc0.cloud-dog.net:27017/dbmcp_ecommerce?authSource=admin
-DB_MCP_TEST_MONGODB_DB=dbmcp_ecommerce

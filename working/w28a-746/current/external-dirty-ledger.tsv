@@ -1,2 +1,0 @@
-path	repo	status	suspected_owner_lane	why_external_to_this_lane
-/opt/iac/Development/cloud-dog-ai/cloud-dog-ai-platform-standards	cloud-dog-ai-platform-standards	dirty/behind before W28A-746 work	coordinator/shared-standards	Read-only source of instructions and validator for this lane; not passed as touched repo to final validator.

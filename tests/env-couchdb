@@ -1,3 +1,0 @@
-DB_MCP_TEST_COUCHDB_URL=http://couchdb0.app.vpc0.cloud-dog.net:5984
-DB_MCP_TEST_COUCHDB_USERNAME=admin
-DB_MCP_TEST_COUCHDB_PASSWORD=couchdb-test-p4ssw0rd

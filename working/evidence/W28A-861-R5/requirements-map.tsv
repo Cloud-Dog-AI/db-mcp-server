@@ -1,9 +1,0 @@
-req	requirement	raw_artefact	raw_value_observed	pass
-N04-1	defaults.yaml resolves at startup in the built image	02-db-build-start-smoke.txt	in-image load_runtime_config() -> "CONFIG LOADED OK; defaults.yaml resolved at /app"; 0 defaults.yaml/config errors	PASS
-N04-2	Dockerfile.public builds (COPY config/ -> mkdir -p config; config/ was unpublished .gitkeep)	Dockerfile.public ; 02	build exit 0 (was: failed at COPY config/)	PASS
-N04-3	container STARTS / healthy + all 4 surfaces	02-db-build-start-smoke.txt	Status=running Health=healthy Exit=0; 8086/health 8087/ 8088/mcp/health 8089/health + agent.json all 200	PASS
-STG-1	cloud_dog_storage ==0.1.4 pinned (pyproject+lock+Dockerfile.public)	pyproject.toml/requirements.lock/Dockerfile.public	==0.1.4 x3 (was >=0.1.1 / lock 0.1.6)	PASS
-STG-2	storage 0.1.4 from single boundary index (no extra-index, no vendor)	02 ; build5 log	in-image pip show -> 0.1.4; single --index-url pypi.cloud-dog.net; storage-pinned=0.1.4	PASS
-OBS1-1	db index-override env var -> PIP_INDEX_URL	docker-build.sh	PYPI_URL->PIP_INDEX_URL (DEV_PYPI_URL->DEV_PIP_INDEX_URL); 0 residual PYPI_URL; creds vars intact; bash -n OK	PASS
-LEAK-1	db published tree passes the cdci publish leakage-gate	03-publish-gate-leak-scrub.txt	scrub dbmcp.cloud-dog.net->db-mcp.example.com in ui/dist/runtime-config.example.js: gate exit 1 -> 0	PASS
-MAN-1	db cdci manifest needs no change (origin/main already ships Dockerfile.public+env; exclude_dirs clean)	all-9 audit (imap evidence 05) ; origin/main db manifest	Dockerfile.public+docker-env.public.example present; no internal Dockerfile; exclude_dirs no src collision	PASS

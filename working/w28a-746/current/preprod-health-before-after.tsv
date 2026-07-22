@@ -1,4 +1,0 @@
-check	result	raw_artifact
-terraform_apply	PASS	raw/terraform-apply.log
-live_health_initial	PASS	raw/live/live-health-and-identity.log
-live_health_stability_6x	PASS	raw/live/live-health-and-identity.log
