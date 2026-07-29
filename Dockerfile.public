@@ -66,8 +66,8 @@ RUN --mount=type=secret,id=pip_conf,target=/etc/pip.conf \
     if [ ! -s /etc/pip.conf ]; then export PIP_INDEX_URL="${PUBLIC_PYPI_INDEX_URL}"; fi && \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
-      "cloud-dog-config==0.3.5" "cloud-dog-logging==0.4.1" "cloud-dog-api-kit[change-stream-db]==0.14.1" \
-      "cloud-dog-idam==0.5.4" "cloud-dog-llm==0.4.1" "cloud-dog-jobs==0.4.4" "cloud-dog-db[nosql,sql]==0.3.3" \
+      "cloud-dog-config==0.3.6" "cloud-dog-logging==0.4.1" "cloud-dog-api-kit[change-stream-db]==0.14.1" \
+      "cloud-dog-idam==0.5.4" "cloud-dog-llm==0.4.4" "cloud-dog-jobs==0.4.4" "cloud-dog-db[nosql,sql]==0.3.3" \
       "cloud-dog-storage==0.1.8" && \
     pip install --no-cache-dir . && \
     rm -f /usr/local/share/ca-certificates/cloud-dog-corporate-ca.crt && \

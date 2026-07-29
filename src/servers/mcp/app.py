@@ -93,6 +93,7 @@ def create_mcp_app(explicit_env_files: list[str] | None = None):
         verify_api_key=runtime.auth.verify_api_key,
         exempt_paths=exempt_paths_for_surface(mcp_base_path),
         public_mcp_paths={mcp_base_path, mcp_messages_path},
+        required_permission="mcp.access",
     )
     contracts = register_tool_router(app, tool_registry, base_path=join_route(mcp_base_path, "/tools"))
     register_mcp_routes(

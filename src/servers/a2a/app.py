@@ -49,12 +49,19 @@ def _has_permission(user_id: str, permission: str) -> bool:
 
 
 async def _verify_websocket_api_key(websocket: WebSocket, runtime) -> bool:
-    """Verify websocket API-key credentials from headers or query params."""
+    """Verify websocket credentials and the A2A transport permission."""
     api_key = websocket.headers.get("x-api-key", "").strip() or websocket.query_params.get("api_key", "").strip()
     if not api_key:
         return False
     result = await runtime.auth.verify_api_key(api_key)
-    return result is not None
+    if result is None:
+        return False
+    permissions = {
+        str(permission).strip()
+        for permission in (result.get("permissions", []) or [])
+        if str(permission).strip()
+    }
+    return "*" in permissions or "a2a.access" in permissions
 
 
 def create_a2a_app(explicit_env_files: list[str] | None = None):
@@ -74,11 +81,8 @@ def create_a2a_app(explicit_env_files: list[str] | None = None):
     app.add_middleware(
         APIKeyAuthMiddleware,
         verify_api_key=runtime.auth.verify_api_key,
-        # W28E-1870-E: the A2A agent card (/.well-known/agent.json) is a public
-        # discovery document (PS-72), matching the sibling services — task
-        # execution (/tasks) stays auth-gated. Only the card is exempt.
-        exempt_paths=exempt_paths_for_surface(a2a_base_path)
-        | {"/.well-known/agent.json", join_route(a2a_base_path, "/.well-known/agent.json")},
+        exempt_paths=exempt_paths_for_surface(a2a_base_path),
+        required_permission="a2a.access",
     )
 
     @app.get("/")

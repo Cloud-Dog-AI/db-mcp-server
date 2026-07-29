@@ -20,7 +20,6 @@
 
 from __future__ import annotations
 
-import json
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -28,17 +27,8 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from src.common.base_paths import normalise_base_path
-
-
 class APIKeyAuthMiddleware(BaseHTTPMiddleware):
     """Protect non-exempt HTTP routes with API-key authentication."""
-
-    # JSON-RPC methods that are allowed without authentication on MCP
-    # transport paths.  ``tools/list`` is the MCP catalogue discovery
-    # method used by gate/health probes that carry no credentials.
-    _PUBLIC_MCP_METHODS: frozenset[str] = frozenset({"tools/list"})
-    _MCP_PATHS: frozenset[str] = frozenset({"/mcp", "/messages"})
 
     def __init__(
         self,
@@ -49,6 +39,7 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
         api_key_header: str = "X-API-Key",
         public_mcp_paths: set[str] | None = None,
         resolve_web_user: Callable[[str], Any] | None = None,
+        required_permission: str | None = None,
     ) -> None:
         super().__init__(app)
         self._verify_api_key = verify_api_key
@@ -58,30 +49,15 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
         # X-Request-User (webui-trusted) to that user's OWN RBAC principal, so the
         # web tier no longer collapses every session to the service principal.
         self._resolve_web_user = resolve_web_user
-        self._public_mcp_paths = frozenset(
-            normalise_base_path(path) or "/"
-            for path in (public_mcp_paths or set(self._MCP_PATHS))
-        )
-
-    async def _is_public_mcp_request(self, request: Request) -> bool:
-        """Return True when the request is an unauthenticated-safe MCP method."""
-        if request.method != "POST" or request.url.path not in self._public_mcp_paths:
-            return False
-        try:
-            body = await request.body()
-            payload = json.loads(body)
-            if isinstance(payload, dict):
-                return str(payload.get("method", "")) in self._PUBLIC_MCP_METHODS
-        except Exception:
-            pass
-        return False
+        self._required_permission = str(required_permission or "").strip()
+        # Kept as a compatibility argument for callers on older configuration
+        # objects.  MCP discovery is an authenticated operation; no JSON-RPC
+        # method is made public here.
+        del public_mcp_paths
 
     async def dispatch(self, request: Request, call_next):
         """Check the inbound API key unless the path is public."""
         if request.url.path in self._exempt_paths:
-            return await call_next(request)
-
-        if await self._is_public_mcp_request(request):
             return await call_next(request)
 
         api_key = request.headers.get(self._api_key_header, "").strip()
@@ -141,4 +117,25 @@ class APIKeyAuthMiddleware(BaseHTTPMiddleware):
             request.state.profile_ids = forwarded_principal.profile_ids
             request.state.scopes = forwarded_principal.scopes
             request.state.principal = forwarded_principal
+
+        permissions = {
+            str(permission).strip()
+            for permission in (request.state.permissions or [])
+            if str(permission).strip()
+        }
+        if (
+            self._required_permission
+            and "*" not in permissions
+            and self._required_permission not in permissions
+        ):
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "ok": False,
+                    "error": {
+                        "code": "FORBIDDEN",
+                        "message": f"Missing required permission: {self._required_permission}",
+                    },
+                },
+            )
         return await call_next(request)

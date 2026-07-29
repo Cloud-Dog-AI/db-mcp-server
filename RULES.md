@@ -1,28 +1,7 @@
-# db-mcp-server — Local Rules
+# db-mcp-server — Rules
 
-## Common contract — binding
+Read the common [Platform Rules](../cloud-dog-ai-platform-standards/RULES.md) in full before work. The standard agent-workspace location is `~/cloud-dog-ai-platform-standards/RULES.md`.
 
-Read [the platform RULES](../cloud-dog-ai-platform-standards/RULES.md) and
-`AGENT-LESSONS.md` in full before work. Central data, platform-package and delivery
-controls apply; this file adds database-service constraints.
+Then read this project's `AGENT-LESSONS.md` in full. Platform Rules are binding; local lessons contain the project's durable constraints and cannot weaken common policy.
 
-**WebUI evidence (when applicable).** Browser-visible change or claim requires named real-service Playwright user-flow proof locally and again on final preprod `main`/`:latest`; `curl`, screenshots, DOM/unit checks, mocks and manual browsing are not substitutes. The platform rule governs the agent/auditor replay.
-
-**Contested delivery (binding).** This repo and every lane it supports are shared space: recover/classify every dirty path, branch, worktree and collision with its owner; never use `BLOCKED` to abandon delivery. For any deployable change: develop/test locally → reconcile to `origin/main` → build final `:latest` → deploy only that `:latest` to PREPROD; never deploy a branch/SHA/old/local image or another environment.
-
-## Local rules
-
-- API, Web, MCP and A2A share catalogue, schema, content, relationship, search and
-  access-control core. Prove a changed shared contract through every applicable
-  adapter and negative permission path.
-- Provider availability, credentials, profiles and permissions come from current
-  authorised configuration. A configured provider is not a supported connector:
-  prove adapter validation and real operations before claiming support.
-- Keep discovery indexing distinct from content search; long full/incremental work
-  uses the common durable job lifecycle with restart/recovery proof.
-- Translate provider failures into the service’s stable error contract. Destructive
-  operations require their explicit role, approval and target-aware audit trail.
-- Editable UI and browser coverage belong in the paired monorepo app; the service
-  ships only the exact synchronised distribution.
-
-Historical connector counts, ports and incident commands are retired to Git history.
+Resolve ports, hosts, routes, images, package versions, models, Vault paths, commands and runtime state from current authorised configuration, source and SSOT — never from this file.
